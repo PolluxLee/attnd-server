@@ -16,10 +16,19 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 
 @RestController
 @Validated
 public class UserController {
+
+    @Autowired
+    public UserController(UserService userService, WechatService wechatService, ConfigBean configBean) {
+        this.userService = userService;
+        this.wechatService = wechatService;
+        this.configBean = configBean;
+    }
 
     //testing api
     @GetMapping("/chk/session")
@@ -47,14 +56,11 @@ public class UserController {
     }
 
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    private WechatService wechatService;
+    private final WechatService wechatService;
 
-    @Autowired
-    private ConfigBean configBean;
+    private final ConfigBean configBean;
 
 
     /**
@@ -69,10 +75,10 @@ public class UserController {
      * code=12345
      *
      * @apiSuccessExample {json} user-exist:
-     * {"code":2001,"msg": "","data":{"openid":"fdsafe51515","name":"lzp"}}
+     * {"code":2002,"msg": "","data":{"id":1,"openid":"fdsafe51515","name":"lzp","remark":{},"status":0}}
      *
      * @apiSuccessExample {json} user-not-exist:
-     * {"code":2000,"msg": "","data":{"openid":"owxxer4748","name":""}}
+     * {"code":2001,"msg": "","data":{"id":0,"openid":"owxxer4748","name":"","remark":{},"status":0}}
      *
      */
     /***/
@@ -103,5 +109,45 @@ public class UserController {
         return user.getName().equals("")?new FeedBack<>(Code.USER_NOT_EXIST,"",user):new FeedBack<>(Code.USER_EXIST,"",user);
     }
 
+    /**
+     * @api {get} /api/user/info ChkUserInfo
+     * @apiName ChkUserInfo
+     * @apiGroup User
+     *
+     * @apiParam {string} openid user openid
+     *
+     * @apiSuccessExample {json} Resp:
+     * {"code":1000,"msg": "","data":{"id":1,"openid":"fdsafe51515","name":"lzp","remark":{},"status":0}}
+     *
+     * @apiError (Error-Code) 2001 user not exist
+     */
+    /***/
+    @GetMapping("/user/info")
+    public FeedBack chkUserInfo(@NotBlank @RequestParam("openid") String openid){
+        User user = userService.FindUserByOpenid(openid);
+        if (user==null){
+            return new FeedBack<>(Code.USER_NOT_EXIST,"","find nothing by openid");
+        }
+
+        return FeedBack.SUCCESS(user);
+    }
+
+
+    /**
+     * @api {post} /api/user/info AddUserInfo
+     * @apiName AddUserInfo
+     * @apiGroup User
+     *
+     * @apiParam {string} name user-name not empty
+     * @apiParamExample {json} Request-body:
+     * {"name":"lzy"}
+     *
+     */
+    /***/
+    @PostMapping("/usr/info")
+    public FeedBack addUser(@Validated(User.C.Add.class) @RequestBody User user){
+        //TODO need session
+        return null;
+    }
 
 }

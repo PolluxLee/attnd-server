@@ -6,8 +6,9 @@ public interface Code {
     int GLOBAL_PARAM_ERROR = 1002;
     int GLOBAL_NOAUTH = 1003;
     int GLOBAL_SYS_ERROR = 1004;
+    int GLOBAL_DB_ERROR = 1005;
 
 
-    int USER_NOT_EXIST = 2000;
-    int USER_EXIST = 2001;
+    int USER_NOT_EXIST = 2001;
+    int USER_EXIST = 2002;
 }

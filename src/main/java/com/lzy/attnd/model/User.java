@@ -1,16 +1,26 @@
 package com.lzy.attnd.model;
 
 
-
 import javax.validation.constraints.*;
 
+
+
 public class User {
-    public User(@Min(0) int id, @NotBlank String name, @NotNull String openid, @NotNull Object remark, @Min(0) int status) {
+
+
+    public User(@Min(value = 1, groups = S.Query.class) @Min(0) int id, @NotBlank(groups = {C.Add.class, S.Ins.class, S.Query.class}) String name, @NotBlank(groups = {S.Ins.class, S.Query.class}) String openid, @NotNull(groups = {S.Ins.class, S.Query.class}) Object remark, @Min(value = 0, groups = S.Query.class) int status) {
         this.id = id;
         this.name = name;
         this.openid = openid;
         this.remark = remark;
         this.status = status;
+    }
+
+    public User(@Min(value = 1, groups = S.Query.class) @Min(0) int id, @NotBlank(groups = {C.Add.class, S.Ins.class, S.Query.class}) String name, @NotBlank(groups = {S.Ins.class, S.Query.class}) String openid) {
+        this.id = id;
+        this.name = name;
+        this.openid = openid;
+        this.remark = new Object();
     }
 
     public int getId() {
@@ -53,24 +63,25 @@ public class User {
         this.status = status;
     }
 
-    public User(@Min(0) int id, @NotBlank String name, @NotNull String openid) {
-        this.id = id;
-        this.name = name;
-        this.openid = openid;
-        this.remark = new Object();
-    }
-
+    @Min(value = 1,groups = S.Query.class)
     @Min(0)
     private int id;
-    @NotBlank
+    @NotBlank(groups = {C.Add.class,S.Ins.class,S.Query.class})
     private String name;
-    @NotNull
+    @NotBlank(groups = {S.Ins.class,S.Query.class})
     private String openid;
-    @NotNull
+    @NotNull(groups = {S.Ins.class,S.Query.class})
     private Object remark;
-    @Min(0)
+    @Min(value = 0,groups = S.Query.class)
     private int status;
 
+    public interface S {
+        public interface Ins{}
+        public interface Query{}
+    }
 
+    public interface C {
+        public interface Add{}
+    }
 
 }

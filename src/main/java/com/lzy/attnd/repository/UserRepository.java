@@ -12,16 +12,22 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
+import org.springframework.validation.annotation.Validated;
 
 
 @Repository
 public class UserRepository implements UserService {
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
     private final static Logger logger = LoggerFactory.getLogger(UserRepository.class);
 
+    @Autowired
+    public UserRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
     @Override
+
     public boolean AddUser(User user) {
         ObjectMapper mapper = new ObjectMapper();
         String remarkJson;
@@ -46,12 +52,11 @@ public class UserRepository implements UserService {
 
     //user null -> not found
     @Override
-    @Nullable
     public User FindUserByOpenid(String openid) {
         User user;
         try {
-            user = this.jdbcTemplate.queryForObject("SELECT id,name from user where openid=?",new Object[]{openid},
-                    (rs, rowNum) -> new User(rs.getInt("id"),rs.getString("name"),openid));
+            user = this.jdbcTemplate.queryForObject("SELECT id,name,remark,status from user where openid=?",new Object[]{openid},
+                    (rs, rowNum) -> new User(rs.getInt("id"),rs.getString("name"),openid,rs.getObject("remark"),rs.getInt("status")));
         } catch (EmptyResultDataAccessException erdae) {
             return null;
         }

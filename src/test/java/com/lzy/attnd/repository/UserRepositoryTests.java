@@ -57,23 +57,26 @@ public class UserRepositoryTests {
     //UpdUserNameByOpenid
 
     @Test
-    public void updopenidnull(){
-        try {
-            userService.UpdUserNameByOpenid("","");
-        } catch (ConstraintViolationException e) {
-            e.printStackTrace();
-        }catch (Exception e){
-            throw e;
-        }
-
+    public void updopenidnull()throws Exception{
         try {
             userService.UpdUserNameByOpenid(null,null);
         } catch (ConstraintViolationException e) {
             e.printStackTrace();
-        }catch (Exception e){
-            throw e;
+            return;
         }
+        throw new Exception();
 
+    }
+
+    @Test
+    public void updEmpty()throws Exception{
+        try {
+            userService.UpdUserNameByOpenid("","");
+        } catch (ConstraintViolationException e) {
+            e.printStackTrace();
+            return;
+        }
+        throw new Exception();
     }
 
     @Test
@@ -100,13 +103,10 @@ public class UserRepositoryTests {
         Assert.assertThat(newUser.getOpenid(),is("ac"));
     }
 
+
     @Test
     @Transactional
     public void normalfindnothing(){
-        User u = new User(1,"testlzy","ac",new testc(),0);
-        boolean success = userService.AddUser(u);
-        Assert.assertTrue(success);
-
         User newUser = userService.FindUserByOpenid("abcest");
         Assert.assertThat(newUser,nullValue());
     }

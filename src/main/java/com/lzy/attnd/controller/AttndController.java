@@ -14,7 +14,7 @@ import javax.validation.Valid;
 @Validated
 public class AttndController {
 
-    private AttndService attndService;
+    private final AttndService attndService;
 
     @Autowired
     public AttndController(AttndService attndService) {
