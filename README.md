@@ -21,6 +21,6 @@ APP_APPSECRET=1
 LOG_HOME=/app/log
 ```
 
-- git clone https://github.com/WisperDin/attnd-server.git
-- docker-compose build
-- docker-compose up
+- `git clone https://github.com/WisperDin/attnd-server.git`
+- `docker-compose build`
+- `docker-compose up`
