@@ -1,6 +1,13 @@
 # attnd-server [![Build Status](https://travis-ci.org/WisperDin/attnd-server.svg?branch=master)](https://travis-ci.org/WisperDin/attnd-server)
 A back-end server of the WeChat attendance applet implemented using the spring boot framework
 
+# Environment(Integrated in Docker)
+- Spring boot v2.0.1
+- Mysql v8.0.11
+- Redis v4.0.9
+- Maven v3.5
+- Java v1.8
+
 # Usage
 **envionment variables need**
 ```sh
