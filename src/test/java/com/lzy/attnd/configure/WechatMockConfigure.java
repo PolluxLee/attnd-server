@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.TestPropertySource;
 
-@Profile("test")
 @Configuration
 @TestPropertySource(locations="classpath:application-test.properties")
 public class WechatMockConfigure {

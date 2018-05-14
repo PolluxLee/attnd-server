@@ -1,0 +1,52 @@
+version: '3'
+services:
+  db:
+   container_name: attnd-mysql
+   image: library/mysql:8.0
+   environment:
+    MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    MYSQL_USER: ${DB_USERNAME}
+    MYSQL_PASSWORD: ${DB_PASSWORD}
+    MYSQL_DATABASE: ${DB_DBNAME}
+   volumes:
+    - "./docker/mysql/conf:/etc/mysql/conf.d"
+   ports:
+    - "3306:3306"
+   restart: always
+
+  cache:
+   container_name: attnd-redis
+   image: redis
+   command: ["redis-server", "/etc/redis.conf", "--requirepass", "${CACHE_PASSWORD}"]
+   ports:
+    - "6379:6379"
+   volumes:
+       - "./docker/redis/conf/redis.conf:/etc/redis.conf"
+
+  app:
+   build: ./
+   working_dir: /app
+   environment:
+    SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+    DB_HOST: db:3306
+    DB_PASSWORD: ${DB_PASSWORD}
+    DB_DBNAME: ${DB_DBNAME}
+    DB_USERNAME: ${DB_USERNAME}
+    CACHE_HOST: cache
+    CACHE_PORT: 6379
+    APP_PORT: ${APP_PORT}
+    APP_APPID: ${APP_APPID}
+    APP_APPSECRET: ${APP_APPSECRET}
+    LOG_HOME: ${LOG_HOME}
+    CACHE_PASSWORD: ${CACHE_PASSWORD}
+   volumes:
+     - ./:/app
+     - ~/.m2:/root/.m2
+   ports:
+     - "${APP_PORT}:${APP_PORT}"
+   expose:
+     - "${APP_PORT}"
+   command: ["/app/docker/wait-for-it.sh", "cache:6379", "--","/app/docker/wait-for-it.sh", "db:3306", "--", "/app/docker/app-start.sh"]
+   depends_on:
+     - db
+     - cache

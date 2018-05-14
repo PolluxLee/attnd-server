@@ -26,4 +26,4 @@
 
 #configure
 log
-*.properties
+test.compose.sh
