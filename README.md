@@ -9,7 +9,7 @@ A back-end server of the WeChat attendance applet implemented using the spring b
 - Java v1.8
 
 # Usage
-**envionment variables need**
+**envionment variables need when running docker-compose**
 ```sh
 #reading properties via profile
 SPRING_PROFILES_ACTIVE=docker 
