@@ -10,8 +10,6 @@ services:
     MYSQL_DATABASE: ${DB_DBNAME}
    volumes:
     - "./docker/mysql/conf:/etc/mysql/conf.d"
-   ports:
-    - "3306:3306"
    restart: always
 
   cache:
