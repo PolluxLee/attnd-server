@@ -2,6 +2,7 @@ package com.lzy.attnd.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.lzy.attnd.model.User;
 import com.lzy.attnd.service.UserService;
 import org.slf4j.Logger;
@@ -27,9 +28,10 @@ public class UserRepository implements UserService {
     }
 
     @Override
-
-    public boolean AddUser(User user) {
+    public boolean InsOrUpdUserInfo(User user) {
         ObjectMapper mapper = new ObjectMapper();
+        //test will failed if not this sentence
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         String remarkJson;
         try {
             remarkJson = mapper.writeValueAsString(user.getRemark());
@@ -39,14 +41,14 @@ public class UserRepository implements UserService {
             return false;
         }
 
-        int effectedRows = this.jdbcTemplate.update("INSERT INTO user(name,openid,remark) VALUES(?,?,?);",user.getName(),user.getOpenid(),remarkJson);
-        return effectedRows == 1;
+        this.jdbcTemplate.update("INSERT INTO user(name,openid,stuid,remark) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE name=?, stuid=?;",user.getName(),user.getOpenid(),user.getStu_id(),remarkJson,user.getName(),user.getStu_id());
+        return true;
     }
 
     //condition
     @Override
-    public boolean UpdUserNameByOpenid(String openid,String userName) {
-        int effectedRows = this.jdbcTemplate.update("UPDATE user set name=? WHERE openid=?;",userName,openid);
+    public boolean UpdUserInfoByOpenid(User user) {
+        int effectedRows = this.jdbcTemplate.update("UPDATE user set name=? ,stuid=?  WHERE openid=?;",user.getName(),user.getStu_id(),user.getOpenid());
         return effectedRows == 1;
     }
 
@@ -55,8 +57,8 @@ public class UserRepository implements UserService {
     public User FindUserByOpenid(String openid) {
         User user;
         try {
-            user = this.jdbcTemplate.queryForObject("SELECT id,name,remark,status from user where openid=?",new Object[]{openid},
-                    (rs, rowNum) -> new User(rs.getInt("id"),rs.getString("name"),openid,rs.getObject("remark"),rs.getInt("status")));
+            user = this.jdbcTemplate.queryForObject("SELECT id,name,stuid,remark,status from user where openid=?",new Object[]{openid},
+                    (rs, rowNum) -> new User(rs.getInt("id"),rs.getString("name"),openid,rs.getObject("remark"),rs.getInt("status"),rs.getString("stuid")));
         } catch (EmptyResultDataAccessException erdae) {
             return null;
         }

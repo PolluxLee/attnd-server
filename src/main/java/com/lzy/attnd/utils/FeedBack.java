@@ -31,6 +31,10 @@ public class FeedBack<T> {
         return new FeedBack(Code.GLOBAL_SYS_ERROR,msg==null?"":msg);
     }
 
+    public static FeedBack DB_FAILED(String msg){
+        return new FeedBack(Code.GLOBAL_DB_FAILED,msg==null?"":msg);
+    }
+
     public FeedBack(int code, String msg) {
         this.code = code;
         this.msg = msg;

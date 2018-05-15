@@ -33,7 +33,8 @@ public class UserRepositoryTests {
     public void openidnull(){
         boolean success = false;
         try {
-            success = userService.AddUser(new User(1,"testlzy",null,null,0));
+            User user = new User(1,"testlzy",null,null,0,"23");
+            success = userService.InsOrUpdUserInfo(user);
         } catch (ConstraintViolationException e) {
             e.printStackTrace();
             return;
@@ -50,7 +51,7 @@ public class UserRepositoryTests {
     @Test
     @Transactional
     public void normal(){
-        boolean success = userService.AddUser(new User(1,"testlzy","testoid",new testc(),0));
+        boolean success = userService.InsOrUpdUserInfo(new User(1,"testlzy","testoid",new testc(),0,"23"));
         Assert.assertTrue(success);
     }
 
@@ -59,7 +60,7 @@ public class UserRepositoryTests {
     @Test
     public void updopenidnull()throws Exception{
         try {
-            userService.UpdUserNameByOpenid(null,null);
+            userService.UpdUserInfoByOpenid(null);
         } catch (ConstraintViolationException e) {
             e.printStackTrace();
             return;
@@ -71,7 +72,8 @@ public class UserRepositoryTests {
     @Test
     public void updEmpty()throws Exception{
         try {
-            userService.UpdUserNameByOpenid("","");
+            User user = new User();
+            userService.UpdUserInfoByOpenid(user);
         } catch (ConstraintViolationException e) {
             e.printStackTrace();
             return;
@@ -82,11 +84,13 @@ public class UserRepositoryTests {
     @Test
     @Transactional
     public void normalupd(){
-        User u = new User(1,"testlzy","testoid",new testc(),0);
-        boolean success = userService.AddUser(u);
+        User u = new User(1,"testlzy","testoid",new testc(),0,"23");
+        boolean success = userService.InsOrUpdUserInfo(u);
         Assert.assertTrue(success);
 
-        success = userService.UpdUserNameByOpenid(u.getOpenid(),"owenmingk");
+        u.setName("JAA");
+        u.setStu_id("111");
+        success = userService.UpdUserInfoByOpenid(u);
         Assert.assertTrue(success);
     }
 
@@ -94,8 +98,8 @@ public class UserRepositoryTests {
     @Test
     @Transactional
     public void normalfind(){
-        User u = new User(1,"testlzy","ac",new testc(),0);
-        boolean success = userService.AddUser(u);
+        User u = new User(1,"testlzy","ac",new testc(),0,"23");
+        boolean success = userService.InsOrUpdUserInfo(u);
         Assert.assertTrue(success);
 
         User newUser = userService.FindUserByOpenid(u.getOpenid());
@@ -109,6 +113,18 @@ public class UserRepositoryTests {
     public void normalfindnothing(){
         User newUser = userService.FindUserByOpenid("abcest");
         Assert.assertThat(newUser,nullValue());
+    }
+
+
+    @Test
+    public void normalfindempty() throws Exception{
+        try {
+            User newUser = userService.FindUserByOpenid("");
+        } catch (ConstraintViolationException e) {
+            e.printStackTrace();
+            return;
+        }
+        throw new Exception();
     }
 
 }

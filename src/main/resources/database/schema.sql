@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS user(
   id INT PRIMARY KEY AUTO_INCREMENT,
   name varchar(255) NOT NULL,
+  stuid varchar(255) NOT NULL,
   openid varchar(255) NOT NULL UNIQUE,
   status INT NOT NULL DEFAULT 0,
   remark JSON NOT NULL ,

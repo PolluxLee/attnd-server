@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "com.lzy")
 public class ConfigBean {
 
-    public String getSession_key() {
+    public final String getSession_key() {
         return session_key;
     }
 

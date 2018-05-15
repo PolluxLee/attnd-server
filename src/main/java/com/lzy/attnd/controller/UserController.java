@@ -7,16 +7,18 @@ import com.lzy.attnd.service.UserService;
 import com.lzy.attnd.service.WechatService;
 import com.lzy.attnd.utils.FeedBack;
 import com.lzy.attnd.utils.Session;
+import org.hibernate.validator.constraints.Range;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.annotation.SessionScope;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 
 @RestController
@@ -75,7 +77,7 @@ public class UserController {
      * code=12345
      *
      * @apiSuccessExample {json} user-exist:
-     * {"code":2002,"msg": "","data":{"id":1,"openid":"fdsafe51515","stu_id":"1506200023","name":"lzp","remark":{},"status":0}}
+     * {"code":2002,"msg": "","data":{"id":1,"openid":"fdsafe51515","stu_id":"1506200023","name":"lzp"}}
      *
      * @apiSuccessExample {json} user-not-exist:
      * {"code":2001,"msg": "","data":{"openid":"owxxer4748"}}
@@ -99,7 +101,8 @@ public class UserController {
         //find user info
         User user = userService.FindUserByOpenid(wxLoginFb.getOpenid());
         if (user == null){
-            user = new User(0,"",wxLoginFb.getOpenid());
+            user = new User();
+            user.setOpenid(wxLoginFb.getOpenid());
         }
 
         //update the newest user regardless of the session exist
@@ -118,7 +121,7 @@ public class UserController {
      * @apiParam {string} openid user openid
      *
      * @apiSuccessExample {json} Resp:
-     * {"code":1000,"msg": "","data":{"id":1,"openid":"fdsafe51515","stu_id":"1506200023","name":"lzp","remark":{},"status":0}}
+     * {"code":1000,"msg": "","data":{"id":1,"openid":"fdsafe51515","stu_id":"1506200023","name":"lzp"}}
      *
      * @apiError (Error-Code) 2001 user not exist
      */
@@ -133,24 +136,43 @@ public class UserController {
         return FeedBack.SUCCESS(user);
     }
 
-
     /**
-     * @api {post} /api/user/info?type=1 AddUserInfo/UpdUserInfo
+     * @api {post} /api/user/info FillUserInfo
      * @apiName AddUserInfo/UpdUserInfo
      * @apiGroup User
-
+     * @apiDescription
+     * if not exists -> insert
+     * exists -> update
      *
-     * @apiParam {Number=1,2} type add/upd 1-> add 2-> upd
-     *
+     * @apiParam {string} name user openid
+     * @apiParam {string} [stu_id] user openid
      * @apiParamExample {json} Request-body:
      * {"name":"lzy","stu_id":"1506200023"}
      *
      */
     /***/
     @PostMapping("/user/info")
-    public FeedBack addUser(@Validated(User.C.Add.class) @RequestBody User user){
-        //TODO need session
-        return null;
+    public FeedBack addOrUpdUser(
+            HttpSession httpSession,
+            @Validated({User.Name.class}) @RequestBody User user){
+        Session session = Session.GetAttribute(httpSession,configBean.getSession_key());
+        if (session == null) {
+            return new FeedBack<>(Code.GLOBAL_SYS_ERROR,"","get session failed");
+        }
+        if (session.getOpenid() == null || session.getOpenid().equals("")){
+            return new FeedBack<>(Code.GLOBAL_NOAUTH,"","session.openid null or empty");
+        }
+
+        user.setRemark(new Object());
+        if (user.getStu_id()==null)
+            user.setStu_id("");
+        user.setOpenid(session.getOpenid());
+
+        boolean success = userService.InsOrUpdUserInfo(user);
+        if (!success){
+            return FeedBack.DB_FAILED("addOrUpdUser InsOrUpdUserInfo failed");
+        }
+        return FeedBack.SUCCESS();
     }
 
 }

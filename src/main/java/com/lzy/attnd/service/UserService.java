@@ -8,13 +8,20 @@ import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 @Service
 @Validated
 public interface UserService {
-    @Validated(User.S.Ins.class)
-    boolean AddUser(@Valid User user) throws DataAccessException;
-    boolean UpdUserNameByOpenid(@NotBlank String openid,@NotBlank String userName) throws DataAccessException;
-    @Validated(User.S.Query.class)
-    @Nullable @Valid User FindUserByOpenid(@NotBlank String openid) throws DataAccessException;
+    @Validated({User.Name.class,User.Openid.class,User.Remark.class,User.StuIDNotNUll.class})
+    boolean InsOrUpdUserInfo(
+            @Valid @NotNull(groups = User.Name.class) User user) throws DataAccessException;
+
+    @Validated({User.Name.class,User.Openid.class,User.StuID.class})
+    boolean UpdUserInfoByOpenid(
+            @Valid @NotNull(groups = User.Name.class) User user) throws DataAccessException;
+
+    @Validated(User.All.class)
+    @Nullable @Valid User FindUserByOpenid(
+            @NotBlank(groups = User.All.class) String openid) throws DataAccessException;
 }
