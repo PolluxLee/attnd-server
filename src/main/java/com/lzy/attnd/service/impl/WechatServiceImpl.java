@@ -13,8 +13,12 @@ import org.springframework.stereotype.Service;
 public class WechatServiceImpl implements WechatService {
     private final static Logger logger = LoggerFactory.getLogger(UserRepository.class);
 
+    private final ConfigBean configBean;
+
     @Autowired
-    ConfigBean configBean;
+    public WechatServiceImpl(ConfigBean configBean) {
+        this.configBean = configBean;
+    }
 
 
     public WxLoginFb Wx_Login(String code){

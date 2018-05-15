@@ -75,10 +75,10 @@ public class UserController {
      * code=12345
      *
      * @apiSuccessExample {json} user-exist:
-     * {"code":2002,"msg": "","data":{"id":1,"openid":"fdsafe51515","name":"lzp","remark":{},"status":0}}
+     * {"code":2002,"msg": "","data":{"id":1,"openid":"fdsafe51515","stu_id":"1506200023","name":"lzp","remark":{},"status":0}}
      *
      * @apiSuccessExample {json} user-not-exist:
-     * {"code":2001,"msg": "","data":{"id":0,"openid":"owxxer4748","name":"","remark":{},"status":0}}
+     * {"code":2001,"msg": "","data":{"openid":"owxxer4748"}}
      *
      */
     /***/
@@ -92,6 +92,7 @@ public class UserController {
         //TODO...WX...
         WechatService.WxLoginFb wxLoginFb = wechatService.Wx_Login(code);
         if (wxLoginFb == null){
+            //TODO WX ERROR
             return FeedBack.SYS_ERROR("Wx_Login failed");
         }
 
@@ -117,7 +118,7 @@ public class UserController {
      * @apiParam {string} openid user openid
      *
      * @apiSuccessExample {json} Resp:
-     * {"code":1000,"msg": "","data":{"id":1,"openid":"fdsafe51515","name":"lzp","remark":{},"status":0}}
+     * {"code":1000,"msg": "","data":{"id":1,"openid":"fdsafe51515","stu_id":"1506200023","name":"lzp","remark":{},"status":0}}
      *
      * @apiError (Error-Code) 2001 user not exist
      */
@@ -134,17 +135,19 @@ public class UserController {
 
 
     /**
-     * @api {post} /api/user/info AddUserInfo
-     * @apiName AddUserInfo
+     * @api {post} /api/user/info?type=1 AddUserInfo/UpdUserInfo
+     * @apiName AddUserInfo/UpdUserInfo
      * @apiGroup User
+
      *
-     * @apiParam {string} name user-name not empty
+     * @apiParam {Number=1,2} type add/upd 1-> add 2-> upd
+     *
      * @apiParamExample {json} Request-body:
-     * {"name":"lzy"}
+     * {"name":"lzy","stu_id":"1506200023"}
      *
      */
     /***/
-    @PostMapping("/usr/info")
+    @PostMapping("/user/info")
     public FeedBack addUser(@Validated(User.C.Add.class) @RequestBody User user){
         //TODO need session
         return null;
