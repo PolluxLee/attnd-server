@@ -28,6 +28,7 @@ public class AttndController {
      *
      * @apiParam {Number{0-}} attnd_id id!=0->update，id==0->create
      * @apiParam {String{0..50}} attnd_name 考勤名称
+     * @apiParam {String{0..50}} addr_name location name
      * @apiParam {Number{0-}} start_time need check start_time + last > now
      * @apiParam {Number{0-1440}} last attendance last time unit->minutes
      * @apiParam {Number{-90-90}} latitude float
@@ -36,10 +37,10 @@ public class AttndController {
      * @apiParam {String} group_name attnd group only work when creating , tag this attnd is member adding
      * @apiParam {String{0..50}} teacher_name if user exist -> do nothing
      * @apiParamExample {json} Req-create:
-     * {"attnd_id":0,"attnd_name":"操作系统","start_time":15577418,"last":20,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"teacher_name":"wjx","group_name":"计科151"}
+     * {"attnd_id":0,"attnd_name":"操作系统","start_time":15577418,"last":20,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"addr_name":"外环西路","teacher_name":"wjx","group_name":"计科151"}
      *
      * @apiParamExample {json} Req-update:
-     * {"attnd_id":12335,"attnd_name":"操作系统","start_time":15577418,"last":50,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"teacher_name":"wjx","group_name":"计科151"}
+     * {"attnd_id":12335,"attnd_name":"操作系统","start_time":15577418,"last":50,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"addr_name":"中环西路","teacher_name":"wjx","group_name":"计科151"}
      *
      * @apiSuccess {String} cipher 口令 标识位(标识录入/考勤)+通过62进制时间戳后3位+attnd_id 的62进制表示
      * @apiSuccessExample {json} Resp-create:
@@ -80,7 +81,7 @@ public class AttndController {
      * attnd_id=1248
      *
      * @apiSuccessExample {json} Resp:
-     * {"code":1000,"msg":"","data":{"attnd_id":12335,"cipher":"JQS52","attnd_name":"操作系统","start_time":15577418,"last":50,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"teacher_name":"wjx","group_name":"计科151"}}
+     * {"code":1000,"msg":"","data":{"attnd_id":12335,"cipher":"JQS52","attnd_name":"操作系统","start_time":15577418,"last":50,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"addr_name":"中环西路","teacher_name":"wjx","group_name":"计科151"}}
      */
 
     /**

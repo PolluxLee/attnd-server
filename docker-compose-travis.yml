@@ -8,8 +8,6 @@ services:
     MYSQL_USER: ${DB_USERNAME}
     MYSQL_PASSWORD: ${DB_PASSWORD}
     MYSQL_DATABASE: ${DB_DBNAME}
-   ports:
-    - "3306:3306"
    volumes:
     - "./docker/mysql/conf:/etc/mysql/conf.d"
 

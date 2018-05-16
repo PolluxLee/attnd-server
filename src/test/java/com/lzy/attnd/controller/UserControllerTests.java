@@ -1,3 +1,4 @@
+/*
 package com.lzy.attnd.controller;
 
 
@@ -37,7 +38,6 @@ import static org.hamcrest.Matchers.*;
 @ActiveProfiles("test")
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@AutoConfigureMockMvc
 public class UserControllerTests {
 
     @Autowired
@@ -58,10 +58,12 @@ public class UserControllerTests {
         session = new MockHttpSession();
     }
 
-    /**
+    */
+/**
      * normal
      * @throws Exception
-     */
+     *//*
+
     @Test
     public void login()throws Exception{
         String openid = "openid-test";
@@ -80,10 +82,12 @@ public class UserControllerTests {
     }
 
 
-    /**
+    */
+/**
      * exist
      * @throws Exception
-     */
+     *//*
+
     @Test
     public void loginexist()throws Exception{
         String openid = "toid123";
@@ -99,10 +103,12 @@ public class UserControllerTests {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.openid",is(openid)))
                 .andDo(MockMvcResultHandlers.print());
     }
-    /**
+    */
+/**
      * param invalid
      * @throws Exception
-     */
+     *//*
+
     @Test
     public void loginParamInvalid()throws Exception{
         mvc.perform(MockMvcRequestBuilders.post("/login")
@@ -117,9 +123,11 @@ public class UserControllerTests {
 
     //chk_user_info-----------------------------------------------------------------
 
-    /**
+    */
+/**
      * find not exist
-     */
+     *//*
+
     @Test
     public void chkUserNotExist() throws Exception{
         mvc.perform(MockMvcRequestBuilders.get("/user/info")
@@ -130,9 +138,11 @@ public class UserControllerTests {
                 .andDo(MockMvcResultHandlers.print());
     }
 
-    /**
+    */
+/**
      * no param
-     */
+     *//*
+
     @Test
     public void chkUserNOPARAM() throws Exception{
         mvc.perform(MockMvcRequestBuilders.get("/user/info")
@@ -141,9 +151,11 @@ public class UserControllerTests {
                 .andDo(MockMvcResultHandlers.print());
     }
 
-    /**
+    */
+/**
      * openid blank
-     */
+     *//*
+
     @Test
     public void chkUserOIDemply() throws Exception{
         mvc.perform(MockMvcRequestBuilders.get("/user/info")
@@ -155,9 +167,11 @@ public class UserControllerTests {
     }
 
 
-    /**
+    */
+/**
      * find exist
-     */
+     *//*
+
     @Test
     public void chkUserExist() throws Exception{
         mvc.perform(MockMvcRequestBuilders.get("/user/info")
@@ -221,3 +235,4 @@ public class UserControllerTests {
     }
 
 }
+*/
