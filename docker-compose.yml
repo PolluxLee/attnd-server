@@ -23,7 +23,7 @@ services:
        - "./docker/redis/conf/redis.conf:/etc/redis.conf"
 
   app:
-   build: ./
+   image: maven:3.5-jdk-8
    working_dir: /app
    environment:
     SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
