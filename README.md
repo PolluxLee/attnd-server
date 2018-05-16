@@ -16,20 +16,20 @@ A back-end server of the WeChat attendance applet implemented using the spring b
 **envionment variables need when running docker-compose**
 ```sh
 #reading properties via profile
-SPRING_PROFILES_ACTIVE=docker 
-DB_HOST=127.0.0.1:3306
-DB_PASSWORD=yourdbpassword
-DB_DBNAME=yourdbname
-DB_USERNAME=yourusername
-CACHE_HOST=127.0.0.1
-CACHE_PORT=6379
-CACHE_PASSWORD=cachepwd
-APP_PORT=8888
+export SPRING_PROFILES_ACTIVE=docker 
+export DB_HOST=127.0.0.1:3306
+export DB_PASSWORD=yourdbpassword
+export DB_DBNAME=yourdbname
+export DB_USERNAME=yourusername
+export CACHE_HOST=127.0.0.1
+export CACHE_PORT=6379
+export CACHE_PASSWORD=cachepwd
+export APP_PORT=8888
 #param for wechat 
-APP_APPID=1
-APP_APPSECRET=1
+export APP_APPID=1
+export APP_APPSECRET=1
 #log file position
-LOG_HOME=/app/log
+export LOG_HOME=/app/log
 ```
 
 - `git clone https://github.com/WisperDin/attnd-server.git`
