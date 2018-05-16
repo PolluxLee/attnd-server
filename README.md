@@ -30,6 +30,8 @@ export APP_APPID=1
 export APP_APPSECRET=1
 #log file position
 export LOG_HOME=/app/log
+#switch to the test
+export TEST_SW=off
 ```
 
 - `git clone https://github.com/WisperDin/attnd-server.git`
