@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS user(
 
 CREATE TABLE IF NOT EXISTS attnd(
   id INT PRIMARY KEY AUTO_INCREMENT,
+  name varchar(255) NOT NULL,
   cipher varchar(32) NOT NULL UNIQUE,
   starttime BIGINT NOT NULL,
   lasttime INT NOT NULL,
@@ -18,6 +19,7 @@ CREATE TABLE IF NOT EXISTS attnd(
   addrname varchar(255) NOT NULL,
   groupname varchar(255) NOT NULL DEFAULT '',
   teacherid INT NOT NULL,
+  teachername varchar(255) NOT NULL,
   status INT NOT NULL DEFAULT 0,
   remark JSON NOT NULL ,
   createdat datetime NOT NULL default NOW(),
@@ -25,6 +27,7 @@ CREATE TABLE IF NOT EXISTS attnd(
 )DEFAULT CHARACTER SET = utf8;
 
 CREATE TABLE IF NOT EXISTS usergroup(
+  id INT PRIMARY KEY AUTO_INCREMENT,
   name varchar(255) NOT NULL,
   creatorname varchar(255) NOT NULL,
   creatorid INT NOT NULL,
@@ -32,7 +35,19 @@ CREATE TABLE IF NOT EXISTS usergroup(
   remark JSON NOT NULL ,
   createdat datetime NOT NULL default NOW(),
   updatedat datetime NOT NULL default NOW(),
-  PRIMARY KEY(name,creatorid)
+  UNIQUE KEY(name,creatorid)
+)DEFAULT CHARACTER SET = utf8;
+
+CREATE TABLE IF NOT EXISTS signin(
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  openid varchar(255) NOT NULL,
+  name varchar(255) NOT NULL,
+  cipher varchar(32) NOT NULL,
+  location JSON NOT NULL,
+  status INT NOT NULL DEFAULT 0,
+  remark JSON NOT NULL ,
+  createdat datetime NOT NULL default NOW(),
+  updatedat datetime NOT NULL default NOW()
 )DEFAULT CHARACTER SET = utf8;
 
 /* logback table */
@@ -100,6 +115,16 @@ CREATE TRIGGER t_usergroup_update_time_before_upd BEFORE UPDATE on usergroup FOR
     set NEW.updatedat = now();
 
 CREATE TRIGGER t_usergroup_update_time_before_ins BEFORE INSERT on usergroup FOR EACH ROW
+    set NEW.updatedat = now();
+
+
+DROP TRIGGER IF EXISTS  t_signin_update_time_before_upd;
+DROP TRIGGER IF EXISTS  t_signin_update_time_before_ins;
+
+CREATE TRIGGER t_signin_update_time_before_upd BEFORE UPDATE on signin FOR EACH ROW
+    set NEW.updatedat = now();
+
+CREATE TRIGGER t_signin_update_time_before_ins BEFORE INSERT on signin FOR EACH ROW
     set NEW.updatedat = now();
 
 

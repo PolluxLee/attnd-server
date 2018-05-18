@@ -7,7 +7,7 @@ import javax.servlet.http.HttpSession;
 import java.io.Serializable;
 
 public class Session implements Serializable {
-    private final static Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private final static Logger logger = LoggerFactory.getLogger(Session.class);
 
     public static Session GetAttribute(HttpSession httpSession,String session_key){
         if (httpSession == null || session_key.equals(""))

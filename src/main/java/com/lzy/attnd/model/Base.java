@@ -24,6 +24,7 @@ public class Base {
         return remark;
     }
 
+    @JsonIgnore
     @Nullable
     public String getRemarkJson(){
         return Utils.ObjectToJson(remark);

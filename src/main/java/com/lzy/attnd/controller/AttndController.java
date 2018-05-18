@@ -3,19 +3,25 @@ package com.lzy.attnd.controller;
 import com.lzy.attnd.configure.ConfigBean;
 import com.lzy.attnd.constant.Code;
 import com.lzy.attnd.model.Attnd;
+import com.lzy.attnd.model.SignIn;
 import com.lzy.attnd.model.User;
 import com.lzy.attnd.model.UserGroup;
 import com.lzy.attnd.service.AttndService;
+import com.lzy.attnd.service.SignInService;
 import com.lzy.attnd.service.UserGroupService;
 import com.lzy.attnd.service.UserService;
 import com.lzy.attnd.utils.FeedBack;
 import com.lzy.attnd.utils.Session;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.MultiValueMap;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,13 +32,16 @@ public class AttndController {
     private final AttndService attndService;
     private final UserGroupService userGroupService;
     private final UserService userService;
+    private final SignInService signInService;
+
     private final ConfigBean configBean;
 
     @Autowired
-    public AttndController(AttndService attndService,UserGroupService userGroupService, UserService userService, ConfigBean configBean) {
+    public AttndController(AttndService attndService,UserGroupService userGroupService, UserService userService, SignInService signInService, ConfigBean configBean) {
         this.attndService = attndService;
         this.userGroupService = userGroupService;
         this.userService = userService;
+        this.signInService = signInService;
         this.configBean = configBean;
     }
 
@@ -49,7 +58,7 @@ public class AttndController {
      * @apiParam {Number{-180-180}} longitude float
      * @apiParam {Number{0-}} accuracy float
      * @apiParam {String{0..50}} [group_name] attnd group only work when creating , tag this attnd is member adding
-     * @apiParam {String{0..50} addr_name location name
+     * @apiParam {String{0..50}} addr_name location name
      * @apiParam {String{0..50}} teacher_name if user exist -> do nothing
      * @apiParamExample {json} Req-create:
      * {"attnd_name":"操作系统","start_time":15577418,"last":20,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"addr_name":"外环西路","teacher_name":"wjx","group_name":"计科151"}
@@ -154,13 +163,26 @@ public class AttndController {
      * @apiName chkAttnd
      * @apiGroup Attnd
      *
-     * @apiParam {Number{1-}} attnd_id id for attendance
-     * @apiParamExample {String} Req:
-     * attnd_id=1248
+     * @apiParamExample {String{1..50}} Req:
+     * cipher="GZXQAS"
      *
      * @apiSuccessExample {json} Resp:
-     * {"code":1000,"msg":"","data":{"attnd_id":12335,"cipher":"JQS52","attnd_name":"操作系统","start_time":15577418,"last":50,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"addr_name":"中环西路","teacher_name":"wjx","group_name":"计科151"}}
+     * {"code":1000,"msg":"","data":{"teacher_id":1,"attnd_id":123,"cipher":"GZXQAS","status":1,"attnd_name":"操作系统","start_time":15577418,"last":20,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"addr_name":"外环西路","teacher_name":"wjx","group_name":"计科151"}}
+     *
+     *
+     * @apiError (Error-Code) 3001 attnd not exist
      */
+    /****/
+    @GetMapping("/attnd")
+    public FeedBack chkAttnd(
+            @NotBlank @Size(max = 50) @RequestParam("cipher") String cipher
+    ){
+        Attnd attnd = attndService.ChkAttnd(cipher);
+        if (attnd==null){
+            return new FeedBack(Code.ATTND_NOT_EXIST);
+        }
+        return FeedBack.SUCCESS(attnd);
+    }
 
     /**
      * @api {get} /api/attnd/hisname chkAttnd_hisname
@@ -211,10 +233,44 @@ public class AttndController {
      * @apiDescription student sign in attendance
      *
      * @apiParam {String} cipher cipher for attendance
-     * @apiParamExample {String} Req:
-     * cipher=X574AQ
+     * @apiParamExample {json} Req:
+     * {"cipher":"X574AQ","location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0}}
      *
      */
+    /***/
+    @PostMapping("/attnd/signin")
+    public FeedBack SignIn(@RequestAttribute("attnd") Session session){
+        /*String cipher = formData.getFirst("cipher");
+        if (cipher==null||cipher.length()>50||cipher.length()==0){
+            return FeedBack.PARAM_INVALID("SignIn cipher param invalid");
+        }
+
+
+        char attnd_type = cipher.charAt(0);
+        switch (attnd_type){
+            case Code.CIPHER_ATTND:{
+                break;
+            }
+            case Code.CIPHER_ENTRY:{
+                break;
+            }
+            case Code.CIPHER_NOGROUP:{
+                break;
+            }
+            case Code.CIPHER_SINGLE:{
+                return FeedBack.SUCCESS();
+            }
+            default:
+                return FeedBack.PARAM_INVALID("SignIn cipher param unknown type");
+        }*/
+        //TODO judge sign in whether success
+
+        boolean signInSuccess = signInService.AddSignInRecord(new SignIn());
+        if (!signInSuccess){
+
+        }
+        return FeedBack.SUCCESS();
+    }
 
     /**
      * @api {get} /api/attnd/situation chkAttndSituation
@@ -223,7 +279,7 @@ public class AttndController {
      *
      * @apiParam {Number{1-}} attnd_id id for attendance
      * @apiParamExample {String} Req:
-     * attnd_id=1248
+     * cipher="A7184"
      *
      *
      * @apiSuccessParam {Number=1,2} attnd_status studnet attendance status 1-> ok 2-> not ok
@@ -234,7 +290,7 @@ public class AttndController {
 
 
     /**
-     * @api {post} /api/attnd/situation updAttndSituation
+     * @api {post} /api/signin/situation updSignSituation
      * @apiName updAttndSituation
      * @apiGroup Attnd
      *

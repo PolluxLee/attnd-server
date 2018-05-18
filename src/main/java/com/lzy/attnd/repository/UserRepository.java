@@ -47,11 +47,11 @@ public class UserRepository implements UserService {
             remarkJson = mapper.writeValueAsString(user.getRemark());
         }catch (JsonProcessingException jpe){
             logger.warn("AddUser failed: "+jpe.getMessage());
-            jpe.printStackTrace();
             return false;
         }
 
-        this.jdbcTemplate.update("INSERT INTO user(name,openid,stuid,remark) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE name=?, stuid=?;",user.getName(),user.getOpenid(),user.getStu_id(),remarkJson,user.getName(),user.getStu_id());
+        this.jdbcTemplate.update("INSERT INTO user(name,openid,stuid,remark) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE name=?, stuid=?;",
+                user.getName(),user.getOpenid(),user.getStu_id(),remarkJson,user.getName(),user.getStu_id());
         return true;
     }
 
@@ -96,6 +96,7 @@ public class UserRepository implements UserService {
     public User FindUserByOpenid(String openid) {
         User user;
         try {
+            //TODO remark in this place is a String
             user = this.jdbcTemplate.queryForObject("SELECT id,name,stuid,remark,status from user where openid=?",new Object[]{openid},
                     (rs, rowNum) -> new User(rs.getInt("id"),rs.getString("name"),openid,rs.getObject("remark"),rs.getInt("status"),rs.getString("stuid")));
         } catch (EmptyResultDataAccessException erdae) {

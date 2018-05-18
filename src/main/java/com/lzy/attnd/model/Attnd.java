@@ -1,12 +1,19 @@
 package com.lzy.attnd.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.lzy.attnd.utils.Utils;
 import org.hibernate.validator.constraints.Range;
+import org.springframework.cglib.core.Converter;
 import org.springframework.lang.Nullable;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
+import java.io.Serializable;
+import java.sql.SQLData;
 
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class Attnd extends Base {
 
     public interface ID{}
@@ -86,7 +93,9 @@ public class Attnd extends Base {
     private String cipher;
 
     public Attnd() {
+        this.location = new Location();
     }
+
 
     public int getAttnd_id() {
         return attnd_id;
@@ -124,6 +133,7 @@ public class Attnd extends Base {
         return location;
     }
 
+    @JsonIgnore
     @Nullable
     public String getLocationJson() {
         return Utils.ObjectToJson(location);
@@ -174,7 +184,7 @@ public class Attnd extends Base {
         this.cipher = cipher;
     }
 
-    public class Location{
+    public class Location {
         public float getLatitude() {
             return latitude;
         }
@@ -199,6 +209,17 @@ public class Attnd extends Base {
             this.accuracy = accuracy;
         }
 
+        public Location(@Range(min = -90, max = 90, groups = {Location_Struct.class, All.class}) float latitude, @Range(min = -180, max = 180, groups = {Location_Struct.class, All.class}) float longitude, @Min(value = 0, groups = {Location_Struct.class, All.class}) float accuracy) {
+            this.latitude = latitude;
+            this.longitude = longitude;
+            this.accuracy = accuracy;
+        }
+
+
+        public Location(){
+
+        }
+
         @Range(min = -90,max = 90,groups = {Location_Struct.class,All.class})
         private float latitude;
 
@@ -207,8 +228,6 @@ public class Attnd extends Base {
 
         @Min(value = 0,groups = {Location_Struct.class,All.class})
         private float accuracy;
-
-
     }
 
 }

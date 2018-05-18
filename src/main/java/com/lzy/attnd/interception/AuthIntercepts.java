@@ -15,7 +15,7 @@ import javax.servlet.http.HttpSession;
 
 
 public class AuthIntercepts implements HandlerInterceptor {
-    private final static Logger logger = LoggerFactory.getLogger(UserRepository.class);
+    private final static Logger logger = LoggerFactory.getLogger(AuthIntercepts.class);
 
     private final ConfigBean configBean;
 

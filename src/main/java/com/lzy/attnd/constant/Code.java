@@ -14,6 +14,7 @@ public interface Code {
     int USER_NOT_EXIST = 2001;
     int USER_EXIST = 2002;
 
+    int ATTND_NOT_EXIST = 3001;
 
     int ADD_FLAG = 1;
     int UPD_FLAG = 2;

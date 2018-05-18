@@ -180,7 +180,7 @@ public class AttndControllerTests {
     @Test
     @Transactional
     public void attnd_User_Exist_Group_Exist_BELONG_ME()throws Exception{
-        session.setAttribute(configBean.getSession_key(),new Session(2,"lzP",0,"toid456","wxsessionkey2"));
+        session.setAttribute(configBean.getSession_key(),new Session(2,"lzy",0,"toid456","wxsessionkey2"));
         mvc.perform(MockMvcRequestBuilders.post("/attnd")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"attnd_name\":\"操作系统\",\"start_time\":15577418,\"last\":20,\"location\":{\"latitude\":23.4,\"longitude\":174.4,\"accuracy\":30.0},\"addr_name\":\"外环西路\",\"teacher_name\":\"wjx\",\"group_name\":\"网工151\"}")
@@ -200,7 +200,7 @@ public class AttndControllerTests {
     @Test
     @Transactional
     public void attnd_User_Exist_Group_Exist_BELONG_NOTME()throws Exception{
-        session.setAttribute(configBean.getSession_key(),new Session(1,"lzy",0,"toid123","wxsessionkey"));
+        session.setAttribute(configBean.getSession_key(),new Session(1,"lzp",0,"toid123","wxsessionkey"));
         mvc.perform(MockMvcRequestBuilders.post("/attnd")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"attnd_name\":\"操作系统\",\"start_time\":15577418,\"last\":20,\"location\":{\"latitude\":23.4,\"longitude\":174.4,\"accuracy\":30.0},\"addr_name\":\"外环西路\",\"teacher_name\":\"wjx\",\"group_name\":\"网工151\"}")
@@ -212,4 +212,76 @@ public class AttndControllerTests {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.cipher",startsWith(String.valueOf(Code.CIPHER_ENTRY))))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)));
     }
+
+
+    /*chk attnd------------------------------------------------------**/
+    @Test
+    public void chk_attnd_param_invalid()throws Exception{
+        mvc.perform(MockMvcRequestBuilders.get("/attnd")
+                .param("ciphefefsr","test")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(400));
+    }
+
+    @Test
+    public void chk_attnd_group_exist()throws Exception{
+        mvc.perform(MockMvcRequestBuilders.get("/attnd")
+                .param("cipher","Gwvk1")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.status",is(2)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id",is(1)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_name",is("操作系统1")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.start_time",is(15577418)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.last",is(20)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.addr_name",is("外环西路")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.group_name",is("网工151")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.teacher_name",is("lzy")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.teacher_id",is(1)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.cipher",is("Gwvk1")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.location.longitude",is(174.4)));
+
+    }
+
+
+    @Test
+    public void chk_attnd_group_not_exist()throws Exception{
+        mvc.perform(MockMvcRequestBuilders.get("/attnd")
+                .param("cipher","Awvk2")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.status",is(1)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id",is(2)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_name",is("计算机网络")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.start_time",is(15577418)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.last",is(20)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.addr_name",is("外环西路")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.group_name",is("")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.teacher_name",is("lzp")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.teacher_id",is(2)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.cipher",is("Awvk2")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.location.longitude",is(174.4)));
+    }
+
+
+    @Test
+    public void chk_attnd_not_exist()throws Exception{
+        mvc.perform(MockMvcRequestBuilders.get("/attnd")
+                .param("cipher","123fe")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_NOT_EXIST)));
+
+    }
+
 }

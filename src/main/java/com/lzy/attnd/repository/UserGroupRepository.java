@@ -1,5 +1,6 @@
 package com.lzy.attnd.repository;
 
+import com.lzy.attnd.exception.DBProcessException;
 import com.lzy.attnd.model.UserGroup;
 import com.lzy.attnd.service.UserGroupService;
 import org.slf4j.Logger;
@@ -11,12 +12,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 
 @Repository
 public class UserGroupRepository implements UserGroupService {
 
-    private final static Logger logger = LoggerFactory.getLogger(UserRepository.class);
+    private final static Logger logger = LoggerFactory.getLogger(UserGroupRepository.class);
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -41,9 +43,14 @@ public class UserGroupRepository implements UserGroupService {
         String remarkJson = userGroup.getRemarkJson();
         if (remarkJson==null){
             logger.error("AddNewGroup remark to json failed");
-            return false;
+            throw new DBProcessException("remark json invalid");
         }
         int effectedRows = this.jdbcTemplate.update("INSERT INTO usergroup(name, creatorname, creatorid, remark) VALUES (?,?,?,?)",new Object[]{userGroup.getName(),userGroup.getCreator_name(),userGroup.getCreator_id(),remarkJson});
         return effectedRows==1;
+    }
+
+    @Override
+    public boolean AddUserToGroup(@NotBlank String openid, @Min(1) int groupID) throws DataAccessException {
+        return false;
     }
 }
