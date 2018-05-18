@@ -1,84 +1,92 @@
 package com.lzy.attnd.model;
 
+import com.lzy.attnd.utils.Utils;
+import org.hibernate.validator.constraints.Range;
+import org.springframework.lang.Nullable;
+
+import javax.validation.Valid;
 import javax.validation.constraints.*;
 
-public class Attnd {
+public class Attnd extends Base {
 
-    @Min(0)
-    private int attnd_id;
-
-    @NotBlank
-    @Size(max = 50)
-    private String attnd_name;
-
-    @Min(0)
-    private long start_time;
-
-    @Min(0)
-    @Max(1440)
-    //attendance last minutes num 0~1440(1 day)
-    private int last;
-
-    @NotNull
-    private Location location;
-
-    @NotBlank
-    @Size(max = 50)
-    private String teacherName;
+    public interface ID{}
+    public interface Name{}
+    public interface StartTime{}
+    public interface Last{}
+    public interface Location_Struct{}
+    public interface AddrName{}
+    public interface GroupNameNotNull {}
+    public interface TeacherName{}
+    public interface TeacherID{}
+    public interface Cipher{}
+    public interface All{}
 
 
-    public class Location{
-        @Min(-90)
-        @Max(90)
-        private float latitude;
-
-        @Min(-180)
-        @Max(180)
-        private float longitude;
-
-        @Min(0)
-        private float accuracy;
-
-
-        public float getLatitude() {
-            return latitude;
-        }
-
-        public void setLatitude(float latitude) {
-            this.latitude = latitude;
-        }
-
-        public float getLongitude() {
-            return longitude;
-        }
-
-        public void setLongitude(float longitude) {
-            this.longitude = longitude;
-        }
-
-        public float getAccuracy() {
-            return accuracy;
-        }
-
-        public void setAccuracy(float accuracy) {
-            this.accuracy = accuracy;
-        }
-
-    }
-
-    public Attnd() {
-    }
-
-    public Attnd(@Min(0) int attnd_id, @NotBlank @Size(max = 50) String attnd_name, @Min(0) long start_time, @Min(0) @Max(1440) int last, @NotNull Location location, @NotBlank @Size(max = 50) String teacherName) {
+    public Attnd(@NotNull(groups = {Remark.class, BaseAll.class}) Object remark, @Min(value = 0, groups = {Status.class, BaseAll.class}) int status, @Min(value = 0, groups = {ID.class, All.class}) int attnd_id, @NotBlank @Size(max = 50, groups = {Name.class, All.class}) String attnd_name, @Min(value = 0, groups = {StartTime.class, All.class}) long start_time, @Range(min = 0, max = 1440, groups = {Last.class, All.class}) int last, @NotNull(groups = {Location_Struct.class, All.class}) @Valid Location location, @NotBlank(groups = {AddrName.class, All.class}) String addr_name, @NotNull(groups = {GroupNameNotNull.class, All.class}) String group_name, @NotBlank(groups = {TeacherName.class, All.class}) @Size(max = 50, groups = {TeacherName.class, All.class}) String teacher_name, @Min(value = 1, groups = {TeacherID.class, All.class}) int teacher_id, @NotBlank(groups = {Cipher.class, All.class}) @Size(max = 50, groups = {Cipher.class, All.class}) String cipher) {
+        super(remark, status);
         this.attnd_id = attnd_id;
         this.attnd_name = attnd_name;
         this.start_time = start_time;
         this.last = last;
         this.location = location;
-        this.teacherName = teacherName;
+        this.addr_name = addr_name;
+        this.group_name = group_name;
+        this.teacher_name = teacher_name;
+        this.teacher_id = teacher_id;
+        this.cipher = cipher;
     }
 
+    public Attnd(@Min(value = 0, groups = {ID.class, All.class}) int attnd_id, @NotBlank @Size(max = 50, groups = {Name.class, All.class}) String attnd_name, @Min(value = 0, groups = {StartTime.class, All.class}) long start_time, @Range(min = 0, max = 1440, groups = {Last.class, All.class}) int last, @NotNull(groups = {Location_Struct.class, All.class}) @Valid Location location, @NotBlank(groups = {AddrName.class, All.class}) String addr_name, @NotNull(groups = {GroupNameNotNull.class, All.class}) String group_name, @NotBlank(groups = {TeacherName.class, All.class}) @Size(max = 50, groups = {TeacherName.class, All.class}) String teacher_name, @Min(value = 1, groups = {TeacherID.class, All.class}) int teacher_id, @NotBlank(groups = {Cipher.class, All.class}) @Size(max = 50, groups = {Cipher.class, All.class}) String cipher) {
+        this.attnd_id = attnd_id;
+        this.attnd_name = attnd_name;
+        this.start_time = start_time;
+        this.last = last;
+        this.location = location;
+        this.addr_name = addr_name;
+        this.group_name = group_name;
+        this.teacher_name = teacher_name;
+        this.teacher_id = teacher_id;
+        this.cipher = cipher;
+    }
 
+    @Min(value = 0,groups = {ID.class,All.class})
+    private int attnd_id;
+
+    @NotBlank(groups = {Name.class,All.class})
+    @Size(max = 50,groups = {Name.class,All.class})
+    private String attnd_name;
+
+    @Min(value = 0,groups = {StartTime.class,All.class})
+    private long start_time;
+
+    //attendance last minutes num 0~1440(1 day)
+    @Range(min = 0,max = 1440,groups = {Last.class,All.class})
+    private int last;
+
+    @NotNull(groups = {Location_Struct.class,All.class})
+    @Valid
+    private Location location;
+
+    @NotBlank(groups = {AddrName.class,All.class})
+    @Size(max = 50,groups = {AddrName.class,All.class})
+    private String addr_name;
+
+    @NotNull(groups = {GroupNameNotNull.class,All.class})
+    private String group_name;
+
+    @NotBlank(groups = {TeacherName.class,All.class})
+    @Size(max = 50,groups = {TeacherName.class,All.class})
+    private String teacher_name;
+
+    @Min(value = 1, groups = {TeacherID.class,All.class})
+    private int teacher_id;
+
+    @NotBlank(groups = {Cipher.class,All.class})
+    @Size(max = 50,groups = {Cipher.class,All.class})
+    private String cipher;
+
+    public Attnd() {
+    }
 
     public int getAttnd_id() {
         return attnd_id;
@@ -116,15 +124,91 @@ public class Attnd {
         return location;
     }
 
+    @Nullable
+    public String getLocationJson() {
+        return Utils.ObjectToJson(location);
+    }
+
+
     public void setLocation(Location location) {
         this.location = location;
     }
 
-    public String getTeacherName() {
-        return teacherName;
+    public String getAddr_name() {
+        return addr_name;
     }
 
-    public void setTeacherName(String teacherName) {
-        this.teacherName = teacherName;
+    public void setAddr_name(String addr_name) {
+        this.addr_name = addr_name;
     }
+
+    public String getGroup_name() {
+        return group_name;
+    }
+
+    public void setGroup_name(String group_name) {
+        this.group_name = group_name;
+    }
+
+    public String getTeacher_name() {
+        return teacher_name;
+    }
+
+    public void setTeacher_name(String teacher_name) {
+        this.teacher_name = teacher_name;
+    }
+
+    public int getTeacher_id() {
+        return teacher_id;
+    }
+
+    public void setTeacher_id(int teacher_id) {
+        this.teacher_id = teacher_id;
+    }
+
+    public String getCipher() {
+        return cipher;
+    }
+
+    public void setCipher(String cipher) {
+        this.cipher = cipher;
+    }
+
+    public class Location{
+        public float getLatitude() {
+            return latitude;
+        }
+
+        public void setLatitude(float latitude) {
+            this.latitude = latitude;
+        }
+
+        public float getLongitude() {
+            return longitude;
+        }
+
+        public void setLongitude(float longitude) {
+            this.longitude = longitude;
+        }
+
+        public float getAccuracy() {
+            return accuracy;
+        }
+
+        public void setAccuracy(float accuracy) {
+            this.accuracy = accuracy;
+        }
+
+        @Range(min = -90,max = 90,groups = {Location_Struct.class,All.class})
+        private float latitude;
+
+        @Range(min = -180,max = 180,groups = {Location_Struct.class,All.class})
+        private float longitude;
+
+        @Min(value = 0,groups = {Location_Struct.class,All.class})
+        private float accuracy;
+
+
+    }
+
 }

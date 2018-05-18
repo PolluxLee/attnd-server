@@ -29,7 +29,7 @@ public class UserGroupController {
      * group_id=1248
      *
      * @apiSuccessExample {json} Resp:
-     * {"code":1000,"msg":"","data":{"group_info":{"group_id":100,"name":"计科151","status":2,"creator":"lzp"},"user_list":[{"openid":"ox111","stu_id":"1506200023","name":"xiaoming"},{"openid":"ox222","stu_id":"1506200024","name":"dedark"}]}}
+     * {"code":1000,"msg":"","data":{"group_info":{"id":100,"name":"计科151","status":2,"creator":"lzp"},"user_list":[{"openid":"ox111","stu_id":"1506200023","name":"xiaoming"},{"openid":"ox222","stu_id":"1506200024","name":"dedark"}]}}
      */
 
 
@@ -58,6 +58,6 @@ public class UserGroupController {
      *
      * @apiSuccess {String} cipher 口令 标识位(标识录入/考勤)+通过62进制时间戳后3位+group_id 的62进制表示
      * @apiSuccessExample {json} Resp:
-     * {"code":1000,"msg":"","data":{"cipher":"G154812"}}
+     * {"code":1000,"msg":"","data":{"cipher":"S154812"}}
      */
 }

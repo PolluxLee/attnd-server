@@ -17,11 +17,15 @@ public interface UserService {
     boolean InsOrUpdUserInfo(
             @Valid @NotNull(groups = User.Name.class) User user) throws DataAccessException;
 
+    @Validated({User.Name.class,User.Openid.class,User.Remark.class,User.StuIDNotNUll.class})
+    int InsIgnoreUserInfo(
+            @Valid @NotNull(groups = User.Name.class) User user) throws DataAccessException;
+
     @Validated({User.Name.class,User.Openid.class,User.StuID.class})
     boolean UpdUserInfoByOpenid(
             @Valid @NotNull(groups = User.Name.class) User user) throws DataAccessException;
 
-    @Validated(User.All.class)
+    @Validated({User.Name.class,User.Openid.class,User.ID.class,User.Remark.class,User.Status.class})
     @Nullable @Valid User FindUserByOpenid(
-            @NotBlank(groups = User.All.class) String openid) throws DataAccessException;
+            @NotBlank(groups = User.Openid.class) String openid) throws DataAccessException;
 }

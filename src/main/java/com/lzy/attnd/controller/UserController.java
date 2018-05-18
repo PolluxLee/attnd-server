@@ -36,24 +36,31 @@ public class UserController {
     @GetMapping("/chk/session")
     public String cookie(HttpServletRequest request, HttpSession session) {
         //取出session中的browser
+        StringBuilder sb = new StringBuilder();
         Object sessionBrowser = session.getAttribute(configBean.getSession_key());
         if (sessionBrowser != null) {
-            System.out.println("session exist:" + sessionBrowser.toString());
+            sb.append("session exist:" + sessionBrowser.toString()+"\n");
         }else{
-            System.out.println("session not exist");
+            sb.append("session not exist\n");
         }
+
         Cookie[] cookies = request.getCookies();
         if (cookies != null && cookies.length > 0) {
             for (Cookie cookie : cookies) {
-                System.out.println(cookie.getName() + " : " + cookie.getValue());
+                sb.append(cookie.getName() + " : " + cookie.getValue()+" \n");
             }
         }
-        return "index";
+        return sb.toString();
     }
 
     @GetMapping("/mocklogin")
-    public String mocklogin(HttpServletRequest request, HttpSession session){
-        session.setAttribute(configBean.getSession_key(),new Session("lzy",0,"oid","wxsessionkey"));
+    public String mocklogin(
+            @Min(1) @RequestParam("id") int id,
+            @NotBlank @RequestParam("name") String name,
+            @NotBlank @RequestParam("openid") String openid,
+            @NotBlank @RequestParam("session_key") String session_key,
+            HttpServletRequest request, HttpSession session){
+        session.setAttribute(configBean.getSession_key(),new Session(id,name,0,openid,session_key));
         return "ok";
     }
 
@@ -108,7 +115,7 @@ public class UserController {
         //update the newest user regardless of the session exist
         //first session key -> app session key
         //second session key -> wx session key
-        session.setAttribute(configBean.getSession_key(),new Session(user.getName(),user.getStatus(),wxLoginFb.getOpenid(),wxLoginFb.getSession_key()));
+        session.setAttribute(configBean.getSession_key(),new Session(user.getId(),user.getName(),user.getStatus(),wxLoginFb.getOpenid(),wxLoginFb.getSession_key()));
 
         return user.getName().equals("")?new FeedBack<>(Code.USER_NOT_EXIST,"",user):new FeedBack<>(Code.USER_EXIST,"",user);
     }
@@ -153,15 +160,8 @@ public class UserController {
     /***/
     @PostMapping("/user/info")
     public FeedBack addOrUpdUser(
-            HttpSession httpSession,
+            @RequestAttribute("attnd") Session session,
             @Validated({User.Name.class}) @RequestBody User user){
-        Session session = Session.GetAttribute(httpSession,configBean.getSession_key());
-        if (session == null) {
-            return new FeedBack<>(Code.GLOBAL_SYS_ERROR,"","get session failed");
-        }
-        if (session.getOpenid() == null || session.getOpenid().equals("")){
-            return new FeedBack<>(Code.GLOBAL_NOAUTH,"","session.openid null or empty");
-        }
 
         user.setRemark(new Object());
         if (user.getStu_id()==null)

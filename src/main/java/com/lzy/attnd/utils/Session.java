@@ -22,17 +22,24 @@ public class Session implements Serializable {
         return sess;
     }
 
-    private String name;
-    private int status;
-    private String openid;
-    private String session_key;
-
-
-    public Session(String name, int status, String openid, String session_key) {
+    public Session(int userID, String name, int status, String openid, String session_key) {
+        UserID = userID;
         this.name = name;
         this.status = status;
         this.openid = openid;
         this.session_key = session_key;
+    }
+
+    public static Logger getLogger() {
+        return logger;
+    }
+
+    public int getUserID() {
+        return UserID;
+    }
+
+    public void setUserID(int userID) {
+        UserID = userID;
     }
 
     public String getName() {
@@ -67,8 +74,17 @@ public class Session implements Serializable {
         this.session_key = session_key;
     }
 
+    private int UserID;
+    private String name;
+    private int status;
+    private String openid;
+    private String session_key;
+
+
+
+
     @Override
     public String toString(){
-        return String.format("UserInfo:[name:%s,status:%d,openid:%s]::WxSessionKey:%s",name,status,openid,session_key);
+        return String.format("UserInfo:[UserID:%s,name:%s,status:%d,openid:%s]::WxSessionKey:%s",UserID,name,status,openid,session_key);
     }
 }

@@ -18,4 +18,13 @@ public interface Code {
     int ADD_FLAG = 1;
     int UPD_FLAG = 2;
 
+    int ATTND_NORMAL=1;
+    int ATTND_ENTRY=2;
+    int ATTND_NOGROUP=3;
+
+    char CIPHER_ATTND = 'A';
+    char CIPHER_ENTRY = 'G';
+    char CIPHER_NOGROUP = 'N';
+    char CIPHER_SINGLE = 'S';
+
 }

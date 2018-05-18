@@ -1,11 +1,6 @@
 package com.lzy.attnd.controller;
 
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.lzy.attnd.AttndApplication;
 import com.lzy.attnd.configure.ConfigBean;
 import com.lzy.attnd.constant.Code;
 import com.lzy.attnd.service.WechatService;
@@ -15,7 +10,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -28,10 +22,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.WebApplicationContext;
-
-import java.util.UUID;
 
 import static org.hamcrest.Matchers.*;
 
@@ -55,8 +46,10 @@ public class UserControllerTests {
 
     @Before
     public void setupMockMvc(){
+        //default session
         mvc = MockMvcBuilders.webAppContextSetup(wac).build(); //初始化MockMvc对象
         session = new MockHttpSession();
+        session.setAttribute(configBean.getSession_key(),new Session(1,"lzy",0,"oid","wxsessionkey"));
     }
 
     /**
@@ -125,6 +118,7 @@ public class UserControllerTests {
     public void chkUserNotExist() throws Exception{
         mvc.perform(MockMvcRequestBuilders.get("/user/info")
             .param("openid","test")
+                .session(session)
         )
                 .andExpect(MockMvcResultMatchers.status().is(200))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.USER_NOT_EXIST)))
@@ -137,6 +131,7 @@ public class UserControllerTests {
     @Test
     public void chkUserNOPARAM() throws Exception{
         mvc.perform(MockMvcRequestBuilders.get("/user/info")
+                .session(session)
         )
                 .andExpect(MockMvcResultMatchers.status().is(400))
                 .andDo(MockMvcResultHandlers.print());
@@ -149,6 +144,7 @@ public class UserControllerTests {
     public void chkUserOIDemply() throws Exception{
         mvc.perform(MockMvcRequestBuilders.get("/user/info")
                 .param("openid","")
+                .session(session)
         )
                 .andExpect(MockMvcResultMatchers.status().is(200))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_PARAM_INVALID)))
@@ -163,6 +159,7 @@ public class UserControllerTests {
     public void chkUserExist() throws Exception{
         mvc.perform(MockMvcRequestBuilders.get("/user/info")
                 .param("openid","toid123")
+                .session(session)
         )
                 .andExpect(MockMvcResultMatchers.status().is(200))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
@@ -177,39 +174,18 @@ public class UserControllerTests {
         mvc.perform(MockMvcRequestBuilders.post("/user/info")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"na564me\":\"ok\"}")
+                .session(session)
         )
                 .andExpect(MockMvcResultMatchers.status().is(200))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_PARAM_INVALID)))
                 .andDo(MockMvcResultHandlers.print());
     }
 
-    @Test
-    public void addOrUpdUser_NOSESSION() throws Exception{
-        mvc.perform(MockMvcRequestBuilders.post("/user/info")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"stu_id\":\"123\",\"name\":\"ok\"}")
-        )
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SYS_ERROR)))
-                .andDo(MockMvcResultHandlers.print());
-    }
-
-    @Test
-    public void addOrUpdUser_NOSESSION2() throws Exception{
-
-        mvc.perform(MockMvcRequestBuilders.post("/user/info")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\":\"ok\"}")
-        )
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SYS_ERROR)))
-                .andDo(MockMvcResultHandlers.print());
-    }
 
 
     @Test
     public void addOrUpdUser_INS() throws Exception{
-        session.setAttribute(configBean.getSession_key(),new Session("lzy",0,"oid","wxsessionkey"));
+        session.setAttribute(configBean.getSession_key(),new Session(1,"lzy",0,"oid","wxsessionkey"));
         mvc.perform(MockMvcRequestBuilders.post("/user/info")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\":\"ok4\"}")

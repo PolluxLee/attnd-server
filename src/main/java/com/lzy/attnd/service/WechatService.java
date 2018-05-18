@@ -1,6 +1,5 @@
 package com.lzy.attnd.service;
 
-import com.lzy.attnd.service.impl.WechatServiceImpl;
 import org.springframework.lang.Nullable;
 import org.springframework.validation.annotation.Validated;
 
@@ -8,6 +7,24 @@ import javax.validation.constraints.NotBlank;
 
 @Validated
 public interface WechatService {
+
+    public static class WxLoginErr {
+        public WxLoginErr(int errcode, String errmsg) {
+            this.errcode = errcode;
+            this.errmsg = errmsg;
+        }
+
+        public int getErrcode() {
+            return errcode;
+        }
+
+        public String getErrmsg() {
+            return errmsg;
+        }
+
+        private int errcode;
+        private String errmsg;
+    }
 
     public static class WxLoginFb {
         public String getOpenid() {

@@ -1,32 +1,46 @@
 package com.lzy.attnd.controller;
 
+import com.lzy.attnd.configure.ConfigBean;
+import com.lzy.attnd.constant.Code;
 import com.lzy.attnd.model.Attnd;
+import com.lzy.attnd.model.User;
+import com.lzy.attnd.model.UserGroup;
 import com.lzy.attnd.service.AttndService;
+import com.lzy.attnd.service.UserGroupService;
+import com.lzy.attnd.service.UserService;
+import com.lzy.attnd.utils.FeedBack;
+import com.lzy.attnd.utils.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @Validated
 public class AttndController {
 
     private final AttndService attndService;
+    private final UserGroupService userGroupService;
+    private final UserService userService;
+    private final ConfigBean configBean;
 
     @Autowired
-    public AttndController(AttndService attndService) {
+    public AttndController(AttndService attndService,UserGroupService userGroupService, UserService userService, ConfigBean configBean) {
         this.attndService = attndService;
+        this.userGroupService = userGroupService;
+        this.userService = userService;
+        this.configBean = configBean;
     }
 
     /**
-     * @api {post} /api/attnd addAttnd/updAttnd
-     * @apiName addAttnd/updAttnd
+     * @api {post} /api/attnd addAttnd
+     * @apiName addAttnd
      * @apiGroup Attnd
      *
-     * @apiParam {Number{0-}} attnd_id id!=0->update，id==0->create
      * @apiParam {String{0..50}} attnd_name 考勤名称
      * @apiParam {String{0..50}} addr_name location name
      * @apiParam {Number{0-}} start_time need check start_time + last > now
@@ -34,13 +48,11 @@ public class AttndController {
      * @apiParam {Number{-90-90}} latitude float
      * @apiParam {Number{-180-180}} longitude float
      * @apiParam {Number{0-}} accuracy float
-     * @apiParam {String} group_name attnd group only work when creating , tag this attnd is member adding
+     * @apiParam {String{0..50}} [group_name] attnd group only work when creating , tag this attnd is member adding
+     * @apiParam {String{0..50} addr_name location name
      * @apiParam {String{0..50}} teacher_name if user exist -> do nothing
      * @apiParamExample {json} Req-create:
-     * {"attnd_id":0,"attnd_name":"操作系统","start_time":15577418,"last":20,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"addr_name":"外环西路","teacher_name":"wjx","group_name":"计科151"}
-     *
-     * @apiParamExample {json} Req-update:
-     * {"attnd_id":12335,"attnd_name":"操作系统","start_time":15577418,"last":50,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"addr_name":"中环西路","teacher_name":"wjx","group_name":"计科151"}
+     * {"attnd_name":"操作系统","start_time":15577418,"last":20,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"addr_name":"外环西路","teacher_name":"wjx","group_name":"计科151"}
      *
      * @apiSuccess {String} cipher 口令 标识位(标识录入/考勤)+通过62进制时间戳后3位+attnd_id 的62进制表示
      * @apiSuccessExample {json} Resp-create:
@@ -51,9 +63,75 @@ public class AttndController {
      */
     /***/
     @PostMapping("/attnd")
-    public String addAttnd(@Valid @RequestBody Attnd attnd){
-        //TODO...
-        return "ok";
+    public FeedBack addAttnd(
+            HttpSession httpSession,
+            @RequestAttribute("attnd") Session session,
+            @Validated({Attnd.Name.class,Attnd.StartTime.class,Attnd.Last.class,Attnd.Location_Struct.class,Attnd.AddrName.class,
+                    Attnd.TeacherName.class})
+                                 @RequestBody Attnd attnd){
+        //chk user exist get Teacherid
+        User user = userService.FindUserByOpenid(session.getOpenid());
+        if (user==null){
+            user = new User();
+            user.setOpenid(session.getOpenid());
+            user.setName(attnd.getTeacher_name());
+            user.setRemark(new Object());
+            user.setStu_id("");
+            int id = userService.InsIgnoreUserInfo(user);
+            if (id==0){
+                return FeedBack.DB_FAILED("addAttnd InsIgnoreUserInfo failed");
+            }
+            user.setId(id);
+        }
+        session.setUserID(user.getId());
+        session.setName(attnd.getTeacher_name());
+
+        //if user info has updated -> update session
+        httpSession.setAttribute(configBean.getSession_key(),session);
+
+        int attndStatus = Code.ATTND_NORMAL;
+
+        //no group fill
+        if (attnd.getGroup_name()==null || attnd.getGroup_name().equals("")){
+            attnd.setGroup_name("");
+            attndStatus = Code.ATTND_NOGROUP;
+        }else{
+            if (attnd.getGroup_name().length()>50){
+                return FeedBack.PARAM_INVALID("addAttnd group name length > 50");
+            }
+            //chk group exist by name
+            UserGroup userGroup = new UserGroup(attnd.getGroup_name(),user.getId(),user.getName());
+            boolean groupExist =userGroupService.ChkUserGroupExistByName(userGroup);
+            if (!groupExist){
+                //create a new group
+                userGroup.setRemark(new Object());
+                boolean addGroupSuccess = userGroupService.AddNewGroup(userGroup);
+                if (!addGroupSuccess){
+                    return FeedBack.DB_FAILED("addAttnd AddNewGroup failed");
+                }
+                attndStatus = Code.ATTND_ENTRY;
+            }
+        }
+
+
+        attnd.setStatus(attndStatus);
+
+        //add attnd
+        attnd.setRemark(new Object());
+        attnd.setTeacher_id(session.getUserID());
+        String cipher = attndService.AddAttnd(attnd);
+        if (cipher==null||cipher.equals("")){
+            return FeedBack.DB_FAILED("addAttnd cipher invalid");
+        }
+
+        if (attnd.getAttnd_id()<=0){
+            return FeedBack.DB_FAILED("addAttnd AddAttnd no id return");
+        }
+
+        HashMap<String,Object> fbJson = new HashMap<>();
+        fbJson.put("attnd_id",attnd.getAttnd_id());
+        fbJson.put("cipher",cipher);
+        return FeedBack.SUCCESS(fbJson);
     }
 
 

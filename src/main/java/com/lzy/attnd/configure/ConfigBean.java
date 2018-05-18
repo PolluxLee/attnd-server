@@ -37,6 +37,7 @@ public class ConfigBean {
         this.wxlogin_url = wxlogin_url;
     }
 
+
     private String session_key;
     private String appid;
     private String appsecret;
