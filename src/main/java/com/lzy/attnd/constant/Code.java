@@ -15,9 +15,16 @@ public interface Code {
     int USER_EXIST = 2002;
 
     int ATTND_NOT_EXIST = 3001;
+    int ATTND_CIPHER_NOT_CORRESPOND = 3002;
+    int ATTND_HAS_SIGNIN = 3003;
+    int ATTND_EXPIRED = 3004;
 
     int ADD_FLAG = 1;
     int UPD_FLAG = 2;
+
+    int SIGNIN_OK = 1;
+    int SIGNIN_LOCATION_BEYOND = 2;
+    int SIGNIN_EXPIRED = 3;
 
     int ATTND_NORMAL=1;
     int ATTND_ENTRY=2;

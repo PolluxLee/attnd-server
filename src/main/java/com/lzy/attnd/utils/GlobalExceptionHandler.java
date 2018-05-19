@@ -1,6 +1,7 @@
 package com.lzy.attnd.utils;
 
 import com.lzy.attnd.constant.Code;
+import com.lzy.attnd.exception.SysErrException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
@@ -49,5 +50,11 @@ public class GlobalExceptionHandler {
             sb.append(" ");
         }
         return new FeedBack(Code.GLOBAL_PARAM_INVALID,"[param invalid]:"+sb.toString());
+    }
+
+    //Sys err
+    @ExceptionHandler(SysErrException.class)
+    public FeedBack SysErr(SysErrException see){
+        return FeedBack.SYS_ERROR(see.getMessage());
     }
 }

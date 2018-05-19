@@ -48,9 +48,4 @@ public class UserGroupRepository implements UserGroupService {
         int effectedRows = this.jdbcTemplate.update("INSERT INTO usergroup(name, creatorname, creatorid, remark) VALUES (?,?,?,?)",new Object[]{userGroup.getName(),userGroup.getCreator_name(),userGroup.getCreator_id(),remarkJson});
         return effectedRows==1;
     }
-
-    @Override
-    public boolean AddUserToGroup(@NotBlank String openid, @Min(1) int groupID) throws DataAccessException {
-        return false;
-    }
 }

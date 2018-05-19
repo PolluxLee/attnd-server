@@ -184,50 +184,5 @@ public class Attnd extends Base {
         this.cipher = cipher;
     }
 
-    public class Location {
-        public float getLatitude() {
-            return latitude;
-        }
-
-        public void setLatitude(float latitude) {
-            this.latitude = latitude;
-        }
-
-        public float getLongitude() {
-            return longitude;
-        }
-
-        public void setLongitude(float longitude) {
-            this.longitude = longitude;
-        }
-
-        public float getAccuracy() {
-            return accuracy;
-        }
-
-        public void setAccuracy(float accuracy) {
-            this.accuracy = accuracy;
-        }
-
-        public Location(@Range(min = -90, max = 90, groups = {Location_Struct.class, All.class}) float latitude, @Range(min = -180, max = 180, groups = {Location_Struct.class, All.class}) float longitude, @Min(value = 0, groups = {Location_Struct.class, All.class}) float accuracy) {
-            this.latitude = latitude;
-            this.longitude = longitude;
-            this.accuracy = accuracy;
-        }
-
-
-        public Location(){
-
-        }
-
-        @Range(min = -90,max = 90,groups = {Location_Struct.class,All.class})
-        private float latitude;
-
-        @Range(min = -180,max = 180,groups = {Location_Struct.class,All.class})
-        private float longitude;
-
-        @Min(value = 0,groups = {Location_Struct.class,All.class})
-        private float accuracy;
-    }
 
 }

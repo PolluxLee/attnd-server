@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS user(
   openid varchar(255) NOT NULL UNIQUE,
   status INT NOT NULL DEFAULT 0,
   remark JSON NOT NULL ,
+  groupid JSON NOT NULL ,
   createdat datetime NOT NULL default NOW(),
   updatedat datetime NOT NULL default NOW()
 )DEFAULT CHARACTER SET = utf8;
@@ -47,7 +48,8 @@ CREATE TABLE IF NOT EXISTS signin(
   status INT NOT NULL DEFAULT 0,
   remark JSON NOT NULL ,
   createdat datetime NOT NULL default NOW(),
-  updatedat datetime NOT NULL default NOW()
+  updatedat datetime NOT NULL default NOW(),
+  UNIQUE KEY(openid,cipher)
 )DEFAULT CHARACTER SET = utf8;
 
 /* logback table */

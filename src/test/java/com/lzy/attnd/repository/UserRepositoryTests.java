@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataAccessException;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -33,10 +34,9 @@ public class UserRepositoryTests {
     public void openidnull(){
         boolean success = false;
         try {
-            User user = new User(1,"testlzy",null,null,0,"23");
+            User user = new User(1,"testlzy",null,null,0,"23",new int[0]);
             success = userService.InsOrUpdUserInfo(user);
         } catch (ConstraintViolationException e) {
-            e.printStackTrace();
             return;
         }catch (Exception e){
             throw e;
@@ -51,7 +51,7 @@ public class UserRepositoryTests {
     @Test
     @Transactional
     public void normal(){
-        boolean success = userService.InsOrUpdUserInfo(new User(1,"testlzy","testoid",new testc(),0,"23"));
+        boolean success = userService.InsOrUpdUserInfo(new User(1,"testlzy","testoid",new testc(),0,"23",new int[0]));
         Assert.assertTrue(success);
     }
 
@@ -62,7 +62,6 @@ public class UserRepositoryTests {
         try {
             userService.UpdUserInfoByOpenid(null);
         } catch (ConstraintViolationException e) {
-            e.printStackTrace();
             return;
         }
         throw new Exception();
@@ -75,7 +74,6 @@ public class UserRepositoryTests {
             User user = new User();
             userService.UpdUserInfoByOpenid(user);
         } catch (ConstraintViolationException e) {
-            e.printStackTrace();
             return;
         }
         throw new Exception();
@@ -84,7 +82,7 @@ public class UserRepositoryTests {
     @Test
     @Transactional
     public void normalupd(){
-        User u = new User(1,"testlzy","testoid",new testc(),0,"23");
+        User u = new User(1,"testlzy","testoid",new testc(),0,"23",new int[0]);
         boolean success = userService.InsOrUpdUserInfo(u);
         Assert.assertTrue(success);
 
@@ -98,7 +96,7 @@ public class UserRepositoryTests {
     @Test
     @Transactional
     public void normalfind(){
-        User u = new User(1,"testlzy","ac",new testc(),0,"23");
+        User u = new User(1,"testlzy","ac",new testc(),0,"23",new int[0]);
         boolean success = userService.InsOrUpdUserInfo(u);
         Assert.assertTrue(success);
 
@@ -121,7 +119,28 @@ public class UserRepositoryTests {
         try {
             User newUser = userService.FindUserByOpenid("");
         } catch (ConstraintViolationException e) {
-            e.printStackTrace();
+            return;
+        }
+        throw new Exception();
+    }
+
+
+    /* groups adding ........................................*/
+/*    @Test
+    @Transactional
+    public void groupsAdd_group_exist() throws Exception{
+        boolean flag = userService.AddUserToGroup("toid123","计科151",1);
+        Assert.assertTrue(flag);
+    }*/
+
+
+    @Test
+    @Transactional
+    public void groupsAdd_group_notexist() throws Exception{
+        boolean flag = false;
+        try {
+            flag = userService.AddUserToGroup("toid123","151",1);
+        } catch (DataAccessException e) {
             return;
         }
         throw new Exception();

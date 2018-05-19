@@ -1,17 +1,18 @@
 package com.lzy.attnd.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lzy.attnd.configure.ConfigBean;
 import com.lzy.attnd.constant.Code;
-import com.lzy.attnd.model.Attnd;
-import com.lzy.attnd.model.SignIn;
-import com.lzy.attnd.model.User;
-import com.lzy.attnd.model.UserGroup;
+import com.lzy.attnd.model.*;
 import com.lzy.attnd.service.AttndService;
 import com.lzy.attnd.service.SignInService;
 import com.lzy.attnd.service.UserGroupService;
 import com.lzy.attnd.service.UserService;
 import com.lzy.attnd.utils.FeedBack;
 import com.lzy.attnd.utils.Session;
+import com.lzy.attnd.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.MultiValueMap;
 import org.springframework.validation.annotation.Validated;
@@ -21,6 +22,7 @@ import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.util.HashMap;
 import java.util.Map;
@@ -226,6 +228,8 @@ public class AttndController {
      *
      */
 
+    public static long testTimestamp = 0;
+
     /**
      * @api {post} /api/attnd/signin attnd_signin
      * @apiName attnd_signin
@@ -239,37 +243,101 @@ public class AttndController {
      */
     /***/
     @PostMapping("/attnd/signin")
-    public FeedBack SignIn(@RequestAttribute("attnd") Session session){
-        /*String cipher = formData.getFirst("cipher");
-        if (cipher==null||cipher.length()>50||cipher.length()==0){
-            return FeedBack.PARAM_INVALID("SignIn cipher param invalid");
+    public FeedBack SignIn(@RequestAttribute("attnd") Session session,
+            @RequestBody @NotNull JsonNode root){
+        JsonNode cipherNode = root.get("cipher");
+        if (cipherNode == null || !cipherNode.isTextual()){
+            return FeedBack.PARAM_INVALID("cipher invalid");
+        }
+        String cipher = cipherNode.asText();
+        if (cipher == null ||cipher.equals("") || cipher.length()>50){
+            return FeedBack.PARAM_INVALID("cipher invalid empty or too long");
         }
 
 
+        ObjectMapper mapper = new ObjectMapper();
+        if (!root.hasNonNull("location")){
+            return FeedBack.PARAM_INVALID("location invalid in root prop");
+        }
+
+        Location signLoc = null;
+        try {
+            signLoc = mapper.treeToValue(root.get("location"),Location.class);
+        } catch (JsonProcessingException e) {
+            return FeedBack.PARAM_INVALID("location invalid in treeToValue");
+        }
+        if (signLoc==null || signLoc.getAccuracy()<0||signLoc.getLatitude()<-90||signLoc.getLatitude()>90||signLoc.getLongitude()<-180||signLoc.getLongitude()>180){
+            return FeedBack.PARAM_INVALID("location invalid in children prop");
+        }
+
+        //just chk user
+        boolean userExist = userService.ChkUserExist(session.getOpenid());
+        if (!userExist){
+            return FeedBack.SYS_ERROR("user not exist");
+        }
+
+        Attnd attnd = null;
         char attnd_type = cipher.charAt(0);
-        switch (attnd_type){
-            case Code.CIPHER_ATTND:{
-                break;
-            }
-            case Code.CIPHER_ENTRY:{
-                break;
-            }
-            case Code.CIPHER_NOGROUP:{
-                break;
-            }
-            case Code.CIPHER_SINGLE:{
-                return FeedBack.SUCCESS();
-            }
-            default:
-                return FeedBack.PARAM_INVALID("SignIn cipher param unknown type");
-        }*/
-        //TODO judge sign in whether success
 
-        boolean signInSuccess = signInService.AddSignInRecord(new SignIn());
-        if (!signInSuccess){
+        if (!Utils.chkCipherType(attnd_type))
+            return FeedBack.PARAM_INVALID("SignIn cipher param unknown type");
 
+        //attnd_type = S
+        if (attnd_type == Code.CIPHER_SINGLE){
+            //get group ID from cipher
+            //cipher length - type(1) - timestamp(3)
+            int groupID = ((int) Utils.Base62LastKToLong(cipher, cipher.length() - 1 - 3));
+            if (groupID == -1){
+                return FeedBack.SYS_ERROR("get groupid from cipher failed");
+            }
+            if(!userService.AddUserToGroupByID(session.getOpenid(),groupID)){
+                return FeedBack.DB_FAILED("AddUserToGroupByID in CIPHER_SINGLE failed");
+            }
+            return FeedBack.SUCCESS();
         }
-        return FeedBack.SUCCESS();
+
+        //attnd_type = A,G,N
+        //chk attnd status correspond
+        attnd = attndService.ChkAttnd(cipher);
+        if (attnd==null){
+            return FeedBack.SYS_ERROR("attnd to cipher not exist");
+        }
+        if (!(Utils.GetTypeViaStatus(attnd.getStatus())==attnd_type)){
+            return new FeedBack(Code.ATTND_CIPHER_NOT_CORRESPOND,"attnd status to cipher type not correspond");
+        }
+
+        //chk user whether has signed in
+        boolean hasSignIn = signInService.ChkUserHasSignIn(session.getOpenid(),cipher);
+        if (hasSignIn){
+            return new FeedBack(Code.ATTND_HAS_SIGNIN);
+        }
+
+        if (attnd_type==Code.CIPHER_ENTRY){
+            if(!userService.AddUserToGroup(session.getOpenid(),attnd.getGroup_name(),attnd.getTeacher_id())){
+                return FeedBack.DB_FAILED("AddUserToGroup in CIPHER_ENTRY failed");
+            }
+        }
+
+        //judge sign in whether success CHK LOCATION CHK TIME
+        SignIn signIn = new SignIn();
+        signIn.setOpenid(session.getOpenid());
+        signIn.setName(session.getName());
+        signIn.setCipher(cipher);
+        signIn.setLocation(signLoc);
+        int signInFlag = Utils.calSignInState(
+                attnd,signLoc,AttndController.testTimestamp==0?System.currentTimeMillis():AttndController.testTimestamp,
+                configBean.getMeter_limit());
+
+        if (signInFlag==Code.SIGNIN_EXPIRED)
+            return new FeedBack(Code.ATTND_EXPIRED);
+
+        signIn.setStatus(signInFlag);
+
+        boolean signInSuccess = signInService.AddSignInRecord(signIn);
+        if (!signInSuccess){
+            return FeedBack.DB_FAILED("SignIn AddSignInRecord failed");
+        }
+        return FeedBack.SUCCESS(signInFlag);
     }
 
     /**

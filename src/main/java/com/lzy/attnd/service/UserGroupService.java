@@ -20,6 +20,4 @@ public interface UserGroupService {
 
     @Validated({UserGroup.All.class,UserGroup.BaseAll.class})
     boolean AddNewGroup(@Valid UserGroup userGroup) throws DataAccessException;
-
-    boolean AddUserToGroup(@NotBlank String openid,@Min(1) int groupID) throws DataAccessException;
 }

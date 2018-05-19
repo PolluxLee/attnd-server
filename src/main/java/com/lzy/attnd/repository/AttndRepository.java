@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.lzy.attnd.constant.Code;
 import com.lzy.attnd.exception.DBProcessException;
 import com.lzy.attnd.model.Attnd;
+import com.lzy.attnd.model.Location;
 import com.lzy.attnd.service.AttndService;
 import com.lzy.attnd.utils.Utils;
 import org.slf4j.Logger;
@@ -96,7 +97,7 @@ public class AttndRepository implements AttndService {
             attnd = this.jdbcTemplate.queryForObject("SELECT id,name,starttime,lasttime,location,addrname,teacherid,teachername,groupname,status,remark from attnd where cipher=?",
                     new Object[]{cipher}, (rs, i) -> {
                         String locStr = rs.getString("location");
-                        Attnd attndInner = new Attnd();
+                        Location location = null;
                         try {
                             ObjectMapper objectMapper = new ObjectMapper();
                             objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
@@ -105,18 +106,24 @@ public class AttndRepository implements AttndService {
                             if (root== null){
                                 throw new DBProcessException("jsonNode null");
                             }
-                            attndInner.getLocation().setAccuracy(root.get("accuracy").floatValue());
+                            location = objectMapper.treeToValue(root,Location.class);
+
+/*                            attndInner.getLocation().setAccuracy(root.get("accuracy").floatValue());
                             attndInner.getLocation().setLatitude(root.get("latitude").floatValue());
-                            attndInner.getLocation().setLongitude(root.get("longitude").floatValue());
+                            attndInner.getLocation().setLongitude(root.get("longitude").floatValue());*/
 
                         } catch (IOException ioe){
                             logger.error("ChkAttnd mapRow failed io "+ioe.getMessage());
-                            throw new DBProcessException("location map failed in io");
+                            throw new DBProcessException("ChkAttnd location map failed in io");
+                        }
+
+                        if (location == null){
+                            throw new DBProcessException("ChkAttnd location null");
                         }
 
                         return new Attnd(rs.getObject("remark"),rs.getInt("status"),
                                 rs.getInt("id"),rs.getString("name"),rs.getLong("starttime"),
-                                rs.getInt("lasttime"),attndInner.getLocation(),rs.getString("addrname"),
+                                rs.getInt("lasttime"),location,rs.getString("addrname"),
                                 rs.getString("groupname"),rs.getString("teachername"),rs.getInt("teacherid"),cipher);
 
                     });

@@ -37,9 +37,19 @@ public class ConfigBean {
         this.wxlogin_url = wxlogin_url;
     }
 
+    public int getMeter_limit() {
+        return meter_limit;
+    }
+
+    public void setMeter_limit(int meter_limit) {
+        this.meter_limit = meter_limit;
+    }
 
     private String session_key;
     private String appid;
     private String appsecret;
     private String wxlogin_url;
+    private int meter_limit;
+
+
 }

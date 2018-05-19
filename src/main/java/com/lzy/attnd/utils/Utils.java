@@ -4,6 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.lzy.attnd.constant.Code;
+import com.lzy.attnd.exception.SysErrException;
+import com.lzy.attnd.model.Attnd;
+import com.lzy.attnd.model.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.Nullable;
@@ -17,6 +20,29 @@ public class Utils {
         if (c==Code.CIPHER_ATTND||c==Code.CIPHER_ENTRY||c==Code.CIPHER_SINGLE||c==Code.CIPHER_NOGROUP)
             return true;
         return false;
+    }
+
+
+    //chk location , time
+    public static int calSignInState(Attnd attnd,
+           Location signInLocation,long signInTime,int signDistanceLimit
+    ){
+        if (attnd == null || signInLocation == null || signInTime < 0 || signDistanceLimit < 0 ||
+                attnd.getLocation() == null || attnd.getStart_time()<0|| attnd.getLast()<0){
+            String msg = "calSignInState param invalid";
+            logger.error(msg);
+            throw new SysErrException(msg);
+        }
+        if (signInTime>attnd.getStart_time()+attnd.getLast()*60){
+            return Code.SIGNIN_EXPIRED;
+        }
+
+        if (Location.calDistanceBetweenLocation(attnd.getLocation(),signInLocation)>signDistanceLimit){
+            return Code.SIGNIN_LOCATION_BEYOND;
+        }
+
+
+        return Code.SIGNIN_OK;
     }
 
     public static char GetTypeViaStatus(int attnd_status){
@@ -82,8 +108,9 @@ public class Utils {
         return jsonStr;
     }
 
-
-    private static String digths = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    //I -> =
+    //l -> +
+    private static String digths = "0123456789abcdefghijk+mnopqrstuvwxyzABCDEFGH=JKLMNOPQRSTUVWXYZ";
 
 
     //后k位
@@ -99,6 +126,18 @@ public class Utils {
             num /= 62;
         }
         return str.toString();
+    }
+
+    public static long Base62LastKToLong(String cipher,int lastK){
+        if (cipher==null || cipher.equals("")||lastK<=0)
+            return -1;
+        long ans = 0;
+        int index = cipher.length()-lastK;
+        while (index<cipher.length()){
+            ans = ans*62 + digths.indexOf(cipher.charAt(index));
+            index++;
+        }
+        return ans;
     }
 
 }
