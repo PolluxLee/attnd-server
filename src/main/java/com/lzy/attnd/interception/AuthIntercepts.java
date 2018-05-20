@@ -1,6 +1,7 @@
 package com.lzy.attnd.interception;
 
 import com.lzy.attnd.configure.ConfigBean;
+import com.lzy.attnd.exception.NoAuthException;
 import com.lzy.attnd.repository.UserRepository;
 import com.lzy.attnd.utils.Session;
 import org.slf4j.Logger;
@@ -27,23 +28,21 @@ public class AuthIntercepts implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         HttpSession httpSession = request.getSession();
         if (httpSession==null){
-            logger.error("AuthIntercepts getSession null");
-            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            return false;
+            String msg = "AuthIntercepts getSession null";
+            logger.error(msg);
+            throw new NoAuthException(msg);
         }
         Session session = null;
         try {
             session = ((Session) httpSession.getAttribute(configBean.getSession_key()));
         } catch (ClassCastException cce) {
-            logger.error("AuthIntercepts session cast failed ");
-            cce.printStackTrace();
-            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            return false;
+            String msg = "AuthIntercepts session cast failed ";
+            logger.error(msg);
+            throw new NoAuthException(msg);
         }
 
         if (session==null||session.getOpenid()==null||session.getOpenid().equals("")){
-            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            return false;
+            throw new NoAuthException("session openid invalid");
         }
         request.setAttribute("attnd",session);
 

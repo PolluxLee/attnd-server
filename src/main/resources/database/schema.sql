@@ -42,8 +42,8 @@ CREATE TABLE IF NOT EXISTS usergroup(
 CREATE TABLE IF NOT EXISTS signin(
   id INT PRIMARY KEY AUTO_INCREMENT,
   openid varchar(255) NOT NULL,
-  name varchar(255) NOT NULL,
   cipher varchar(32) NOT NULL,
+  distance DOUBLE NOT NULL,
   location JSON NOT NULL,
   status INT NOT NULL DEFAULT 0,
   remark JSON NOT NULL ,

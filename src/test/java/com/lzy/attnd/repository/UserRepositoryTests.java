@@ -1,7 +1,9 @@
 package com.lzy.attnd.repository;
 
 
+import com.lzy.attnd.model.AttndState;
 import com.lzy.attnd.model.User;
+import com.lzy.attnd.service.SignInService;
 import com.lzy.attnd.service.UserService;
 import org.junit.Assert;
 import org.junit.Test;
@@ -11,13 +13,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataAccessException;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.validation.ConstraintViolationException;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 
 import static org.hamcrest.Matchers.*;
 
@@ -27,6 +24,9 @@ public class UserRepositoryTests {
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    SignInService signInService;
 
     //adduser
 
@@ -146,4 +146,13 @@ public class UserRepositoryTests {
         throw new Exception();
     }
 
+
+    @Test
+    public void getSigninList() throws Exception{
+        AttndState[] attndStateList = signInService.ChkSignInList("Awvq3",0,10,1,1);
+        for (AttndState state : attndStateList) {
+            System.out.println(state);
+        }
+        System.out.println(signInService.CountSignInList("Awvq3",1));
+    }
 }

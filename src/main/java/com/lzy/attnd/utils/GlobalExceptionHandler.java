@@ -1,6 +1,7 @@
 package com.lzy.attnd.utils;
 
 import com.lzy.attnd.constant.Code;
+import com.lzy.attnd.exception.NoAuthException;
 import com.lzy.attnd.exception.SysErrException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,12 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     private final static Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    //no auth when session
+    @ExceptionHandler(NoAuthException.class)
+    public FeedBack NoAuthException(NoAuthException nae){
+        return new FeedBack(Code.GLOBAL_NOAUTH,"[no_auth]: "+nae.getMessage());
+    }
 
     //db access failed
     @ExceptionHandler(DataAccessException.class)

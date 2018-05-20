@@ -35,4 +35,6 @@ public interface UserService {
     boolean AddUserToGroup(@NotBlank String openid,@NotBlank String groupName, @Min(1) int creatorID) throws DataAccessException;
 
     boolean AddUserToGroupByID(@NotBlank String openid,@Min(1) int groupID) throws DataAccessException;
+
+    User[] ChkUserListByGroupID(@Min(1) int groupID) throws DataAccessException;
 }

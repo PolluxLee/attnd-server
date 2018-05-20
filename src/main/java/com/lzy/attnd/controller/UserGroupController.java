@@ -1,25 +1,51 @@
 package com.lzy.attnd.controller;
 
+import com.lzy.attnd.service.UserGroupService;
+import com.lzy.attnd.utils.FeedBack;
+import com.lzy.attnd.utils.Session;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @Validated
 public class UserGroupController {
+
+
+    private final UserGroupService userGroupService;
+
+    @Autowired
+    public UserGroupController(UserGroupService userGroupService) {
+        this.userGroupService = userGroupService;
+    }
+
     /**
-     * @api {post} /api/group updUserGroup
-     * @apiName UpdUserGroup
+     * @api {get} /api/group/name chkUserGroupName
+     * @apiName chkGroupNameByUser
      * @apiGroup Group
      *
-     * @apiParam {Number{1-}} group_id
-     * @apiParam {Number=1,2} status group allow join status 1-> can join 2-> can't join
-     * @apiParamExample {json} Request-body-update:
-     * {"group_id":100,"name":"计科151","status":2}
-     *
+     * @apiSuccessExample {json} Resp:
+     * {"code":1000,"msg":"","data":["计科151","网工151"]}
      */
-
+    /***/
+    @GetMapping("/group/name")
+    public FeedBack chkGroupNameByUser(
+            @RequestAttribute("attnd") Session session
+    ){
+        if (session.getUserID()<=0){
+            return FeedBack.USER_NOT_EXIST("");
+        }
+        String[] groupNames =userGroupService.ChkGroupByUser(session.getUserID(),50);
+        if (groupNames==null){
+            return FeedBack.SYS_ERROR("chkGroupNameByUser groupNames null ");
+        }
+        return FeedBack.SUCCESS(groupNames);
+    }
 
     /**
+     * @apiDeprecated
      * @api {get} /api/group chkUserGroup
      * @apiName chkAttnd
      * @apiGroup Group
@@ -34,6 +60,7 @@ public class UserGroupController {
 
 
     /**
+     * @apiDeprecated
      * @api {post} /api/delgroup delUserGroup
      * @apiName delUserGroup
      * @apiGroup Group
@@ -46,6 +73,7 @@ public class UserGroupController {
      */
 
     /**
+     * @apiDeprecated
      * @api {post} /api/group/adduser addUserToGroup
      * @apiName addUserToGroup
      * @apiGroup Group

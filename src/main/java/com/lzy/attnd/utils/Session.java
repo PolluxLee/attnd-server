@@ -22,14 +22,6 @@ public class Session implements Serializable {
         return sess;
     }
 
-    public Session(int userID, String name, int status, String openid, String session_key) {
-        UserID = userID;
-        this.name = name;
-        this.status = status;
-        this.openid = openid;
-        this.session_key = session_key;
-    }
-
     public static Logger getLogger() {
         return logger;
     }
@@ -43,7 +35,7 @@ public class Session implements Serializable {
     }
 
     public String getName() {
-        return name;
+        return name==null?"":name;
     }
 
     public void setName(String name) {
@@ -59,7 +51,7 @@ public class Session implements Serializable {
     }
 
     public String getOpenid() {
-        return openid;
+        return openid==null?"":openid;
     }
 
     public void setOpenid(String openid) {
@@ -74,17 +66,40 @@ public class Session implements Serializable {
         this.session_key = session_key;
     }
 
+
+    public String getStuid() {
+        return stuid;
+    }
+
+    public void setStuid(String stuid) {
+        this.stuid = stuid;
+    }
+
     private int UserID;
     private String name;
     private int status;
     private String openid;
+
+    public Session(int userID, String name, int status, String openid, String session_key, String stuid) {
+        UserID = userID;
+        this.name = name;
+        this.status = status;
+        this.openid = openid;
+        this.stuid = stuid;
+        this.session_key = session_key;
+    }
+
+    private String stuid;
     private String session_key;
 
 
+    public boolean IsUserRealyExist(){
+        return this.UserID>=1;
+    }
 
 
     @Override
     public String toString(){
-        return String.format("UserInfo:[UserID:%s,name:%s,status:%d,openid:%s]::WxSessionKey:%s",UserID,name,status,openid,session_key);
+        return String.format("UserInfo:[stuid:%s,UserID:%s,name:%s,status:%d,openid:%s]::WxSessionKey:%s",stuid,UserID,name,status,openid,session_key);
     }
 }

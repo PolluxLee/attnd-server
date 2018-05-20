@@ -58,9 +58,10 @@ public class UserController {
             @Min(1) @RequestParam("id") int id,
             @NotBlank @RequestParam("name") String name,
             @NotBlank @RequestParam("openid") String openid,
+            @NotBlank @RequestParam("stuid") String stuid,
             @NotBlank @RequestParam("session_key") String session_key,
             HttpServletRequest request, HttpSession session){
-        session.setAttribute(configBean.getSession_key(),new Session(id,name,0,openid,session_key));
+        session.setAttribute(configBean.getSession_key(),new Session(id,name,0,openid,session_key,stuid));
         return "ok";
     }
 
@@ -98,10 +99,8 @@ public class UserController {
             return FeedBack.PARAM_INVALID("code not exist or empty");
         }
         //request wx get openid+session_key
-        //TODO...WX...
         WechatService.WxLoginFb wxLoginFb = wechatService.Wx_Login(code);
         if (wxLoginFb == null){
-            //TODO WX ERROR
             return FeedBack.SYS_ERROR("Wx_Login failed");
         }
 
@@ -115,7 +114,7 @@ public class UserController {
         //update the newest user regardless of the session exist
         //first session key -> app session key
         //second session key -> wx session key
-        session.setAttribute(configBean.getSession_key(),new Session(user.getId(),user.getName(),user.getStatus(),wxLoginFb.getOpenid(),wxLoginFb.getSession_key()));
+        session.setAttribute(configBean.getSession_key(),new Session(user.getId(),user.getName(),user.getStatus(),wxLoginFb.getOpenid(),wxLoginFb.getSession_key(),user.getStu_id()));
 
         return user.getName().equals("")?new FeedBack<>(Code.USER_NOT_EXIST,"",user):new FeedBack<>(Code.USER_EXIST,"",user);
     }
@@ -156,10 +155,14 @@ public class UserController {
      * @apiParamExample {json} Request-body:
      * {"name":"lzy","stu_id":"1506200023"}
      *
+     * @apiSuccessExample {json} Resp:
+     * {"id":1,"openid":"fdsafe51515","stu_id":"1506200023","name":"lzp"}
+     *
      */
     /***/
     @PostMapping("/user/info")
     public FeedBack addOrUpdUser(
+            HttpSession httpSession,
             @RequestAttribute("attnd") Session session,
             @Validated({User.Name.class}) @RequestBody User user){
 
@@ -172,7 +175,19 @@ public class UserController {
         if (!success){
             return FeedBack.DB_FAILED("addOrUpdUser InsOrUpdUserInfo failed");
         }
-        return FeedBack.SUCCESS();
+
+        User userInfo = userService.FindUserByOpenid(session.getOpenid());
+        if (userInfo==null){
+            return FeedBack.SYS_ERROR("FindUserByOpenid userinfo null");
+        }
+
+        session.setName(userInfo.getName());
+        session.setUserID(userInfo.getId());
+        session.setStuid(userInfo.getStu_id());
+        session.setStatus(userInfo.getStatus());
+        httpSession.setAttribute(configBean.getSession_key(),session);
+
+        return FeedBack.SUCCESS(userInfo);
     }
 
 }

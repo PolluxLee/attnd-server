@@ -27,6 +27,10 @@ public class FeedBack<T> {
         return new FeedBack(Code.GLOBAL_PARAM_INVALID,msg==null?"":msg);
     }
 
+    public static FeedBack USER_NOT_EXIST(String msg){
+        return new FeedBack(Code.GLOBAL_USER_NOT_EXIST,msg==null?"":msg);
+    }
+
     public static FeedBack SYS_ERROR(String msg){
         return new FeedBack(Code.GLOBAL_SYS_ERROR,msg==null?"":msg);
     }

@@ -49,7 +49,7 @@ public class UserControllerTests {
         //default session
         mvc = MockMvcBuilders.webAppContextSetup(wac).build(); //初始化MockMvc对象
         session = new MockHttpSession();
-        session.setAttribute(configBean.getSession_key(),new Session(1,"lzy",0,"oid","wxsessionkey"));
+        session.setAttribute(configBean.getSession_key(),new Session(1,"lzy",0,"oid","wxsessionkey","23"));
     }
 
     /**
@@ -185,7 +185,7 @@ public class UserControllerTests {
 
     @Test
     public void addOrUpdUser_INS() throws Exception{
-        session.setAttribute(configBean.getSession_key(),new Session(1,"lzy",0,"oid","wxsessionkey"));
+        session.setAttribute(configBean.getSession_key(),new Session(1,"lzy",0,"oid","wxsessionkey","23"));
         mvc.perform(MockMvcRequestBuilders.post("/user/info")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"name\":\"ok4\"}")

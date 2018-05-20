@@ -165,4 +165,9 @@ public class UserRepository implements UserService {
 
         return this.addUserToGroupByID(openid,groupID);
     }
+
+    @Override
+    public User[] ChkUserListByGroupID(int groupID) throws DataAccessException {
+        return new User[0];
+    }
 }

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import java.util.List;
 
 @Repository
 public class UserGroupRepository implements UserGroupService {
@@ -29,13 +30,14 @@ public class UserGroupRepository implements UserGroupService {
 
 
     @Override
-    public boolean ChkUserGroupExistByName(UserGroup userGroup) throws DataAccessException {
+    public int ChkUserGroupExistByName(UserGroup userGroup) throws DataAccessException {
+        int id;
         try {
-            this.jdbcTemplate.queryForObject("SELECT 1 FROM usergroup WHERE name=? AND creatorid=?",new Object[]{userGroup.getName(),userGroup.getCreator_id()},Integer.class);
+            id = this.jdbcTemplate.queryForObject("SELECT id FROM usergroup WHERE name=? AND creatorid=?",new Object[]{userGroup.getName(),userGroup.getCreator_id()},Integer.class);
         } catch (EmptyResultDataAccessException ere) {
-            return false;
+            return 0;
         }
-        return true;
+        return id;
     }
 
     @Override
@@ -47,5 +49,21 @@ public class UserGroupRepository implements UserGroupService {
         }
         int effectedRows = this.jdbcTemplate.update("INSERT INTO usergroup(name, creatorname, creatorid, remark) VALUES (?,?,?,?)",new Object[]{userGroup.getName(),userGroup.getCreator_name(),userGroup.getCreator_id(),remarkJson});
         return effectedRows==1;
+    }
+
+    @Override
+    public int CountUserInGroup(int groupID) throws DataAccessException {
+        return this.jdbcTemplate.queryForObject("SELECT COUNT(id) FROM user WHERE JSON_CONTAINS(groupid,?,'$')=1",new Object[]{Integer.toString(groupID)},int.class);
+    }
+
+    @Override
+    public String[] ChkGroupByUser(int creatorID,int limit) throws DataAccessException {
+        List<String> list= this.jdbcTemplate.queryForList("SELECT name FROM usergroup WHERE creatorid=? ORDER BY createdat desc LIMIT ?",String.class,creatorID,limit);
+        if (list==null){
+            String msg = "ChkGroupByUser list null";
+            logger.error(msg);
+            throw new DBProcessException(msg);
+        }
+        return list.toArray(new String[0]);
     }
 }

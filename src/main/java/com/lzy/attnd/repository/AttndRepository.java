@@ -23,9 +23,12 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.sql.*;
+import java.util.List;
 import java.util.Map;
 
 @Repository
@@ -43,7 +46,7 @@ public class AttndRepository implements AttndService {
 
     @Transactional
     @Override
-    public String AddAttnd(Attnd attnd) throws DataAccessException {
+    public String AddAttnd(Attnd attnd,int groupID) throws DataAccessException {
         String locationJson = attnd.getLocationJson();
         String remarkJson = attnd.getRemarkJson();
         if (locationJson==null||remarkJson==null){
@@ -68,24 +71,24 @@ public class AttndRepository implements AttndService {
             statement.setString(11, attnd.getAttnd_name());
             return statement;
         }, holder);
+        int attndID = holder.getKey().intValue();
 
-        int idAfterIns = holder.getKey().intValue();
-
-        String cipher = Utils.CalCipher(Utils.GetTypeViaStatus(attnd.getStatus()),idAfterIns);
+        int cipherID = groupID<=0?attndID:groupID;
+        String cipher = Utils.CalCipher(Utils.GetTypeViaStatus(attnd.getStatus()),cipherID);
         if (cipher==null||cipher.equals("")){
             logger.warn("AddAttnd cipher invalid");
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             throw new DBProcessException("cal cipher failed");
         }
 
-        int effectedRows = this.jdbcTemplate.update("UPDATE attnd SET cipher=? WHERE id=?",cipher,idAfterIns);
+        int effectedRows = this.jdbcTemplate.update("UPDATE attnd SET cipher=? WHERE id=?",cipher,attndID);
         if (effectedRows != 1){
             logger.error("AddAttnd update cipher failed");
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             throw new DBProcessException("UPDATE effected not 1");
         }
 
-        attnd.setAttnd_id(idAfterIns);
+        attnd.setAttnd_id(attndID);
         return cipher;
     }
 
@@ -108,10 +111,6 @@ public class AttndRepository implements AttndService {
                             }
                             location = objectMapper.treeToValue(root,Location.class);
 
-/*                            attndInner.getLocation().setAccuracy(root.get("accuracy").floatValue());
-                            attndInner.getLocation().setLatitude(root.get("latitude").floatValue());
-                            attndInner.getLocation().setLongitude(root.get("longitude").floatValue());*/
-
                         } catch (IOException ioe){
                             logger.error("ChkAttnd mapRow failed io "+ioe.getMessage());
                             throw new DBProcessException("ChkAttnd location map failed in io");
@@ -132,12 +131,16 @@ public class AttndRepository implements AttndService {
         }
         return attnd;
     }
+
+    @Override
+    public String[] ChkHisAttndName(int userID,int limit) throws DataAccessException {
+        List<String> list= this.jdbcTemplate.queryForList("SELECT name FROM attnd WHERE teacherid=? ORDER BY createdat desc LIMIT ?",String.class,userID,limit);
+        if (list==null){
+            String msg = "ChkHisAttndName list null";
+            logger.error(msg);
+            throw new DBProcessException(msg);
+        }
+        return list.toArray(new String[0]);
+    }
 }
 
-
-/*
-(rs, rowNum) ->
-
-
-
-*/

@@ -1,6 +1,7 @@
 package com.lzy.attnd.configure;
 
 import com.lzy.attnd.interception.AuthIntercepts;
+import com.lzy.attnd.interception.PageIngercepts;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
@@ -22,6 +23,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new AuthIntercepts(configBean)).addPathPatterns("/**").excludePathPatterns("/login","/mocklogin","/chk/session");
+        registry.addInterceptor(new AuthIntercepts(configBean)).addPathPatterns("/**").excludePathPatterns("/login","/mocklogin**","/chk/session");
+        registry.addInterceptor(new PageIngercepts()).addPathPatterns("/attnd/situation");
     }
 }

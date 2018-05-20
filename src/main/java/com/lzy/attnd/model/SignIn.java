@@ -2,6 +2,7 @@ package com.lzy.attnd.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.lzy.attnd.utils.Utils;
+import org.hibernate.validator.constraints.Range;
 import org.springframework.lang.Nullable;
 
 import javax.validation.Valid;
@@ -12,28 +13,12 @@ import javax.validation.constraints.Size;
 
 public class SignIn extends Base {
     public interface ID{}
-    public interface Name{}
     public interface Openid {}
     public interface Cipher {}
+    public interface Dist {}
     public interface Location_Struct{}
     public interface All{}
 
-    public SignIn(@NotNull(groups = {Remark.class, BaseAll.class}) Object remark, @Min(value = 0, groups = {Status.class, BaseAll.class}) int status, @Min(value = 1, groups = {ID.class, All.class}) int id, @NotBlank(groups = {Name.class, All.class}) @Size(max = 50, groups = {Name.class, All.class}) String openid, @NotBlank(groups = {Openid.class, All.class}) @Size(max = 50, groups = {Openid.class, All.class}) String name, @NotBlank(groups = {Cipher.class, All.class}) @Size(max = 50, groups = {Cipher.class, All.class}) String cipher, @NotNull(groups = {Location_Struct.class, All.class}) @Valid Location location) {
-        super(remark, status);
-        this.id = id;
-        this.openid = openid;
-        this.name = name;
-        this.cipher = cipher;
-        this.location = location;
-    }
-
-    public SignIn(@Min(value = 1, groups = {ID.class, All.class}) int id, @NotBlank(groups = {Name.class, All.class}) @Size(max = 50, groups = {Name.class, All.class}) String openid, @NotBlank(groups = {Openid.class, All.class}) @Size(max = 50, groups = {Openid.class, All.class}) String name, @NotBlank(groups = {Cipher.class, All.class}) @Size(max = 50, groups = {Cipher.class, All.class}) String cipher, @NotNull(groups = {Location_Struct.class, All.class}) @Valid Location location) {
-        this.id = id;
-        this.openid = openid;
-        this.name = name;
-        this.cipher = cipher;
-        this.location = location;
-    }
 
 
     public SignIn() {
@@ -56,14 +41,6 @@ public class SignIn extends Base {
         this.openid = openid;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getCipher() {
         return cipher;
     }
@@ -80,18 +57,45 @@ public class SignIn extends Base {
         this.location = location;
     }
 
+    public Double getDistance() {
+        return distance;
+    }
+
+    public void setDistance(Double distance) {
+        this.distance = distance;
+    }
+
+
     @Min(value = 1,groups = {ID.class,All.class})
     private int id;
-    @NotBlank(groups = {Name.class,All.class})
-    @Size(max = 50,groups = {Name.class,All.class})
-    private String openid;
     @NotBlank(groups = {Openid.class,All.class})
     @Size(max = 50,groups = {Openid.class,All.class})
-    private String name;
+    private String openid;
     @NotBlank(groups = {Cipher.class,All.class})
     @Size(max = 50,groups = {Cipher.class,All.class})
     private String cipher;
     @NotNull(groups = {Location_Struct.class,All.class})
     @Valid
     private Location location;
+    @Min(value = 0,groups = Dist.class)
+    private Double distance;
+
+
+    public SignIn(@NotNull(groups = {Remark.class, BaseAll.class}) Object remark, @Min(value = 0, groups = {Status.class, BaseAll.class}) int status, @Min(value = 1, groups = {ID.class, All.class}) int id, @NotBlank(groups = {Openid.class, All.class}) @Size(max = 50, groups = {Openid.class, All.class}) String openid, @NotBlank(groups = {Cipher.class, All.class}) @Size(max = 50, groups = {Cipher.class, All.class}) String cipher, @NotNull(groups = {Location_Struct.class, All.class}) @Valid Location location, @Min(value = 0, groups = Dist.class) Double distance) {
+        super(remark, status);
+        this.id = id;
+        this.openid = openid;
+        this.cipher = cipher;
+        this.location = location;
+        this.distance = distance;
+    }
+
+    public SignIn(@Min(value = 1, groups = {ID.class, All.class}) int id, @NotBlank(groups = {Openid.class, All.class}) @Size(max = 50, groups = {Openid.class, All.class}) String openid, @NotBlank(groups = {Cipher.class, All.class}) @Size(max = 50, groups = {Cipher.class, All.class}) String cipher, @NotNull(groups = {Location_Struct.class, All.class}) @Valid Location location, @Min(value = 0, groups = Dist.class) Double distance) {
+        this.id = id;
+        this.openid = openid;
+        this.cipher = cipher;
+        this.location = location;
+        this.distance = distance;
+    }
+
 }

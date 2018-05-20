@@ -13,23 +13,25 @@ import com.lzy.attnd.service.UserService;
 import com.lzy.attnd.utils.FeedBack;
 import com.lzy.attnd.utils.Session;
 import com.lzy.attnd.utils.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.MultiValueMap;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
-import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @Validated
 public class AttndController {
+
+    private final static Logger logger = LoggerFactory.getLogger(AttndController.class);
+
 
     private final AttndService attndService;
     private final UserGroupService userGroupService;
@@ -54,7 +56,7 @@ public class AttndController {
      *
      * @apiParam {String{0..50}} attnd_name 考勤名称
      * @apiParam {String{0..50}} addr_name location name
-     * @apiParam {Number{0-}} start_time need check start_time + last > now
+     * @apiParam {Number{0-}} start_time need check start_time + last > now milliseconds
      * @apiParam {Number{0-1440}} last attendance last time unit->minutes
      * @apiParam {Number{-90-90}} latitude float
      * @apiParam {Number{-180-180}} longitude float
@@ -63,9 +65,9 @@ public class AttndController {
      * @apiParam {String{0..50}} addr_name location name
      * @apiParam {String{0..50}} teacher_name if user exist -> do nothing
      * @apiParamExample {json} Req-create:
-     * {"attnd_name":"操作系统","start_time":15577418,"last":20,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"addr_name":"外环西路","teacher_name":"wjx","group_name":"计科151"}
+     * {"attnd_name":"操作系统","start_time":1526826235000,"last":20,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"addr_name":"外环西路","teacher_name":"wjx","group_name":"计科151"}
      *
-     * @apiSuccess {String} cipher 口令 标识位(标识录入/考勤)+通过62进制时间戳后3位+attnd_id 的62进制表示
+     * @apiSuccess {String} cipher 口令 标识位(标识录入/考勤)+通过62进制时间戳后3位+ (attnd_id (when no_group) ||group_id ) 的62进制表示
      * @apiSuccessExample {json} Resp-create:
      * {"code":1000,"msg":"","data":{"attnd_id":5415,"cipher":"A548QC"}}
      *
@@ -94,6 +96,7 @@ public class AttndController {
             }
             user.setId(id);
         }
+        attnd.setTeacher_name(user.getName());
         session.setUserID(user.getId());
         session.setName(attnd.getTeacher_name());
 
@@ -103,6 +106,7 @@ public class AttndController {
         int attndStatus = Code.ATTND_NORMAL;
 
         //no group fill
+        int groupID = 0;
         if (attnd.getGroup_name()==null || attnd.getGroup_name().equals("")){
             attnd.setGroup_name("");
             attndStatus = Code.ATTND_NOGROUP;
@@ -112,8 +116,8 @@ public class AttndController {
             }
             //chk group exist by name
             UserGroup userGroup = new UserGroup(attnd.getGroup_name(),user.getId(),user.getName());
-            boolean groupExist =userGroupService.ChkUserGroupExistByName(userGroup);
-            if (!groupExist){
+            groupID =userGroupService.ChkUserGroupExistByName(userGroup);
+            if (groupID<=0){
                 //create a new group
                 userGroup.setRemark(new Object());
                 boolean addGroupSuccess = userGroupService.AddNewGroup(userGroup);
@@ -130,7 +134,7 @@ public class AttndController {
         //add attnd
         attnd.setRemark(new Object());
         attnd.setTeacher_id(session.getUserID());
-        String cipher = attndService.AddAttnd(attnd);
+        String cipher = attndService.AddAttnd(attnd,groupID);
         if (cipher==null||cipher.equals("")){
             return FeedBack.DB_FAILED("addAttnd cipher invalid");
         }
@@ -147,13 +151,13 @@ public class AttndController {
 
 
     /**
+     * @apiDeprecated
      * @api {post} /api/delattnd delAttnd
      * @apiName delAttnd
      * @apiGroup Attnd
      *
-     * @apiParam {Number{1-}} attnd_id id for attendance
      * @apiParamExample {String} Req:
-     * attnd_id=1248
+     * cipher=GZXQAS
      *
      *
      */
@@ -165,8 +169,8 @@ public class AttndController {
      * @apiName chkAttnd
      * @apiGroup Attnd
      *
-     * @apiParamExample {String{1..50}} Req:
-     * cipher="GZXQAS"
+     * @apiParamExample {String} Req:
+     * cipher=GZXQAS
      *
      * @apiSuccessExample {json} Resp:
      * {"code":1000,"msg":"","data":{"teacher_id":1,"attnd_id":123,"cipher":"GZXQAS","status":1,"attnd_name":"操作系统","start_time":15577418,"last":20,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"addr_name":"外环西路","teacher_name":"wjx","group_name":"计科151"}}
@@ -190,22 +194,33 @@ public class AttndController {
      * @api {get} /api/attnd/hisname chkAttnd_hisname
      * @apiName chkAttnd_hisname
      * @apiGroup Attnd
-     * @apiDescription get latest top 6
+     * @apiDescription get latest top 15
      *
-     *
-     * @apiParam {Number{1-}} attnd_id id for attendance
-     * @apiParamExample {String} Req:
-     * attnd_id=1248
      *
      * @apiSuccessExample {json} Resp:
      * {"code":1000,"msg":"","data":["操作系统","计算机网络"]}
      */
-
+    /***/
+    @GetMapping("/attnd/hisname")
+    public FeedBack chkAttnd_hisName(
+            @RequestAttribute("attnd") Session session
+    ){
+        if (!session.IsUserRealyExist()){
+            return new FeedBack(Code.GLOBAL_USER_NOT_EXIST);
+        }
+        String[] hisName = attndService.ChkHisAttndName(session.getUserID(),15);
+        if (hisName==null || hisName.length<=0){
+            String msg = "ChkHisAttndName hisName empty or null";
+            logger.warn(msg);
+            return FeedBack.SYS_ERROR(msg);
+        }
+        return FeedBack.SUCCESS(hisName);
+    }
 
     /**
      * @apiDefine Pagination
      * @apiParam {Number{1..}} page  分页页号 1开始
-     * @apiParam {Number{1..}} pagesize  每页长度
+     * @apiParam {Number{1..}} page_size  每页长度
      */
 
     /**
@@ -215,6 +230,7 @@ public class AttndController {
 
 
     /**
+     * @apiDeprecated
      * @api {get} /api/attndlist chkAttndlist
      * @apiName chkAttndlist
      * @apiGroup Attnd
@@ -270,6 +286,8 @@ public class AttndController {
             return FeedBack.PARAM_INVALID("location invalid in children prop");
         }
 
+        //--------- chk param complete
+
         //just chk user
         boolean userExist = userService.ChkUserExist(session.getOpenid());
         if (!userExist){
@@ -312,6 +330,8 @@ public class AttndController {
             return new FeedBack(Code.ATTND_HAS_SIGNIN);
         }
 
+        //TODO if type = A --> judge user is this group
+
         if (attnd_type==Code.CIPHER_ENTRY){
             if(!userService.AddUserToGroup(session.getOpenid(),attnd.getGroup_name(),attnd.getTeacher_id())){
                 return FeedBack.DB_FAILED("AddUserToGroup in CIPHER_ENTRY failed");
@@ -321,12 +341,11 @@ public class AttndController {
         //judge sign in whether success CHK LOCATION CHK TIME
         SignIn signIn = new SignIn();
         signIn.setOpenid(session.getOpenid());
-        signIn.setName(session.getName());
         signIn.setCipher(cipher);
         signIn.setLocation(signLoc);
         int signInFlag = Utils.calSignInState(
                 attnd,signLoc,AttndController.testTimestamp==0?System.currentTimeMillis():AttndController.testTimestamp,
-                configBean.getMeter_limit());
+                configBean.getMeter_limit(),signIn);
 
         if (signInFlag==Code.SIGNIN_EXPIRED)
             return new FeedBack(Code.ATTND_EXPIRED);
@@ -345,19 +364,60 @@ public class AttndController {
      * @apiName chkAttndSituation
      * @apiGroup Attnd
      *
-     * @apiParam {Number{1-}} attnd_id id for attendance
+     * @apiUse Pagination
      * @apiParamExample {String} Req:
-     * cipher="A7184"
+     * cipher=A7184&fail_only=true&page=1&page_size=10
      *
      *
-     * @apiSuccessParam {Number=1,2} attnd_status studnet attendance status 1-> ok 2-> not ok
+     * @apiSuccessParam {Number=1,2,3,4} attnd_status studnet attendance status 1-> ok 2-> location beyond 3 -> time expired 4 -> not exist
      * @apiSuccessExample {json} Resp:
      * {"code":1000,"msg":"","data":{"count":10,"attnds":[{"openid":"ox111","stu_id":"1506200023","name":"xiaoming","attnd_status":1},{"openid":"ox222","stu_id":"1506200024","name":"zhangli","attnd_status":1}]}}
      *
      */
+    /***/
+    @GetMapping("/attnd/situation")
+    public FeedBack chkAttndSituation(
+            @Min(0) @RequestAttribute("start") int start,
+            @Min(1) @RequestAttribute("rows") int rows,
+            @NotBlank @Size(max = 50) @RequestParam("cipher") String cipher,
+            @RequestParam("fail_only") boolean fail_only
+    ){
+        int groupID = 0;
+        AttndState[] attndStates;
+        switch (cipher.charAt(0)){
+            case Code.CIPHER_ATTND:{
+                //get the last groupid
+                groupID = ((int) Utils.Base62LastKToLong(cipher, cipher.length() - 1 - 3));
+            }
+            case Code.CIPHER_ENTRY:
+            case Code.CIPHER_NOGROUP:{
+                //chk sign in list
+                attndStates = signInService.ChkSignInList(cipher,start,rows,groupID,fail_only?Code.SIGNIN_OK:-1);
+                break;
+            }
+            default:
+                return FeedBack.SYS_ERROR("unknown cipher type");
+        }
 
+        if (attndStates==null){
+            return FeedBack.SYS_ERROR("attndStates null");
+        }
+
+        int count;
+        if (groupID<=0){
+            count = signInService.CountSignInList(cipher,fail_only?Code.SIGNIN_OK:-1);
+        }else {
+            count = userGroupService.CountUserInGroup(groupID);
+        }
+
+        HashMap<String,Object> fbJson = new HashMap<>();
+        fbJson.put("count",count);
+        fbJson.put("attnds",attndStates);
+        return FeedBack.SUCCESS(fbJson);
+    }
 
     /**
+     * @apiDeprecated
      * @api {post} /api/signin/situation updSignSituation
      * @apiName updAttndSituation
      * @apiGroup Attnd

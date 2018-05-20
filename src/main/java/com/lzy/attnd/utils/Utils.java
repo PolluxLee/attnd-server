@@ -7,6 +7,7 @@ import com.lzy.attnd.constant.Code;
 import com.lzy.attnd.exception.SysErrException;
 import com.lzy.attnd.model.Attnd;
 import com.lzy.attnd.model.Location;
+import com.lzy.attnd.model.SignIn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.Nullable;
@@ -22,26 +23,34 @@ public class Utils {
         return false;
     }
 
+    public static boolean chkCipherType_Attnd(char c){
+        if (c==Code.CIPHER_ATTND||c==Code.CIPHER_ENTRY||c==Code.CIPHER_NOGROUP)
+            return true;
+        return false;
+    }
+
 
     //chk location , time
     public static int calSignInState(Attnd attnd,
-           Location signInLocation,long signInTime,int signDistanceLimit
+           Location signInLocation,long signInTime,int signDistanceLimit,SignIn signIn
     ){
-        if (attnd == null || signInLocation == null || signInTime < 0 || signDistanceLimit < 0 ||
+        if (attnd == null || signInLocation == null || signInTime < 0 || signDistanceLimit < 0 || signIn == null ||
                 attnd.getLocation() == null || attnd.getStart_time()<0|| attnd.getLast()<0){
             String msg = "calSignInState param invalid";
             logger.error(msg);
             throw new SysErrException(msg);
         }
-        if (signInTime>attnd.getStart_time()+attnd.getLast()*60){
+        if (signInTime>attnd.getStart_time()+attnd.getLast()*60*1000){
             return Code.SIGNIN_EXPIRED;
         }
 
-        if (Location.calDistanceBetweenLocation(attnd.getLocation(),signInLocation)>signDistanceLimit){
+        Double dist = Location.calDistanceBetweenLocation(attnd.getLocation(),signInLocation);
+        if (dist>signDistanceLimit){
+            signIn.setDistance(dist);
             return Code.SIGNIN_LOCATION_BEYOND;
         }
 
-
+        signIn.setDistance(dist);
         return Code.SIGNIN_OK;
     }
 

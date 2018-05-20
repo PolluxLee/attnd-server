@@ -9,6 +9,7 @@ public interface Code {
     int GLOBAL_DB_ERROR = 1005;
     //work normal but execute not success
     int GLOBAL_DB_FAILED = 1006;
+    int GLOBAL_USER_NOT_EXIST = 1007;
 
 
     int USER_NOT_EXIST = 2001;
@@ -25,6 +26,7 @@ public interface Code {
     int SIGNIN_OK = 1;
     int SIGNIN_LOCATION_BEYOND = 2;
     int SIGNIN_EXPIRED = 3;
+    int SIGNIN_NOT_EXIST = 4;
 
     int ATTND_NORMAL=1;
     int ATTND_ENTRY=2;
