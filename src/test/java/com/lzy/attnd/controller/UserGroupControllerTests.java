@@ -64,4 +64,52 @@ public class UserGroupControllerTests {
                 .andExpect(MockMvcResultMatchers.status().is(200))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
     }
+
+    /**-------------------group list---------------*/
+    @Test
+    public void groupList()throws Exception{
+        mvc.perform(MockMvcRequestBuilders.get("/group/list")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
+    }
+
+    /**-------------------group info ----------------*/
+    @Test
+    public void group_info()throws Exception{
+        mvc.perform(MockMvcRequestBuilders.get("/group")
+                .param("group_id","1")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
+    }
+
+    @Test
+    public void group_info_not_exist()throws Exception{
+        mvc.perform(MockMvcRequestBuilders.get("/group")
+                .param("group_id","3543")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GROUP_NOTEXIST)));
+    }
+
+    /**---------------------group user list-----------*/
+    @Test
+    public void group_UserList()throws Exception{
+        mvc.perform(MockMvcRequestBuilders.get("/group/userlist")
+                .param("group_id","1")
+                .param("page","1")
+                .param("page_size","1")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
+    }
 }

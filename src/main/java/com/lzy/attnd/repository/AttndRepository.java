@@ -24,6 +24,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
+import javax.sql.RowSet;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -142,7 +143,10 @@ public class AttndRepository implements AttndService {
 
     @Override
     public String[] ChkHisAttndName(int userID,int limit) throws DataAccessException {
-        List<String> list= this.jdbcTemplate.queryForList("SELECT name FROM attnd WHERE teacherid=? ORDER BY createdat desc LIMIT ?",String.class,userID,limit);
+        List<String> list= this.jdbcTemplate.queryForList("SELECT name FROM attnd WHERE teacherid=? GROUP BY name ORDER BY max(createdat) desc limit ? " +
+                "" +
+                "" +
+                "",String.class,userID,limit);
         if (list==null){
             String msg = "ChkHisAttndName list null";
             logger.error(msg);
@@ -153,7 +157,7 @@ public class AttndRepository implements AttndService {
 
     @Override
     public @NotNull String[] ChkHisAttndAddr(@Min(1) int userID, @Min(1) int limit) throws DataAccessException {
-        List<String> list= this.jdbcTemplate.queryForList("SELECT addrname FROM attnd WHERE teacherid=? ORDER BY createdat desc LIMIT ?",String.class,userID,limit);
+        List<String> list= this.jdbcTemplate.queryForList("SELECT addrname FROM attnd WHERE teacherid=? GROUP BY addrname ORDER BY max(createdat) desc limit ?",String.class,userID,limit);
         if (list==null){
             String msg = "ChkHisAttndAddr list null";
             logger.error(msg);

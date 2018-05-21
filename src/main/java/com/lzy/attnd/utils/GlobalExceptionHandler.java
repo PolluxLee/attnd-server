@@ -21,25 +21,25 @@ public class GlobalExceptionHandler {
 
     //no auth when session
     @ExceptionHandler(NoAuthException.class)
-    public FeedBack NoAuthException(NoAuthException nae){
-        return new FeedBack(Code.GLOBAL_NOAUTH,"[no_auth]: "+nae.getMessage());
+    public FB NoAuthException(NoAuthException nae){
+        return new FB(Code.GLOBAL_NOAUTH,"[no_auth]: "+nae.getMessage());
     }
 
     //db access failed
     @ExceptionHandler(DataAccessException.class)
-    public FeedBack DataAccessFailed(DataAccessException dae){
-        return new FeedBack(Code.GLOBAL_DB_ERROR,"[db_failed]: "+dae.getMessage());
+    public FB DataAccessFailed(DataAccessException dae){
+        return new FB(Code.GLOBAL_DB_ERROR,"[db_failed]: "+dae.getMessage());
     }
 
     //param invalid in get query
     @ExceptionHandler(ConstraintViolationException.class)
-    public FeedBack ParamError(ConstraintViolationException cve){
-        return new FeedBack(Code.GLOBAL_PARAM_INVALID,"[param invalid]: "+cve.getMessage());
+    public FB ParamError(ConstraintViolationException cve){
+        return new FB(Code.GLOBAL_PARAM_INVALID,"[param invalid]: "+cve.getMessage());
     }
 
     //param invalid in post json
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public FeedBack ParamInvalid(MethodArgumentNotValidException mane) {
+    public FB ParamInvalid(MethodArgumentNotValidException mane) {
         List<ObjectError> allParamError = mane.getBindingResult().getAllErrors();
         StringBuilder sb = new StringBuilder(" ");
         for (int i = 0; i < allParamError.size(); i++) {
@@ -56,12 +56,12 @@ public class GlobalExceptionHandler {
             sb.append(fieldError.getDefaultMessage());
             sb.append(" ");
         }
-        return new FeedBack(Code.GLOBAL_PARAM_INVALID,"[param invalid]:"+sb.toString());
+        return new FB(Code.GLOBAL_PARAM_INVALID,"[param invalid]:"+sb.toString());
     }
 
     //Sys err
     @ExceptionHandler(SysErrException.class)
-    public FeedBack SysErr(SysErrException see){
-        return FeedBack.SYS_ERROR(see.getMessage());
+    public FB SysErr(SysErrException see){
+        return FB.SYS_ERROR(see.getMessage());
     }
 }

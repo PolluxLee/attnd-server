@@ -5,15 +5,13 @@ import com.lzy.attnd.constant.Code;
 import com.lzy.attnd.model.User;
 import com.lzy.attnd.service.UserService;
 import com.lzy.attnd.service.WechatService;
-import com.lzy.attnd.utils.FeedBack;
+import com.lzy.attnd.utils.FB;
 import com.lzy.attnd.utils.Session;
-import org.hibernate.validator.constraints.Range;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.annotation.SessionScope;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -93,15 +91,15 @@ public class UserController {
      */
     /***/
     @PostMapping(value = "/login",consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public FeedBack login(@RequestBody MultiValueMap<String,String> formData,HttpSession session){
+    public FB login(@RequestBody MultiValueMap<String,String> formData, HttpSession session){
         String code = formData.getFirst("code");
         if (code == null || code.isEmpty()){
-            return FeedBack.PARAM_INVALID("code not exist or empty");
+            return FB.PARAM_INVALID("code not exist or empty");
         }
         //request wx get openid+session_key
         WechatService.WxLoginFb wxLoginFb = wechatService.Wx_Login(code);
         if (wxLoginFb == null){
-            return FeedBack.SYS_ERROR("Wx_Login failed");
+            return FB.SYS_ERROR("Wx_Login failed");
         }
 
         //find user info
@@ -116,7 +114,7 @@ public class UserController {
         //second session key -> wx session key
         session.setAttribute(configBean.getSession_key(),new Session(user.getId(),user.getName(),user.getStatus(),wxLoginFb.getOpenid(),wxLoginFb.getSession_key(),user.getStu_id()));
 
-        return user.getName().equals("")?new FeedBack<>(Code.USER_NOT_EXIST,"",user):new FeedBack<>(Code.USER_EXIST,"",user);
+        return user.getName().equals("")?new FB<>(Code.USER_NOT_EXIST,"",user):new FB<>(Code.USER_EXIST,"",user);
     }
 
     /**
@@ -133,13 +131,13 @@ public class UserController {
      */
     /***/
     @GetMapping("/user/info")
-    public FeedBack chkUserInfo(@NotBlank @RequestParam("openid") String openid){
+    public FB chkUserInfo(@NotBlank @RequestParam("openid") String openid){
         User user = userService.FindUserByOpenid(openid);
         if (user==null){
-            return new FeedBack<>(Code.USER_NOT_EXIST,"","find nothing by openid");
+            return new FB<>(Code.USER_NOT_EXIST,"","find nothing by openid");
         }
 
-        return FeedBack.SUCCESS(user);
+        return FB.SUCCESS(user);
     }
 
     /**
@@ -161,7 +159,7 @@ public class UserController {
      */
     /***/
     @PostMapping("/user/info")
-    public FeedBack addOrUpdUser(
+    public FB addOrUpdUser(
             HttpSession httpSession,
             @RequestAttribute("attnd") Session session,
             @Validated({User.Name.class}) @RequestBody User user){
@@ -173,12 +171,12 @@ public class UserController {
 
         boolean success = userService.InsOrUpdUserInfo(user);
         if (!success){
-            return FeedBack.DB_FAILED("addOrUpdUser InsOrUpdUserInfo failed");
+            return FB.DB_FAILED("addOrUpdUser InsOrUpdUserInfo failed");
         }
 
         User userInfo = userService.FindUserByOpenid(session.getOpenid());
         if (userInfo==null){
-            return FeedBack.SYS_ERROR("FindUserByOpenid userinfo null");
+            return FB.SYS_ERROR("FindUserByOpenid userinfo null");
         }
 
         session.setName(userInfo.getName());
@@ -187,7 +185,7 @@ public class UserController {
         session.setStatus(userInfo.getStatus());
         httpSession.setAttribute(configBean.getSession_key(),session);
 
-        return FeedBack.SUCCESS(userInfo);
+        return FB.SUCCESS(userInfo);
     }
 
 }

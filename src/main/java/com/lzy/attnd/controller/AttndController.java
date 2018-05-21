@@ -10,7 +10,7 @@ import com.lzy.attnd.service.AttndService;
 import com.lzy.attnd.service.SignInService;
 import com.lzy.attnd.service.UserGroupService;
 import com.lzy.attnd.service.UserService;
-import com.lzy.attnd.utils.FeedBack;
+import com.lzy.attnd.utils.FB;
 import com.lzy.attnd.utils.Session;
 import com.lzy.attnd.utils.Utils;
 import org.hibernate.validator.constraints.Range;
@@ -77,7 +77,7 @@ public class AttndController {
      */
     /***/
     @PostMapping("/attnd")
-    public FeedBack addAttnd(
+    public FB addAttnd(
             HttpSession httpSession,
             @RequestAttribute("attnd") Session session,
             @Validated({Attnd.Name.class,Attnd.StartTime.class,Attnd.Last.class,Attnd.Location_Struct.class,Attnd.AddrName.class,
@@ -93,7 +93,7 @@ public class AttndController {
             user.setStu_id("");
             int id = userService.InsIgnoreUserInfo(user);
             if (id==0){
-                return FeedBack.DB_FAILED("addAttnd InsIgnoreUserInfo failed");
+                return FB.DB_FAILED("addAttnd InsIgnoreUserInfo failed");
             }
             user.setId(id);
         }
@@ -113,17 +113,20 @@ public class AttndController {
             attndStatus = Code.ATTND_NOGROUP;
         }else{
             if (attnd.getGroup_name().length()>50){
-                return FeedBack.PARAM_INVALID("addAttnd group name length > 50");
+                return FB.PARAM_INVALID("addAttnd group name length > 50");
             }
             //chk group exist by name
-            UserGroup userGroup = new UserGroup(attnd.getGroup_name(),user.getId(),user.getName());
+            UserGroup userGroup = new UserGroup();
+            userGroup.setName(attnd.getGroup_name());
+            userGroup.setCreator_id(user.getId());
+            userGroup.setCreator_name(user.getName());
             groupID =userGroupService.ChkUserGroupExistByName(userGroup);
             if (groupID<=0){
                 //create a new group
                 userGroup.setRemark(new Object());
                 boolean addGroupSuccess = userGroupService.AddNewGroup(userGroup);
                 if (!addGroupSuccess){
-                    return FeedBack.DB_FAILED("addAttnd AddNewGroup failed");
+                    return FB.DB_FAILED("addAttnd AddNewGroup failed");
                 }
                 attndStatus = Code.ATTND_ENTRY;
             }
@@ -137,17 +140,17 @@ public class AttndController {
         attnd.setTeacher_id(session.getUserID());
         String cipher = attndService.AddAttnd(attnd,groupID);
         if (cipher==null||cipher.equals("")){
-            return FeedBack.DB_FAILED("addAttnd cipher invalid");
+            return FB.DB_FAILED("addAttnd cipher invalid");
         }
 
         if (attnd.getAttnd_id()<=0){
-            return FeedBack.DB_FAILED("addAttnd AddAttnd no id return");
+            return FB.DB_FAILED("addAttnd AddAttnd no id return");
         }
 
         HashMap<String,Object> fbJson = new HashMap<>();
         fbJson.put("attnd_id",attnd.getAttnd_id());
         fbJson.put("cipher",cipher);
-        return FeedBack.SUCCESS(fbJson);
+        return FB.SUCCESS(fbJson);
     }
 
 
@@ -168,21 +171,21 @@ public class AttndController {
      */
     /****/
     @GetMapping("/attnd")
-    public FeedBack chkAttnd(
+    public FB chkAttnd(
             @NotBlank @Size(max = 50) @RequestParam("cipher") String cipher
     ){
         Attnd attnd = attndService.ChkAttnd(cipher);
         if (attnd==null){
-            return new FeedBack(Code.ATTND_NOT_EXIST);
+            return new FB(Code.ATTND_NOT_EXIST);
         }
-        return FeedBack.SUCCESS(attnd);
+        return FB.SUCCESS(attnd);
     }
 
     /**
      * @api {get} /api/attnd/hisname chkAttnd_hisname
      * @apiName chkAttnd_hisname
      * @apiGroup Attnd
-     * @apiDescription get latest top 15
+     * @apiDescription get latest top 15 distinct
      *
      *
      * @apiSuccessExample {json} Resp:
@@ -190,45 +193,45 @@ public class AttndController {
      */
     /***/
     @GetMapping("/attnd/hisname")
-    public FeedBack chkAttnd_hisName(
+    public FB chkAttnd_hisName(
             @RequestAttribute("attnd") Session session
     ){
         if (!session.IsUserRealyExist()){
-            return new FeedBack(Code.GLOBAL_USER_NOT_EXIST);
+            return new FB(Code.GLOBAL_USER_NOT_EXIST);
         }
         String[] hisName = attndService.ChkHisAttndName(session.getUserID(),15);
         if (hisName==null || hisName.length<=0){
             String msg = "ChkHisAttndName hisName empty or null";
             logger.warn(msg);
-            return FeedBack.SYS_ERROR(msg);
+            return FB.SYS_ERROR(msg);
         }
-        return FeedBack.SUCCESS(hisName);
+        return FB.SUCCESS(hisName);
     }
 
     /**
      * @api {get} /api/attnd/hisaddr chkAttnd_hisAddr
      * @apiName chkAttnd_hisAddr
      * @apiGroup Attnd
-     * @apiDescription get latest top 15
+     * @apiDescription get latest top 15 distinct
      *
      * @apiSuccessExample {json} Resp:
      * {"code":1000,"msg":"","data":["理科南305","文新楼317"]}
      */
     /***/
     @GetMapping("/attnd/hisaddr")
-    public FeedBack chkAttndHisAddr(
+    public FB chkAttndHisAddr(
             @RequestAttribute("attnd") Session session
     ){
         if (!session.IsUserRealyExist()){
-            return new FeedBack(Code.GLOBAL_USER_NOT_EXIST);
+            return new FB(Code.GLOBAL_USER_NOT_EXIST);
         }
         String[] hisName = attndService.ChkHisAttndAddr(session.getUserID(),15);
         if (hisName==null || hisName.length<=0){
             String msg = "chkAttndHisAddr hisName empty or null";
             logger.warn(msg);
-            return FeedBack.SYS_ERROR(msg);
+            return FB.SYS_ERROR(msg);
         }
-        return FeedBack.SUCCESS(hisName);
+        return FB.SUCCESS(hisName);
     }
 
 
@@ -259,7 +262,7 @@ public class AttndController {
      */
     /***/
     @GetMapping("/attndlist")
-    public FeedBack chkAttndList(
+    public FB chkAttndList(
             @RequestAttribute("attnd") Session session,
             @Min(0) @RequestAttribute("start") int start,
             @Min(1) @RequestAttribute("rows") int rows,
@@ -268,7 +271,7 @@ public class AttndController {
     ){
         int userID = session.getUserID();
         if(userID<=0){
-            return FeedBack.USER_NOT_EXIST("");
+            return FB.USER_NOT_EXIST("");
         }
 
         PaginationAttnd attndsPage = null;
@@ -284,10 +287,10 @@ public class AttndController {
         if (attndsPage==null){
             String msg = "chkAttndList unreachable branch in attndspage null";
             logger.error(msg);
-            return FeedBack.SYS_ERROR(msg);
+            return FB.SYS_ERROR(msg);
         }
 
-        return FeedBack.SUCCESS(attndsPage);
+        return FB.SUCCESS(attndsPage);
     }
 
     public static long testTimestamp = 0;
@@ -305,31 +308,31 @@ public class AttndController {
      */
     /***/
     @PostMapping("/attnd/signin")
-    public FeedBack SignIn(@RequestAttribute("attnd") Session session,
-            @RequestBody @NotNull JsonNode root){
+    public FB SignIn(@RequestAttribute("attnd") Session session,
+                     @RequestBody @NotNull JsonNode root){
         JsonNode cipherNode = root.get("cipher");
         if (cipherNode == null || !cipherNode.isTextual()){
-            return FeedBack.PARAM_INVALID("cipher invalid");
+            return FB.PARAM_INVALID("cipher invalid");
         }
         String cipher = cipherNode.asText();
         if (cipher == null ||cipher.equals("") || cipher.length()>50){
-            return FeedBack.PARAM_INVALID("cipher invalid empty or too long");
+            return FB.PARAM_INVALID("cipher invalid empty or too long");
         }
 
 
         ObjectMapper mapper = new ObjectMapper();
         if (!root.hasNonNull("location")){
-            return FeedBack.PARAM_INVALID("location invalid in root prop");
+            return FB.PARAM_INVALID("location invalid in root prop");
         }
 
         Location signLoc = null;
         try {
             signLoc = mapper.treeToValue(root.get("location"),Location.class);
         } catch (JsonProcessingException e) {
-            return FeedBack.PARAM_INVALID("location invalid in treeToValue");
+            return FB.PARAM_INVALID("location invalid in treeToValue");
         }
         if (signLoc==null || signLoc.getAccuracy()<0||signLoc.getLatitude()<-90||signLoc.getLatitude()>90||signLoc.getLongitude()<-180||signLoc.getLongitude()>180){
-            return FeedBack.PARAM_INVALID("location invalid in children prop");
+            return FB.PARAM_INVALID("location invalid in children prop");
         }
 
         //--------- chk param complete
@@ -337,14 +340,14 @@ public class AttndController {
         //just chk user
         boolean userExist = userService.ChkUserExist(session.getOpenid());
         if (!userExist){
-            return FeedBack.SYS_ERROR("user not exist");
+            return FB.SYS_ERROR("user not exist");
         }
 
         Attnd attnd = null;
         char attnd_type = cipher.charAt(0);
 
         if (!Utils.chkCipherType(attnd_type))
-            return FeedBack.PARAM_INVALID("SignIn cipher param unknown type");
+            return FB.PARAM_INVALID("SignIn cipher param unknown type");
 
         //attnd_type = S
         if (attnd_type == Code.CIPHER_SINGLE){
@@ -352,35 +355,35 @@ public class AttndController {
             //cipher length - type(1) - timestamp(3)
             int groupID = ((int) Utils.Base62LastKToLong(cipher, cipher.length() - 1 - 3));
             if (groupID == -1){
-                return FeedBack.SYS_ERROR("get groupid from cipher failed");
+                return FB.SYS_ERROR("get groupid from cipher failed");
             }
             if(!userService.AddUserToGroupByID(session.getOpenid(),groupID)){
-                return FeedBack.DB_FAILED("AddUserToGroupByID in CIPHER_SINGLE failed");
+                return FB.DB_FAILED("AddUserToGroupByID in CIPHER_SINGLE failed");
             }
-            return FeedBack.SUCCESS();
+            return FB.SUCCESS();
         }
 
         //attnd_type = A,G,N
         //chk attnd status correspond
         attnd = attndService.ChkAttnd(cipher);
         if (attnd==null){
-            return FeedBack.SYS_ERROR("attnd to cipher not exist");
+            return FB.SYS_ERROR("attnd to cipher not exist");
         }
         if (!(Utils.GetTypeViaStatus(attnd.getStatus())==attnd_type)){
-            return new FeedBack(Code.ATTND_CIPHER_NOT_CORRESPOND,"attnd status to cipher type not correspond");
+            return new FB(Code.ATTND_CIPHER_NOT_CORRESPOND,"attnd status to cipher type not correspond");
         }
 
         //chk user whether has signed in
         boolean hasSignIn = signInService.ChkUserHasSignIn(session.getOpenid(),cipher);
         if (hasSignIn){
-            return new FeedBack(Code.ATTND_HAS_SIGNIN);
+            return new FB(Code.ATTND_HAS_SIGNIN);
         }
 
         //TODO if type = A --> judge user is this group
 
         if (attnd_type==Code.CIPHER_ENTRY){
             if(!userService.AddUserToGroup(session.getOpenid(),attnd.getGroup_name(),attnd.getTeacher_id())){
-                return FeedBack.DB_FAILED("AddUserToGroup in CIPHER_ENTRY failed");
+                return FB.DB_FAILED("AddUserToGroup in CIPHER_ENTRY failed");
             }
         }
 
@@ -394,15 +397,15 @@ public class AttndController {
                 configBean.getMeter_limit(),signIn);
 
         if (signInFlag==Code.SIGNIN_EXPIRED)
-            return new FeedBack(Code.ATTND_EXPIRED);
+            return new FB(Code.ATTND_EXPIRED);
 
         signIn.setStatus(signInFlag);
 
         boolean signInSuccess = signInService.AddSignInRecord(signIn);
         if (!signInSuccess){
-            return FeedBack.DB_FAILED("SignIn AddSignInRecord failed");
+            return FB.DB_FAILED("SignIn AddSignInRecord failed");
         }
-        return FeedBack.SUCCESS(signInFlag);
+        return FB.SUCCESS(signInFlag);
     }
 
     /**
@@ -422,7 +425,7 @@ public class AttndController {
      */
     /***/
     @GetMapping("/attnd/situation")
-    public FeedBack chkAttndSituation(
+    public FB chkAttndSituation(
             @Min(0) @RequestAttribute("start") int start,
             @Min(1) @RequestAttribute("rows") int rows,
             @NotBlank @Size(max = 50) @RequestParam("cipher") String cipher,
@@ -442,11 +445,11 @@ public class AttndController {
                 break;
             }
             default:
-                return FeedBack.SYS_ERROR("unknown cipher type");
+                return FB.SYS_ERROR("unknown cipher type");
         }
 
         if (attndStates==null){
-            return FeedBack.SYS_ERROR("attndStates null");
+            return FB.SYS_ERROR("attndStates null");
         }
 
         int count;
@@ -459,7 +462,7 @@ public class AttndController {
         HashMap<String,Object> fbJson = new HashMap<>();
         fbJson.put("count",count);
         fbJson.put("attnds",attndStates);
-        return FeedBack.SUCCESS(fbJson);
+        return FB.SUCCESS(fbJson);
     }
 
 

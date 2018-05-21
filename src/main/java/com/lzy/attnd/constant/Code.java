@@ -20,6 +20,8 @@ public interface Code {
     int ATTND_HAS_SIGNIN = 3003;
     int ATTND_EXPIRED = 3004;
 
+    int GROUP_NOTEXIST=4001;
+
     int ADD_FLAG = 1;
     int UPD_FLAG = 2;
 
