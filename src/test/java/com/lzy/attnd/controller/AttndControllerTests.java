@@ -241,7 +241,7 @@ public class AttndControllerTests {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_name",is("操作系统1")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.start_time",is(1522512000)))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.last",is(20)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.addr_name",is("外环西路")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.addr_name",is("外环西路1")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.group_name",is("网工151")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.teacher_name",is("lzy")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.teacher_id",is(1)))
@@ -265,7 +265,7 @@ public class AttndControllerTests {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_name",is("计算机网络")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.start_time",is(1522512000)))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.last",is(20)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.addr_name",is("外环西路")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.addr_name",is("外环西路2")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.group_name",is("计科151")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.teacher_name",is("lzy")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.teacher_id",is(1)))
@@ -287,7 +287,7 @@ public class AttndControllerTests {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_name",is("高级网站开发")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.start_time",is(1522512000)))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.last",is(20)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.addr_name",is("外环西路")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.addr_name",is("外环西路4")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.group_name",is("")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.teacher_name",is("lzy")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.teacher_id",is(1)))
@@ -488,6 +488,26 @@ public class AttndControllerTests {
     }
 
 
+    //get his addr name ---------------------------------------------
+
+    @Test
+    public void HisAddr_user_exist()throws Exception{
+        //{"高级网站开发","计算机网络","操作系统1","编译原理"}
+        session.setAttribute(configBean.getSession_key(),new Session(1,"lzy",0,"toid123","wxsessionkey","23"));
+        mvc.perform(MockMvcRequestBuilders.get("/attnd/hisaddr")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data[0]",is("外环西路4")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data[1]",is("外环西路2")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data[2]",is("外环西路1")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data[3]",is("外环西路3")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data[4]",is("外环西路5")));
+    }
+
+
     /*------------------chk signin list-------------------*/
 
     @Test
@@ -562,6 +582,79 @@ public class AttndControllerTests {
                 .andExpect(MockMvcResultMatchers.status().is(200))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(2)));
+    }
+
+    /*---------------------------------------chkAttndlist------------------*/
+
+    @Test
+    public void attndlist_type_invalid()throws Exception{
+        mvc.perform(MockMvcRequestBuilders.get("/attndlist")
+                .param("page","1")
+                .param("page_size","10")
+                .param("list_type","0")
+                .param("query","fa")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_PARAM_INVALID)));
+    }
+
+    @Test
+    public void attndlist_chkAttnd()throws Exception{
+        mvc.perform(MockMvcRequestBuilders.get("/attndlist")
+                .param("page","1")
+                .param("page_size","10")
+                .param("list_type","1")
+                .param("query","")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
+    }
+
+    @Test
+    public void attndlist_chkAttnd_query()throws Exception{
+        mvc.perform(MockMvcRequestBuilders.get("/attndlist")
+                .param("page","1")
+                .param("page_size","10")
+                .param("list_type","1")
+                .param("query","操作")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
+    }
+
+
+    @Test
+    public void attndlist_chkAttnd_signin_query()throws Exception{
+        mvc.perform(MockMvcRequestBuilders.get("/attndlist")
+                .param("page","1")
+                .param("page_size","10")
+                .param("list_type","2")
+                .param("query","数据")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
+    }
+
+    @Test
+    public void attndlist_chkAttnd_signin_page()throws Exception{
+        mvc.perform(MockMvcRequestBuilders.get("/attndlist")
+                .param("page","1")
+                .param("page_size","1")
+                .param("list_type","2")
+                .param("query","")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
     }
 
 }

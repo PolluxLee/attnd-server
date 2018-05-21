@@ -24,6 +24,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new AuthIntercepts(configBean)).addPathPatterns("/**").excludePathPatterns("/login","/mocklogin**","/chk/session");
-        registry.addInterceptor(new PageIngercepts()).addPathPatterns("/attnd/situation");
+        registry.addInterceptor(new PageIngercepts()).addPathPatterns("/attnd/situation","/attndlist");
     }
 }

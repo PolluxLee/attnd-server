@@ -8,6 +8,7 @@ import com.lzy.attnd.constant.Code;
 import com.lzy.attnd.exception.DBProcessException;
 import com.lzy.attnd.model.Attnd;
 import com.lzy.attnd.model.Location;
+import com.lzy.attnd.model.PaginationAttnd;
 import com.lzy.attnd.service.AttndService;
 import com.lzy.attnd.utils.Utils;
 import org.slf4j.Logger;
@@ -92,6 +93,28 @@ public class AttndRepository implements AttndService {
         return cipher;
     }
 
+    private Location getLocation(String locStr){
+        if (locStr==null||locStr.equals("")){
+            return null;
+        }
+        Location location = null;
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+
+            JsonNode root = objectMapper.readTree(locStr);
+            if (root== null){
+                throw new DBProcessException("jsonNode null");
+            }
+            location = objectMapper.treeToValue(root,Location.class);
+
+        } catch (IOException ioe){
+            logger.error("ChkAttnd mapRow failed io "+ioe.getMessage());
+            throw new DBProcessException("ChkAttnd location map failed in io");
+        }
+        return location;
+    }
+
     @Override
     public Attnd ChkAttnd(String cipher) throws DataAccessException {
         Attnd attnd;
@@ -100,22 +123,7 @@ public class AttndRepository implements AttndService {
             attnd = this.jdbcTemplate.queryForObject("SELECT id,name,starttime,lasttime,location,addrname,teacherid,teachername,groupname,status,remark from attnd where cipher=?",
                     new Object[]{cipher}, (rs, i) -> {
                         String locStr = rs.getString("location");
-                        Location location = null;
-                        try {
-                            ObjectMapper objectMapper = new ObjectMapper();
-                            objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-
-                            JsonNode root = objectMapper.readTree(locStr);
-                            if (root== null){
-                                throw new DBProcessException("jsonNode null");
-                            }
-                            location = objectMapper.treeToValue(root,Location.class);
-
-                        } catch (IOException ioe){
-                            logger.error("ChkAttnd mapRow failed io "+ioe.getMessage());
-                            throw new DBProcessException("ChkAttnd location map failed in io");
-                        }
-
+                        Location location = getLocation(locStr);
                         if (location == null){
                             throw new DBProcessException("ChkAttnd location null");
                         }
@@ -141,6 +149,69 @@ public class AttndRepository implements AttndService {
             throw new DBProcessException(msg);
         }
         return list.toArray(new String[0]);
+    }
+
+    @Override
+    public @NotNull String[] ChkHisAttndAddr(@Min(1) int userID, @Min(1) int limit) throws DataAccessException {
+        List<String> list= this.jdbcTemplate.queryForList("SELECT addrname FROM attnd WHERE teacherid=? ORDER BY createdat desc LIMIT ?",String.class,userID,limit);
+        if (list==null){
+            String msg = "ChkHisAttndAddr list null";
+            logger.error(msg);
+            throw new DBProcessException(msg);
+        }
+        return list.toArray(new String[0]);
+    }
+
+    @Override
+    @Transactional
+    public PaginationAttnd ChkAttndListByUser(int userID, int start, int rows, String query) throws DataAccessException {
+        query = "%"+query+"%";
+        Object[] args = new Object[]{userID,query,start,rows};
+        String conditions = " WHERE teacherid=? AND name like ? LIMIT ?,? ";
+        List<Attnd> attnds=this.jdbcTemplate.query(
+                "SELECT id,name,cipher,starttime,lasttime,location,addrname,groupname,teachername,status FROM attnd "+conditions,
+                args,
+                (rs, i) -> {
+                    String locStr = rs.getString("location");
+                    Location location = getLocation(locStr);
+                    if (location == null){
+                        throw new DBProcessException("ChkAttndListByUser location null");
+                    }
+
+                    return new Attnd(rs.getInt("id"),rs.getString("name"),rs.getLong("starttime"),
+                            rs.getInt("lasttime"),location,rs.getString("addrname"),rs.getString("groupname"),
+                            rs.getString("teachername"),userID,rs.getString("cipher"));
+                });
+        //arg start to 0
+        args[2]=0;
+        int totalCount = this.jdbcTemplate.queryForObject("SELECT COUNT(id) FROM attnd "+conditions,args,Integer.class);
+        return new PaginationAttnd(totalCount,attnds.toArray(new Attnd[0]));
+    }
+
+    @Override
+    @Transactional
+    public PaginationAttnd ChkAttndList_SigninByUser(String signIn_openid, int start,int rows,String query) throws DataAccessException {
+        query = "%"+query+"%";
+        Object[] args = new Object[]{signIn_openid,query,start,rows};
+        String conditions = " WHERE cipher in (SELECT cipher FROM signin WHERE openid=?) AND name like ? LIMIT ?,? ";
+        List<Attnd> attnds = this.jdbcTemplate.query(
+                "SELECT id,name,cipher,starttime,lasttime,location,addrname,groupname,teachername,status,teacherid FROM attnd "+conditions,
+                args,
+                (rs, i) -> {
+                    String locStr = rs.getString("location");
+                    Location location = getLocation(locStr);
+                    if (location == null){
+                        throw new DBProcessException("ChkAttndListByUser location null");
+                    }
+
+                    return new Attnd(rs.getInt("id"),rs.getString("name"),rs.getLong("starttime"),
+                            rs.getInt("lasttime"),location,rs.getString("addrname"),rs.getString("groupname"),
+                            rs.getString("teachername"),rs.getInt("teacherid"),rs.getString("cipher"));
+                });
+        //arg start to 0
+        args[2]=0;
+        int totalCount = this.jdbcTemplate.queryForObject("SELECT COUNT(id) FROM attnd "+conditions,args,Integer.class);
+        return new PaginationAttnd(totalCount,attnds.toArray(new Attnd[0]));
     }
 }
 

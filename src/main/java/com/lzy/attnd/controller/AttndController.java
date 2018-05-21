@@ -13,6 +13,7 @@ import com.lzy.attnd.service.UserService;
 import com.lzy.attnd.utils.FeedBack;
 import com.lzy.attnd.utils.Session;
 import com.lzy.attnd.utils.Utils;
+import org.hibernate.validator.constraints.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -150,19 +151,6 @@ public class AttndController {
     }
 
 
-    /**
-     * @apiDeprecated
-     * @api {post} /api/delattnd delAttnd
-     * @apiName delAttnd
-     * @apiGroup Attnd
-     *
-     * @apiParamExample {String} Req:
-     * cipher=GZXQAS
-     *
-     *
-     */
-
-
 
     /**
      * @api {get} /api/attnd chkAttnd
@@ -218,6 +206,33 @@ public class AttndController {
     }
 
     /**
+     * @api {get} /api/attnd/hisaddr chkAttnd_hisAddr
+     * @apiName chkAttnd_hisAddr
+     * @apiGroup Attnd
+     * @apiDescription get latest top 15
+     *
+     * @apiSuccessExample {json} Resp:
+     * {"code":1000,"msg":"","data":["理科南305","文新楼317"]}
+     */
+    /***/
+    @GetMapping("/attnd/hisaddr")
+    public FeedBack chkAttndHisAddr(
+            @RequestAttribute("attnd") Session session
+    ){
+        if (!session.IsUserRealyExist()){
+            return new FeedBack(Code.GLOBAL_USER_NOT_EXIST);
+        }
+        String[] hisName = attndService.ChkHisAttndAddr(session.getUserID(),15);
+        if (hisName==null || hisName.length<=0){
+            String msg = "chkAttndHisAddr hisName empty or null";
+            logger.warn(msg);
+            return FeedBack.SYS_ERROR(msg);
+        }
+        return FeedBack.SUCCESS(hisName);
+    }
+
+
+    /**
      * @apiDefine Pagination
      * @apiParam {Number{1..}} page  分页页号 1开始
      * @apiParam {Number{1..}} page_size  每页长度
@@ -230,7 +245,6 @@ public class AttndController {
 
 
     /**
-     * @apiDeprecated
      * @api {get} /api/attndlist chkAttndlist
      * @apiName chkAttndlist
      * @apiGroup Attnd
@@ -240,9 +254,41 @@ public class AttndController {
      * @apiParam list_type {Number=1,2} 查看的是 1->我创建的考勤/2->我的签到
      *
      * @apiSuccessExample {json} Resp:
-     * {"code":1000,"msg":"","data":{"count":10,"attnds":[{"attnd_id":12335,"cipher":"JQS52","attnd_name":"操作系统","start_time":15577418,"last":50,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"teacher_name":"wjx"},{"attnd_id":14475,"cipher":"CX6q52","attnd_name":"计算机网络","start_time":15566788,"last":50,"location":{"latitude":36.4,"longitude":175.4,"accuracy":30.0},"teacher_name":"lzp"}]}}
+     * {"code":1000,"msg":"","data":{"attnds":[{"attnd_id":1,"attnd_name":"操作系统1","start_time":1522512000,"last":20,"location":{"latitude":23.4,"longitude":174.4,"accuracy":30.0},"addr_name":"外环西路","group_name":"网工151","teacher_name":"lzy","teacher_id":1,"cipher":"Gwvk1"}],"count":1}}
      *
      */
+    /***/
+    @GetMapping("/attndlist")
+    public FeedBack chkAttndList(
+            @RequestAttribute("attnd") Session session,
+            @Min(0) @RequestAttribute("start") int start,
+            @Min(1) @RequestAttribute("rows") int rows,
+            @NotNull @Size(max = 50)@RequestParam("query") String query,
+            @Range(min = 1,max = 2) @RequestParam("list_type") int listType
+    ){
+        int userID = session.getUserID();
+        if(userID<=0){
+            return FeedBack.USER_NOT_EXIST("");
+        }
+
+        PaginationAttnd attndsPage = null;
+
+        if (listType==1){
+            attndsPage = attndService.ChkAttndListByUser(userID,start,rows,query);
+        }
+
+        if (listType == 2){
+            attndsPage = attndService.ChkAttndList_SigninByUser(session.getOpenid(),start,rows,query);
+        }
+
+        if (attndsPage==null){
+            String msg = "chkAttndList unreachable branch in attndspage null";
+            logger.error(msg);
+            return FeedBack.SYS_ERROR(msg);
+        }
+
+        return FeedBack.SUCCESS(attndsPage);
+    }
 
     public static long testTimestamp = 0;
 
@@ -416,6 +462,20 @@ public class AttndController {
         return FeedBack.SUCCESS(fbJson);
     }
 
+
+
+    /**
+     * @apiDeprecated
+     * @api {post} /api/delattnd delAttnd
+     * @apiName delAttnd
+     * @apiGroup Attnd
+     *
+     * @apiParamExample {String} Req:
+     * cipher=GZXQAS
+     *
+     *
+     */
+
     /**
      * @apiDeprecated
      * @api {post} /api/signin/situation updSignSituation
@@ -423,10 +483,10 @@ public class AttndController {
      * @apiGroup Attnd
      *
      * @apiParam {Number{1-}} attnd_id id for attendance
-     * @apiParam {String} stu_id id for student to upd not empty
-     * @apiParam {Number=1,2} attnd_status studnet attendance status 1-> ok 2-> not ok
+     * @apiParam {String} openid openid for student who signin
+     * @apiParam {Number=1,2} attnd_status student attendance status 1-> ok 2-> not ok
      * @apiParamExample {String} Req:
-     * attnd_id=1248&stu_id=1506200023&attnd_status=2
+     * attnd_id=1248&openid=1506200023&attnd_status=2
      *
      *
      */
