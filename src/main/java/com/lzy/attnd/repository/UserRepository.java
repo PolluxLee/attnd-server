@@ -3,6 +3,7 @@ package com.lzy.attnd.repository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.lzy.attnd.constant.Code;
 import com.lzy.attnd.exception.DBProcessException;
 import com.lzy.attnd.model.User;
 import com.lzy.attnd.service.UserService;
@@ -138,7 +139,7 @@ public class UserRepository implements UserService {
         //group exist
         int groupID;
         try {
-            groupID = this.jdbcTemplate.queryForObject("SELECT id FROM usergroup WHERE name=? and creatorid=?",new Object[]{groupName,creatorID},int.class);
+            groupID = this.jdbcTemplate.queryForObject("SELECT id FROM usergroup WHERE name=? and creatorid=? and status<>? ",new Object[]{groupName,creatorID, Code.GROUP_DEL},int.class);
         } catch (EmptyResultDataAccessException e) {
             throw new DBProcessException("group not exist");
         }
@@ -158,7 +159,7 @@ public class UserRepository implements UserService {
     public boolean AddUserToGroupByID(String openid,int groupID) throws DataAccessException {
         //group exist
         try {
-            this.jdbcTemplate.queryForObject("SELECT 1 FROM usergroup WHERE id=?",new Object[]{groupID},int.class);
+            this.jdbcTemplate.queryForObject("SELECT 1 FROM usergroup WHERE id=? and status<>?",new Object[]{groupID, Code.GROUP_DEL},int.class);
         } catch (EmptyResultDataAccessException e) {
             throw new DBProcessException("group not exist");
         }

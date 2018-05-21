@@ -26,4 +26,4 @@
 
 #configure
 log
-test.compose.sh
+test.*.sh

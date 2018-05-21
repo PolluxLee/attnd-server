@@ -17,6 +17,7 @@ import org.hibernate.validator.constraints.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.MultiValueMap;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -305,6 +306,9 @@ public class AttndController {
      * @apiParamExample {json} Req:
      * {"cipher":"X574AQ","location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0}}
      *
+     * @apiSuccessParam {Number} data 1-->ok 2-->location beyond 3-->expired
+     * @apiSuccessExample {json} Resp:
+     * {"code":1000,"msg":"","data":1}
      */
     /***/
     @PostMapping("/attnd/signin")
@@ -379,6 +383,7 @@ public class AttndController {
             return new FB(Code.ATTND_HAS_SIGNIN);
         }
 
+        //TODO if user is attnd creator --> return
         //TODO if type = A --> judge user is this group
 
         if (attnd_type==Code.CIPHER_ENTRY){
@@ -396,11 +401,7 @@ public class AttndController {
                 attnd,signLoc,AttndController.testTimestamp==0?System.currentTimeMillis():AttndController.testTimestamp,
                 configBean.getMeter_limit(),signIn);
 
-        if (signInFlag==Code.SIGNIN_EXPIRED)
-            return new FB(Code.ATTND_EXPIRED);
-
         signIn.setStatus(signInFlag);
-
         boolean signInSuccess = signInService.AddSignInRecord(signIn);
         if (!signInSuccess){
             return FB.DB_FAILED("SignIn AddSignInRecord failed");
@@ -468,22 +469,63 @@ public class AttndController {
 
 
     /**
-     * @apiDeprecated
-     * @api {post} /api/delattnd delAttnd
+     * @api {post} /api/attnd/del delAttnd
      * @apiName delAttnd
      * @apiGroup Attnd
+     * @apiDescription [Condition]:only when the attnd has expired or stop by creator
+     * [Effected]:
+     * 1.ChkAttnd
+     * 2.ChkHisAttndName
+     * 3.ChkHisAttndAddr
+     * 4.ChkAttndListByUser
+     * 5.ChkAttndList_SigninByUser
      *
      * @apiParamExample {String} Req:
      * cipher=GZXQAS
      *
-     *
+     * @apiError (Error-Code) 3005 attnd has del
+     * @apiError (Error-Code) 3006 attnd is going an not be del
      */
+    /***/
+    @PostMapping("/attnd/del")
+    public FB delAttnd(
+            @RequestAttribute("attnd") Session session,
+            @RequestBody MultiValueMap<String,String> formData
+    ){
+        String cipher = formData.getFirst("cipher");
+        if (cipher==null||cipher.equals("")||cipher.length()>50){
+            return FB.PARAM_INVALID("cipher invalid");
+        }
+
+        if (session.getUserID()<=0){
+            return FB.USER_NOT_EXIST("");
+        }
+
+        long nowTimeStamp = testTimestamp==0?System.currentTimeMillis():testTimestamp;
+
+        Attnd attnd = attndService.ChkAttndStatus(cipher);
+
+        if (attnd.getStatus()==Code.ATTND_DEL){
+            return new FB(Code.ATTND_HAS_DEL);
+        }
+
+        if (nowTimeStamp<=attnd.getStart_time()+attnd.getLast()*60*1000){
+            return new FB(Code.ATTND_ONGOING);
+        }
+
+        if(!attndService.UpdAttndStatus(cipher,Code.ATTND_DEL,session.getUserID())){
+            return FB.DB_FAILED("UpdAttndStatus failed");
+        }
+
+        return FB.SUCCESS();
+    }
 
     /**
      * @apiDeprecated
-     * @api {post} /api/signin/situation updSignSituation
+     * @api {post} /api/signin/situation/upd updSignSituation
      * @apiName updAttndSituation
      * @apiGroup Attnd
+     * @apiDescription [Condition]:only when the attnd has expired or stop by creator
      *
      * @apiParam {Number{1-}} attnd_id id for attendance
      * @apiParam {String} openid openid for student who signin

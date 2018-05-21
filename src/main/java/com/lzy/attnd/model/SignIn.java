@@ -57,11 +57,11 @@ public class SignIn extends Base {
         this.location = location;
     }
 
-    public Double getDistance() {
+    public double getDistance() {
         return distance;
     }
 
-    public void setDistance(Double distance) {
+    public void setDistance(double distance) {
         this.distance = distance;
     }
 
@@ -78,10 +78,10 @@ public class SignIn extends Base {
     @Valid
     private Location location;
     @Min(value = 0,groups = Dist.class)
-    private Double distance;
+    private double distance;
 
 
-    public SignIn(@NotNull(groups = {Remark.class, BaseAll.class}) Object remark, @Min(value = 0, groups = {Status.class, BaseAll.class}) int status, @Min(value = 1, groups = {ID.class, All.class}) int id, @NotBlank(groups = {Openid.class, All.class}) @Size(max = 50, groups = {Openid.class, All.class}) String openid, @NotBlank(groups = {Cipher.class, All.class}) @Size(max = 50, groups = {Cipher.class, All.class}) String cipher, @NotNull(groups = {Location_Struct.class, All.class}) @Valid Location location, @Min(value = 0, groups = Dist.class) Double distance) {
+    public SignIn(@NotNull(groups = {Remark.class, BaseAll.class}) Object remark, @Min(value = 0, groups = {Status.class, BaseAll.class}) int status, @Min(value = 1, groups = {ID.class, All.class}) int id, @NotBlank(groups = {Openid.class, All.class}) @Size(max = 50, groups = {Openid.class, All.class}) String openid, @NotBlank(groups = {Cipher.class, All.class}) @Size(max = 50, groups = {Cipher.class, All.class}) String cipher, @NotNull(groups = {Location_Struct.class, All.class}) @Valid Location location, @Min(value = 0, groups = Dist.class) double distance) {
         super(remark, status);
         this.id = id;
         this.openid = openid;
@@ -90,7 +90,7 @@ public class SignIn extends Base {
         this.distance = distance;
     }
 
-    public SignIn(@Min(value = 1, groups = {ID.class, All.class}) int id, @NotBlank(groups = {Openid.class, All.class}) @Size(max = 50, groups = {Openid.class, All.class}) String openid, @NotBlank(groups = {Cipher.class, All.class}) @Size(max = 50, groups = {Cipher.class, All.class}) String cipher, @NotNull(groups = {Location_Struct.class, All.class}) @Valid Location location, @Min(value = 0, groups = Dist.class) Double distance) {
+    public SignIn(@Min(value = 1, groups = {ID.class, All.class}) int id, @NotBlank(groups = {Openid.class, All.class}) @Size(max = 50, groups = {Openid.class, All.class}) String openid, @NotBlank(groups = {Cipher.class, All.class}) @Size(max = 50, groups = {Cipher.class, All.class}) String cipher, @NotNull(groups = {Location_Struct.class, All.class}) @Valid Location location, @Min(value = 0, groups = Dist.class) double distance) {
         this.id = id;
         this.openid = openid;
         this.cipher = cipher;

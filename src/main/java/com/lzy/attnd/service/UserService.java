@@ -32,8 +32,9 @@ public interface UserService {
 
     boolean ChkUserExist(@NotBlank String openid) throws DataAccessException;
 
+    //exclude group del
     boolean AddUserToGroup(@NotBlank String openid,@NotBlank String groupName, @Min(1) int creatorID) throws DataAccessException;
-
+    //exclude group del
     boolean AddUserToGroupByID(@NotBlank String openid,@Min(1) int groupID) throws DataAccessException;
 
     User[] ChkUserListByGroupID(@Min(1) int groupID) throws DataAccessException;

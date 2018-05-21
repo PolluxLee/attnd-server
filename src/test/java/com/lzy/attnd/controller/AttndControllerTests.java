@@ -7,6 +7,7 @@ import com.lzy.attnd.service.SignInService;
 import com.lzy.attnd.service.WechatService;
 import com.lzy.attnd.utils.Session;
 import org.hamcrest.Matchers;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,6 +28,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
+import static com.lzy.attnd.controller.AttndController.testTimestamp;
 import static org.hamcrest.Matchers.*;
 
 @ActiveProfiles("test")
@@ -49,6 +51,11 @@ public class AttndControllerTests {
         mvc = MockMvcBuilders.webAppContextSetup(wac).build(); //初始化MockMvc对象
         session = new MockHttpSession();
         session.setAttribute(configBean.getSession_key(),new Session(1,"lzy",0,"toid123","wxsessionkey","23"));
+    }
+
+    @After
+    public void clean(){
+        testTimestamp = 0;
     }
 
     /**
@@ -365,7 +372,7 @@ public class AttndControllerTests {
     @Test
     @Transactional
     public void SignIn_normal_attnd_expired()throws Exception{
-        AttndController.testTimestamp = System.currentTimeMillis();
+        testTimestamp = System.currentTimeMillis();
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"cipher\":\"Awvq3\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0}}")
@@ -373,14 +380,15 @@ public class AttndControllerTests {
         )
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_EXPIRED)));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data",is(Code.SIGNIN_EXPIRED)));
     }
 
     @Test
     @Transactional
     public void SignIn_normal_location_beyond()throws Exception{
         //sign in at 10 minutes later after add attnd
-        AttndController.testTimestamp = 1522512000+10*60;
+        testTimestamp = 1522512000+10*60;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"cipher\":\"Awvq3\",\"location\":{\"latitude\":23.4,\"longitude\":150.4005,\"accuracy\":30.0}}")
@@ -396,7 +404,7 @@ public class AttndControllerTests {
     @Transactional
     public void SignIn_normal_ok()throws Exception{
         //sign in at 10 minutes later after add attnd
-        AttndController.testTimestamp = 1522512000+10*60;
+        testTimestamp = 1522512000+10*60;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"cipher\":\"Awvq3\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0}}")
@@ -413,7 +421,7 @@ public class AttndControllerTests {
     @Transactional
     public void SignIn_NOGROUP_ok()throws Exception{
         //sign in at 10 minutes later after add attnd
-        AttndController.testTimestamp = 1522512000+10*60;
+        testTimestamp = 1522512000+10*60;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"cipher\":\"NQSA4\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0}}")
@@ -430,7 +438,7 @@ public class AttndControllerTests {
     public void SignIn_GROUP_ok()throws Exception{
         session.setAttribute(configBean.getSession_key(),new Session(2,"lzp",0,"toid456","wxsessionkey","25"));
         //sign in at 10 minutes later after add attnd
-        AttndController.testTimestamp = 1522512000+10*60;
+        testTimestamp = 1522512000+10*60;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"cipher\":\"Gwvk1\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0}}")
@@ -446,7 +454,7 @@ public class AttndControllerTests {
     @Transactional
     public void SignIn_Entry_TOGROUP_1()throws Exception{
         //sign in at 10 minutes later after add attnd
-        AttndController.testTimestamp = 1522512000+10*60;
+        testTimestamp = 1522512000+10*60;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"cipher\":\"Swvk1\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0}}")
@@ -657,4 +665,46 @@ public class AttndControllerTests {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
     }
 
+    /**-----------------del ATTND --------------------------*/
+    @Test
+    @Transactional
+    public void delAttnd_ongoing()throws Exception{
+        testTimestamp=1522512000+10*60*1000;
+        mvc.perform(MockMvcRequestBuilders.post("/attnd/del")
+                .content("cipher=Awvq1")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_ONGOING)));
+    }
+
+    @Test
+    @Transactional
+    public void delAttnd_hasdel()throws Exception{
+        testTimestamp=1522512000+30*60*1000;
+        mvc.perform(MockMvcRequestBuilders.post("/attnd/del")
+                .content("cipher=GZXQ6")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_HAS_DEL)));
+    }
+
+    @Test
+    @Transactional
+    public void delAttnd_success()throws Exception{
+        testTimestamp=1522512000+30*60*1000;
+        mvc.perform(MockMvcRequestBuilders.post("/attnd/del")
+                .content("cipher=Awvq1")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
+    }
 }

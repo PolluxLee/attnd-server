@@ -1,9 +1,11 @@
 package com.lzy.attnd.repository;
 
+import com.lzy.attnd.constant.Code;
 import com.lzy.attnd.exception.DBProcessException;
 import com.lzy.attnd.model.User;
 import com.lzy.attnd.model.UserGroup;
 import com.lzy.attnd.service.UserGroupService;
+import org.hibernate.validator.constraints.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +37,7 @@ public class UserGroupRepository implements UserGroupService {
     public int ChkUserGroupExistByName(UserGroup userGroup) throws DataAccessException {
         int id;
         try {
-            id = this.jdbcTemplate.queryForObject("SELECT id FROM usergroup WHERE name=? AND creatorid=?",new Object[]{userGroup.getName(),userGroup.getCreator_id()},Integer.class);
+            id = this.jdbcTemplate.queryForObject("SELECT id FROM usergroup WHERE name=? AND creatorid=?  and status<>? ",new Object[]{userGroup.getName(),userGroup.getCreator_id(), Code.GROUP_DEL},Integer.class);
         } catch (EmptyResultDataAccessException ere) {
             return 0;
         }
@@ -59,10 +61,10 @@ public class UserGroupRepository implements UserGroupService {
     }
 
     @Override
-    public String[] ChkGroupByUser(int creatorID, int limit) throws DataAccessException {
-        List<String> list= this.jdbcTemplate.queryForList("SELECT name FROM usergroup WHERE creatorid=? ORDER BY createdat desc LIMIT ?",String.class,creatorID,limit);
+    public String[] ChkGroupNameByCreator(int creatorID, int limit) throws DataAccessException {
+        List<String> list= this.jdbcTemplate.queryForList("SELECT name FROM usergroup WHERE creatorid=? AND status<>? ORDER BY createdat desc LIMIT ?",String.class,creatorID,Code.GROUP_DEL,limit);
         if (list==null){
-            String msg = "ChkGroupInfoByUser list null";
+            String msg = "ChkGroupInfoByGroupID list null";
             logger.error(msg);
             throw new DBProcessException(msg);
         }
@@ -72,8 +74,8 @@ public class UserGroupRepository implements UserGroupService {
     @Override
     public UserGroup[] ChkGroupListByUser(int creatorID) throws DataAccessException {
         List<UserGroup> attndStateList=this.jdbcTemplate.query(
-                "SELECT id,name,creatorname,status FROM usergroup WHERE creatorid=?",
-                new Object[]{creatorID},
+                "SELECT id,name,creatorname,status FROM usergroup WHERE creatorid=? AND status<>? ",
+                new Object[]{creatorID,Code.GROUP_DEL},
                 (rs, i) -> new UserGroup(new Object(),rs.getInt("status"),
                         rs.getInt("id"),rs.getString("name"),creatorID,rs.getString("creatorname")));
 
@@ -81,7 +83,7 @@ public class UserGroupRepository implements UserGroupService {
     }
 
     @Override
-    public UserGroup ChkGroupInfoByUser(int groupID) throws DataAccessException {
+    public UserGroup ChkGroupInfoByGroupID(int groupID) throws DataAccessException {
         UserGroup userGroup = null;
         try {
             userGroup = this.jdbcTemplate.queryForObject(
@@ -102,5 +104,10 @@ public class UserGroupRepository implements UserGroupService {
                 new Object[]{Integer.toString(groupID),start,rows},
                 (rs, i) -> new User(rs.getInt("id"),rs.getString("name"),rs.getString("openid"),new Object(),rs.getInt("status"),rs.getString("stuid"),null));
         return userList.toArray(new User[0]);
+    }
+
+    @Override
+    public boolean UpdGroupStatus(int status,int groupID,int creatorID) throws DataAccessException {
+        return 1==this.jdbcTemplate.update("UPDATE usergroup SET status=? WHERE id=? AND creatorid=?",status,groupID,creatorID);
     }
 }

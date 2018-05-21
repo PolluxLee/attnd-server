@@ -43,7 +43,7 @@ public class UserGroupController {
         if (session.getUserID()<=0){
             return FB.USER_NOT_EXIST("");
         }
-        String[] groupNames =userGroupService.ChkGroupByUser(session.getUserID(),50);
+        String[] groupNames =userGroupService.ChkGroupNameByCreator(session.getUserID(),50);
         if (groupNames==null){
             return FB.SYS_ERROR("chkGroupNameByUser groupNames null ");
         }
@@ -95,7 +95,7 @@ public class UserGroupController {
     ){
         //TODO privilege control
 
-        UserGroup userGroup = userGroupService.ChkGroupInfoByUser(groupID);
+        UserGroup userGroup = userGroupService.ChkGroupInfoByGroupID(groupID);
         if (userGroup==null){
             return new FB(Code.GROUP_NOTEXIST);
         }
@@ -139,21 +139,48 @@ public class UserGroupController {
     }
 
     /**
-     * @apiDeprecated
-     * @api {post} /api/delgroup delUserGroup
+     * @api {post} /api/group/del delUserGroup
      * @apiName delUserGroup
      * @apiGroup Group
+     * @apiDescription [Effected]:
+     * 1. add user to group (AddUserToGroup)
+     * 2. chk group exist by name (ChkUserGroupExistByName)
+     * 3. chk his group name (ChkGroupNameByCreator)
+     * 4. chk group list    (ChkGroupListByUser)
+     * [Condition]: user is the creator of the group
+     *
      *
      * @apiParam {Number{1-}} group_id id for attendance
      * @apiParamExample {String} Req:
      * group_id=1248
      *
-     *
      */
+    /***/
+    @PostMapping("/group/del")
+    public FB delGroup(
+            @RequestAttribute("attnd") Session session,
+            @RequestBody MultiValueMap<String,String> formData
+    ){
+        String rawGroupID = formData.getFirst("group_id");
+        if (rawGroupID==null||Integer.valueOf(rawGroupID)<=0){
+            return FB.PARAM_INVALID("rawGroupID invalid");
+        }
+        int groupID = Integer.valueOf(rawGroupID);
+
+        if (session.getUserID()<=0){
+            return FB.USER_NOT_EXIST("");
+        }
+
+        if(!userGroupService.UpdGroupStatus(Code.GROUP_DEL,groupID,session.getUserID())){
+            return FB.DB_FAILED("UpdGroupStatus failed");
+        }
+
+        return FB.SUCCESS();
+    }
 
     /**
      * @apiDeprecated
-     * @api {post} /api/group/adduser addUserToGroup
+     * @api {post} /api/group/user/add addUserToGroup
      * @apiName addUserToGroup
      * @apiGroup Group
      * @apiDescription get cipher

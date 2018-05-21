@@ -12,15 +12,17 @@ services:
     - "3306:3306"
    volumes:
     - "./docker/mysql/conf:/etc/mysql/conf.d"
+    - "./docker/mysql/data:/var/lib/mysql"
 
   cache:
    container_name: attnd-redis
    image: redis
-   command: ["redis-server", "/etc/redis.conf", "--requirepass", "${CACHE_PASSWORD}"]
+   command: ["redis-server", "/etc/redis.conf", "--requirepass", "${CACHE_PASSWORD}","--appendonly yes"]
    ports:
     - "6379:6379"
    volumes:
        - "./docker/redis/conf/redis.conf:/etc/redis.conf"
+       - "./docker/redis/data:/data"
 
   app:
    image: maven:3.5-jdk-8

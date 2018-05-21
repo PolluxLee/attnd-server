@@ -11,6 +11,7 @@ import com.lzy.attnd.model.Location;
 import com.lzy.attnd.model.PaginationAttnd;
 import com.lzy.attnd.service.AttndService;
 import com.lzy.attnd.utils.Utils;
+import org.hibernate.validator.constraints.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import javax.sql.RowSet;
+import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -119,10 +121,9 @@ public class AttndRepository implements AttndService {
     @Override
     public Attnd ChkAttnd(String cipher) throws DataAccessException {
         Attnd attnd;
-
         try {
-            attnd = this.jdbcTemplate.queryForObject("SELECT id,name,starttime,lasttime,location,addrname,teacherid,teachername,groupname,status,remark from attnd where cipher=?",
-                    new Object[]{cipher}, (rs, i) -> {
+            attnd = this.jdbcTemplate.queryForObject("SELECT id,name,starttime,lasttime,location,addrname,teacherid,teachername,groupname,status,remark from attnd where cipher=? AND status<>? ",
+                    new Object[]{cipher,Code.ATTND_DEL}, (rs, i) -> {
                         String locStr = rs.getString("location");
                         Location location = getLocation(locStr);
                         if (location == null){
@@ -143,10 +144,7 @@ public class AttndRepository implements AttndService {
 
     @Override
     public String[] ChkHisAttndName(int userID,int limit) throws DataAccessException {
-        List<String> list= this.jdbcTemplate.queryForList("SELECT name FROM attnd WHERE teacherid=? GROUP BY name ORDER BY max(createdat) desc limit ? " +
-                "" +
-                "" +
-                "",String.class,userID,limit);
+        List<String> list= this.jdbcTemplate.queryForList("SELECT name FROM attnd WHERE teacherid=?  AND status<>?  GROUP BY name ORDER BY max(createdat) desc limit ? ",String.class,userID,Code.ATTND_DEL,limit);
         if (list==null){
             String msg = "ChkHisAttndName list null";
             logger.error(msg);
@@ -157,7 +155,7 @@ public class AttndRepository implements AttndService {
 
     @Override
     public @NotNull String[] ChkHisAttndAddr(@Min(1) int userID, @Min(1) int limit) throws DataAccessException {
-        List<String> list= this.jdbcTemplate.queryForList("SELECT addrname FROM attnd WHERE teacherid=? GROUP BY addrname ORDER BY max(createdat) desc limit ?",String.class,userID,limit);
+        List<String> list= this.jdbcTemplate.queryForList("SELECT addrname FROM attnd WHERE teacherid=?  AND status<>? GROUP BY addrname ORDER BY max(createdat) desc limit ?",String.class,userID,Code.ATTND_DEL,limit);
         if (list==null){
             String msg = "ChkHisAttndAddr list null";
             logger.error(msg);
@@ -170,8 +168,8 @@ public class AttndRepository implements AttndService {
     @Transactional
     public PaginationAttnd ChkAttndListByUser(int userID, int start, int rows, String query) throws DataAccessException {
         query = "%"+query+"%";
-        Object[] args = new Object[]{userID,query,start,rows};
-        String conditions = " WHERE teacherid=? AND name like ? LIMIT ?,? ";
+        Object[] args = new Object[]{userID,query,Code.ATTND_DEL,start,rows};
+        String conditions = " WHERE teacherid=? AND name like ?  AND status<>?  LIMIT ?,? ";
         List<Attnd> attnds=this.jdbcTemplate.query(
                 "SELECT id,name,cipher,starttime,lasttime,location,addrname,groupname,teachername,status FROM attnd "+conditions,
                 args,
@@ -196,8 +194,8 @@ public class AttndRepository implements AttndService {
     @Transactional
     public PaginationAttnd ChkAttndList_SigninByUser(String signIn_openid, int start,int rows,String query) throws DataAccessException {
         query = "%"+query+"%";
-        Object[] args = new Object[]{signIn_openid,query,start,rows};
-        String conditions = " WHERE cipher in (SELECT cipher FROM signin WHERE openid=?) AND name like ? LIMIT ?,? ";
+        Object[] args = new Object[]{signIn_openid,query,Code.ATTND_DEL,start,rows};
+        String conditions = " WHERE cipher in (SELECT cipher FROM signin WHERE openid=?) AND name like ?  AND status<>?  LIMIT ?,? ";
         List<Attnd> attnds = this.jdbcTemplate.query(
                 "SELECT id,name,cipher,starttime,lasttime,location,addrname,groupname,teachername,status,teacherid FROM attnd "+conditions,
                 args,
@@ -216,6 +214,31 @@ public class AttndRepository implements AttndService {
         args[2]=0;
         int totalCount = this.jdbcTemplate.queryForObject("SELECT COUNT(id) FROM attnd "+conditions,args,Integer.class);
         return new PaginationAttnd(totalCount,attnds.toArray(new Attnd[0]));
+    }
+
+
+    @Override
+    public boolean UpdAttndStatus(String cipher, int status, int creatorID) throws DataAccessException {
+        return 1==this.jdbcTemplate.update("UPDATE attnd SET status=? WHERE teacherid=? AND cipher=?",status,creatorID,cipher);
+    }
+
+    @Override
+    public Attnd ChkAttndStatus(String cipher) throws DataAccessException {
+        Attnd attnd;
+        try {
+            attnd = this.jdbcTemplate.queryForObject("SELECT starttime,lasttime,status from attnd where cipher=?",
+                    new Object[]{cipher}, (rs, i) -> {
+                        Attnd attndInner = new Attnd();
+                        attndInner.setStart_time(rs.getLong("starttime"));
+                        attndInner.setLast(rs.getInt("lasttime"));
+                        attndInner.setStatus(rs.getInt("status"));
+                        attndInner.setCipher(cipher);
+                        return attndInner; }
+                    );
+        } catch (EmptyResultDataAccessException erdae) {
+            return null;
+        }
+        return attnd;
     }
 }
 

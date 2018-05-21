@@ -40,18 +40,20 @@ public class Utils {
             logger.error(msg);
             throw new SysErrException(msg);
         }
-        if (signInTime>attnd.getStart_time()+attnd.getLast()*60*1000){
-            return Code.SIGNIN_EXPIRED;
+
+        int signin_status = Code.SIGNIN_OK;
+
+        double dist = Location.calDistanceBetweenLocation(attnd.getLocation(),signInLocation);
+        if (dist>signDistanceLimit){
+            signin_status = Code.SIGNIN_LOCATION_BEYOND;
         }
 
-        Double dist = Location.calDistanceBetweenLocation(attnd.getLocation(),signInLocation);
-        if (dist>signDistanceLimit){
-            signIn.setDistance(dist);
-            return Code.SIGNIN_LOCATION_BEYOND;
+        if (signInTime>attnd.getStart_time()+attnd.getLast()*60*1000){
+            signin_status = Code.SIGNIN_EXPIRED;
         }
 
         signIn.setDistance(dist);
-        return Code.SIGNIN_OK;
+        return signin_status;
     }
 
     public static char GetTypeViaStatus(int attnd_status){

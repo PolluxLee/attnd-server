@@ -1,8 +1,10 @@
 package com.lzy.attnd.service;
 
 
+import com.lzy.attnd.constant.Code;
 import com.lzy.attnd.model.Attnd;
 import com.lzy.attnd.model.PaginationAttnd;
+import org.hibernate.validator.constraints.Range;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -21,14 +23,24 @@ public interface AttndService {
         //if group <=0 cipher build with attnd_id otherwise groupID
     String AddAttnd(@Valid Attnd attnd,int groupID) throws DataAccessException;
 
+    //exclude by del
     @Validated({Attnd.All.class,Attnd.BaseAll.class})
     @Valid Attnd ChkAttnd(@NotBlank(groups = Attnd.All.class) String cipher) throws DataAccessException;
 
+    //exclude by del
     @NotNull String[] ChkHisAttndName(@Min(1) int userID, @Min(1) int limit)throws DataAccessException;
 
+    //exclude by del
     @NotNull String[] ChkHisAttndAddr(@Min(1) int userID, @Min(1) int limit)throws DataAccessException;
 
+    //exclude by del
     @NotNull PaginationAttnd ChkAttndListByUser(@Min(1) int userID, @Min(0) int start, @Min(1) int rows,@NotNull String query) throws DataAccessException;
 
+    //exclude by del
     @NotNull PaginationAttnd ChkAttndList_SigninByUser(@NotBlank String signIn_openid, @Min(0) int start, @Min(1) int rows, @NotNull String query) throws DataAccessException;
+
+    boolean UpdAttndStatus(@NotBlank String cipher, @Range(min = Code.ATTND_DEL,max = Code.ATTND_DEL) int status, @Min(1) int creatorID) throws DataAccessException;
+
+    @Validated({Attnd.Status.class,Attnd.StartTime.class,Attnd.Last.class,Attnd.Cipher.class})
+    @Valid Attnd ChkAttndStatus(@NotBlank(groups = Attnd.Cipher.class) String cipher) throws DataAccessException;
 }
