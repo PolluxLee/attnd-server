@@ -10,7 +10,7 @@ services:
 - docker
 
 script:
-  - docker-compose -f docker-compose-travis.yml up
+  - docker-compose -f docker-compose-travis.yml up --exit-code-from app
 
 addons:
   ssh_known_hosts:
