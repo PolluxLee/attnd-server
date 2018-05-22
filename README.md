@@ -35,5 +35,4 @@ export TEST_SW=off
 ```
 
 - `git clone https://github.com/WisperDin/attnd-server.git`
-- `docker-compose build`
 - `docker-compose up`
