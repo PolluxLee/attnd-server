@@ -2,7 +2,7 @@
 A back-end server of the WeChat attendance applet implemented using the spring boot framework
 
 # Environment(Integrated in Docker)
-- Spring boot v2.0.1
+- Spring boot v2.0.2
 - Mysql v8.0.11
 - Redis v4.0.9
 - Maven v3.5

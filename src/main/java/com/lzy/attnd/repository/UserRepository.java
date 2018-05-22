@@ -168,7 +168,13 @@ public class UserRepository implements UserService {
     }
 
     @Override
-    public User[] ChkUserListByGroupID(int groupID) throws DataAccessException {
-        return new User[0];
+    public boolean ChkUserIsGroupByGroupID(int userID, int groupID) throws DataAccessException {
+        try {
+            this.jdbcTemplate.queryForObject("SELECT 1 FROM user WHERE id=? AND JSON_CONTAINS(groupid,?,'$')=1",
+                    new Object[]{userID,Integer.toString(groupID)},int.class);
+        } catch (EmptyResultDataAccessException e) {
+            return false;
+        }
+        return true;
     }
 }

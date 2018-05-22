@@ -1,7 +1,9 @@
 package com.lzy.attnd.interception;
 
 import com.lzy.attnd.configure.ConfigBean;
+import com.lzy.attnd.constant.Code;
 import com.lzy.attnd.exception.NoAuthException;
+import com.lzy.attnd.exception.VisitorNoAuthException;
 import com.lzy.attnd.repository.UserRepository;
 import com.lzy.attnd.utils.Session;
 import org.slf4j.Logger;
@@ -13,6 +15,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.util.Map;
 
 
 public class AuthIntercepts implements HandlerInterceptor {
@@ -20,8 +23,11 @@ public class AuthIntercepts implements HandlerInterceptor {
 
     private final ConfigBean configBean;
 
-    public AuthIntercepts(ConfigBean configBean) {
+    private final Map<String,Integer> rightMap;
+
+    public AuthIntercepts(ConfigBean configBean,Map<String,Integer> rightMap) {
         this.configBean = configBean;
+        this.rightMap = rightMap;
     }
 
     @Override
@@ -44,6 +50,17 @@ public class AuthIntercepts implements HandlerInterceptor {
         if (session==null||session.getOpenid()==null||session.getOpenid().equals("")){
             throw new NoAuthException("session openid invalid");
         }
+
+        String key = request.getMethod().toUpperCase() + request.getRequestURI();
+        if (rightMap.containsKey(key)){
+            int rightCode = rightMap.get(key);
+            if (rightCode == Code.RIGHT_USER &&
+                (session.getUserID()<=0 || session.getName()==null ||session.getName().equals("")
+                        ||session.getStuid()==null || session.getStuid().equals(""))){
+                throw new VisitorNoAuthException("");
+            }
+        }
+
         request.setAttribute("attnd",session);
 
         return true;

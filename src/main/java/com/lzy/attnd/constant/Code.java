@@ -23,6 +23,10 @@ public interface Code {
     //attnd has del
     int ATTND_HAS_DEL = 3005;
     int ATTND_ONGOING = 3006;
+    //sign in and type is 'A' and user not in the group
+    int SIGNIN_NOT_BELONG_GROUP = 3007;
+    //attnd creator not allow to signin
+    int SIGNIN_CREATOR = 3008;
 
     int GROUP_NOTEXIST=4001;
 
@@ -51,4 +55,7 @@ public interface Code {
     int GROUP_DEL=2;
 
 
+    //right control code
+    int RIGHT_VISITOR = 1;
+    int RIGHT_USER = 2;
 }

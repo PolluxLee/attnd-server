@@ -40,9 +40,6 @@ public class UserGroupController {
     public FB chkGroupNameByUser(
             @RequestAttribute("attnd") Session session
     ){
-        if (session.getUserID()<=0){
-            return FB.USER_NOT_EXIST("");
-        }
         String[] groupNames =userGroupService.ChkGroupNameByCreator(session.getUserID(),50);
         if (groupNames==null){
             return FB.SYS_ERROR("chkGroupNameByUser groupNames null ");
@@ -65,9 +62,6 @@ public class UserGroupController {
     public FB chkUserGroupList(
             @RequestAttribute("attnd") Session session
     ){
-        if (session.getUserID()<=0){
-            return FB.USER_NOT_EXIST("");
-        }
         UserGroup[] groups =userGroupService.ChkGroupListByUser(session.getUserID());
         if (groups==null){
             return FB.SYS_ERROR("chkUserGroupList groups null ");
@@ -90,11 +84,9 @@ public class UserGroupController {
     /***/
     @GetMapping("/group")
     public FB chkUserGroup(
-            @Min (1) @RequestParam("group_id") int groupID,
-            @RequestAttribute("attnd") Session session
+            @Min (1) @RequestParam("group_id") int groupID
     ){
-        //TODO privilege control
-
+        //todo right control only the member or the creator
         UserGroup userGroup = userGroupService.ChkGroupInfoByGroupID(groupID);
         if (userGroup==null){
             return new FB(Code.GROUP_NOTEXIST);
@@ -124,7 +116,8 @@ public class UserGroupController {
             @Min(1) @RequestAttribute("rows") int rows,
             @Min (1) @RequestParam("group_id") int groupID
     ){
-        //TODO privilege control
+        //todo right control only the creator
+
         User[] users = userGroupService.ChkGroupUserlist(groupID,start,rows);
         if (users==null){
             return FB.SYS_ERROR("chkGroupUserList users null");
@@ -166,10 +159,6 @@ public class UserGroupController {
             return FB.PARAM_INVALID("rawGroupID invalid");
         }
         int groupID = Integer.valueOf(rawGroupID);
-
-        if (session.getUserID()<=0){
-            return FB.USER_NOT_EXIST("");
-        }
 
         if(!userGroupService.UpdGroupStatus(Code.GROUP_DEL,groupID,session.getUserID())){
             return FB.DB_FAILED("UpdGroupStatus failed");

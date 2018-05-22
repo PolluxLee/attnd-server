@@ -37,5 +37,5 @@ public interface UserService {
     //exclude group del
     boolean AddUserToGroupByID(@NotBlank String openid,@Min(1) int groupID) throws DataAccessException;
 
-    User[] ChkUserListByGroupID(@Min(1) int groupID) throws DataAccessException;
+    boolean ChkUserIsGroupByGroupID(@Min(1) int userID, @Min(1) int groupID) throws DataAccessException;
 }

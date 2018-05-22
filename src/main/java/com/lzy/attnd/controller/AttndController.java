@@ -197,9 +197,6 @@ public class AttndController {
     public FB chkAttnd_hisName(
             @RequestAttribute("attnd") Session session
     ){
-        if (!session.IsUserRealyExist()){
-            return new FB(Code.GLOBAL_USER_NOT_EXIST);
-        }
         String[] hisName = attndService.ChkHisAttndName(session.getUserID(),15);
         if (hisName==null || hisName.length<=0){
             String msg = "ChkHisAttndName hisName empty or null";
@@ -223,9 +220,6 @@ public class AttndController {
     public FB chkAttndHisAddr(
             @RequestAttribute("attnd") Session session
     ){
-        if (!session.IsUserRealyExist()){
-            return new FB(Code.GLOBAL_USER_NOT_EXIST);
-        }
         String[] hisName = attndService.ChkHisAttndAddr(session.getUserID(),15);
         if (hisName==null || hisName.length<=0){
             String msg = "chkAttndHisAddr hisName empty or null";
@@ -270,15 +264,10 @@ public class AttndController {
             @NotNull @Size(max = 50)@RequestParam("query") String query,
             @Range(min = 1,max = 2) @RequestParam("list_type") int listType
     ){
-        int userID = session.getUserID();
-        if(userID<=0){
-            return FB.USER_NOT_EXIST("");
-        }
-
         PaginationAttnd attndsPage = null;
 
         if (listType==1){
-            attndsPage = attndService.ChkAttndListByUser(userID,start,rows,query);
+            attndsPage = attndService.ChkAttndListByUser(session.getUserID(),start,rows,query);
         }
 
         if (listType == 2){
@@ -383,8 +372,22 @@ public class AttndController {
             return new FB(Code.ATTND_HAS_SIGNIN);
         }
 
-        //TODO if user is attnd creator --> return
-        //TODO if type = A --> judge user is this group
+        //if user is attnd creator --> return
+        if (attnd.getTeacher_id()==session.getUserID()){
+            return new FB(Code.SIGNIN_CREATOR);
+        }
+
+        //if type = A --> judge user is this group
+        if (attnd_type == Code.CIPHER_ATTND ){
+            int groupID = ((int) Utils.Base62LastKToLong(cipher, cipher.length() - 1 - 3));
+            if (groupID<=0){
+                return FB.SYS_ERROR("get groupid from cipher invalid");
+            }
+
+            if (!userService.ChkUserIsGroupByGroupID(session.getUserID(),groupID)){
+                return new FB(Code.SIGNIN_NOT_BELONG_GROUP);
+            }
+        }
 
         if (attnd_type==Code.CIPHER_ENTRY){
             if(!userService.AddUserToGroup(session.getOpenid(),attnd.getGroup_name(),attnd.getTeacher_id())){
@@ -495,10 +498,6 @@ public class AttndController {
         String cipher = formData.getFirst("cipher");
         if (cipher==null||cipher.equals("")||cipher.length()>50){
             return FB.PARAM_INVALID("cipher invalid");
-        }
-
-        if (session.getUserID()<=0){
-            return FB.USER_NOT_EXIST("");
         }
 
         long nowTimeStamp = testTimestamp==0?System.currentTimeMillis():testTimestamp;

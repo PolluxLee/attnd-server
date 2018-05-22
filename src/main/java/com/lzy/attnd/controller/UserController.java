@@ -154,7 +154,7 @@ public class UserController {
      * {"name":"lzy","stu_id":"1506200023"}
      *
      * @apiSuccessExample {json} Resp:
-     * {"id":1,"openid":"fdsafe51515","stu_id":"1506200023","name":"lzp"}
+     * {"code":1000,"msg":"","data":{"id":1,"openid":"fdsafe51515","stu_id":"1506200023","name":"lzp"}}
      *
      */
     /***/
