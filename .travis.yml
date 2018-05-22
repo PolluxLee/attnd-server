@@ -12,3 +12,11 @@ services:
 
 script:
   - docker-compose -f docker-compose-travis.yml up -d
+
+addons:
+  ssh_known_hosts:
+   - liziyi.top
+
+after_success:
+  - chmod 600 ~/.ssh/id_rsa
+  - ssh travis@liziyi.top "/home/travis/attnd_start.sh | tee /home/travis/log_attnd/log"
