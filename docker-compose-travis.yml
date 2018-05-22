@@ -9,6 +9,7 @@ services:
     MYSQL_PASSWORD: ${DB_PASSWORD}
     MYSQL_DATABASE: ${DB_DBNAME}
    volumes:
+    - "./docker/mysql/conf:/etc/mysql/conf.d"
     - "./docker/mysql/data:/var/lib/mysql"
 
   cache:
@@ -45,7 +46,7 @@ services:
      - "${APP_PORT}:${APP_PORT}"
    expose:
      - "${APP_PORT}"
-   command: ["/app/docker/wait-for-it.sh", "cache:6379", "--","/app/docker/wait-for-it.sh", "db:3306", "--", "/app/docker/app-start.sh"]
+   command: ["/app/docker/wait-for-it.sh", "cache:6379", "--","/app/docker/wait-for-it.sh", "db:3306", "--", "/app/docker/app-test.sh"]
    depends_on:
      - db
      - cache
