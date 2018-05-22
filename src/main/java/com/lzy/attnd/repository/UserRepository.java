@@ -149,10 +149,10 @@ public class UserRepository implements UserService {
     }
 
     private boolean addUserToGroupByID(String openid,int groupID) throws DataAccessException {
-        int effectedRows = this.jdbcTemplate.update(
-                "UPDATE user SET groupid=JSON_ARRAY_APPEND(groupid,'$',?) WHERE openid=?",
-                groupID,openid);
-        return effectedRows == 1;
+        this.jdbcTemplate.update(
+                "UPDATE user SET groupid=JSON_ARRAY_APPEND(groupid,'$',?) WHERE openid=? AND JSON_CONTAINS(groupid,?,'$')=0",
+                groupID,openid,Integer.toString(groupID));
+        return true;
     }
 
     @Override

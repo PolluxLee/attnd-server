@@ -55,8 +55,7 @@ public class AuthIntercepts implements HandlerInterceptor {
         if (rightMap.containsKey(key)){
             int rightCode = rightMap.get(key);
             if (rightCode == Code.RIGHT_USER &&
-                (session.getUserID()<=0 || session.getName()==null ||session.getName().equals("")
-                        ||session.getStuid()==null || session.getStuid().equals(""))){
+                (session.getUserID()<=0 || session.getName()==null ||session.getName().equals(""))){
                 throw new VisitorNoAuthException("");
             }
         }
