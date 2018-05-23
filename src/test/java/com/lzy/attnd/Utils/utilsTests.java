@@ -5,6 +5,7 @@ import com.lzy.attnd.model.Location;
 import com.lzy.attnd.utils.Utils;
 import junit.runner.BaseTestRunner;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.io.IOException;
 
 @RunWith(SpringRunner.class)
+@Ignore
 public class utilsTests {
 
 

@@ -169,7 +169,7 @@ public class AttndRepository implements AttndService {
     public PaginationAttnd ChkAttndListByUser(int userID, int start, int rows, String query) throws DataAccessException {
         query = "%"+query+"%";
         Object[] args = new Object[]{userID,query,Code.ATTND_DEL,start,rows};
-        String conditions = " WHERE teacherid=? AND name like ?  AND status<>?  LIMIT ?,? ";
+        String conditions = " WHERE teacherid=? AND name like ?  AND status<>? ORDER BY createdat desc LIMIT ?,? ";
         List<Attnd> attnds=this.jdbcTemplate.query(
                 "SELECT id,name,cipher,starttime,lasttime,location,addrname,groupname,teachername,status FROM attnd "+conditions,
                 args,
@@ -195,7 +195,7 @@ public class AttndRepository implements AttndService {
     public PaginationAttnd ChkAttndList_SigninByUser(String signIn_openid, int start,int rows,String query) throws DataAccessException {
         query = "%"+query+"%";
         Object[] args = new Object[]{signIn_openid,query,Code.ATTND_DEL,start,rows};
-        String conditions = " WHERE cipher in (SELECT cipher FROM signin WHERE openid=?) AND name like ?  AND status<>?  LIMIT ?,? ";
+        String conditions = " WHERE cipher in (SELECT cipher FROM signin WHERE openid=?) AND name like ?  AND status<>? ORDER BY createdat desc LIMIT ?,? ";
         List<Attnd> attnds = this.jdbcTemplate.query(
                 "SELECT id,name,cipher,starttime,lasttime,location,addrname,groupname,teachername,status,teacherid FROM attnd "+conditions,
                 args,

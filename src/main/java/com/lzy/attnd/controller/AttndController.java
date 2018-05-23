@@ -422,6 +422,7 @@ public class AttndController {
      * cipher=A7184&fail_only=true&page=1&page_size=10
      *
      *
+     * @apiSuccessParam {Number} count 当类型为A 的考勤，意义为应到人数
      * @apiSuccessParam {Number=1,2,3,4} attnd_status studnet attendance status 1-> ok 2-> location beyond 3 -> time expired 4 -> not exist
      * @apiSuccessExample {json} Resp:
      * {"code":1000,"msg":"","data":{"count":10,"attnds":[{"openid":"ox111","stu_id":"1506200023","name":"xiaoming","attnd_status":1,"distance":53.14},{"openid":"ox222","stu_id":"1506200024","name":"zhangli","attnd_status":1,"distance":23.14}]}}

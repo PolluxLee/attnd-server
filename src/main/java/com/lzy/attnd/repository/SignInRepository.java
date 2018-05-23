@@ -68,9 +68,9 @@ public class SignInRepository implements SignInService {
             args = new Object[]{cipher,start,count};
         }else {
             query="SELECT user.openid,coalesce(distance, -1) AS dist,coalesce(signin.status, 4) AS status,stuid,name\n" +
-                    "FROM user LEFT JOIN signin on signin.openid=user.openid\n" +
-                    "WHERE JSON_CONTAINS(user.groupid,?,'$')=1 AND (cipher=? or cipher is null) %s ORDER BY stuid ASC LIMIT ?,?;";
-            args = new Object[]{Integer.toString(groupID),cipher,start,count};
+                    "FROM user LEFT JOIN signin on (signin.openid=user.openid AND cipher=?)\n" +
+                    "WHERE JSON_CONTAINS(user.groupid,?,'$')=1 %s ORDER BY stuid ASC LIMIT ?,?;";
+            args = new Object[]{cipher,Integer.toString(groupID),start,count};
         }
 
         query = String.format(query,statusExcludeHandle(statusExclude));
