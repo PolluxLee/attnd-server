@@ -196,7 +196,7 @@ public class IntegrationTests {
         //add user 郭思文
         //add groupname 计科151
         long attndTime = Long.valueOf("1526996690000");
-        Attnd attndG = new Attnd(0,"高水平大学诗词鉴赏课",attndTime,20,new Location(23.4,174.4,30.0),"文新510","郭思文","计科151",1,"x");
+        Attnd attndG = new Attnd(0,"高水平大学诗词鉴赏课",attndTime,20,new Location(23.4,174.4,30.0),"文新510","计科151","郭思文",1,"x");
         ObjectMapper mapper = new ObjectMapper();
         String attndJson = mapper.writeValueAsString(attndG);
         r = mvc.perform(MockMvcRequestBuilders.post("/attnd")
@@ -311,8 +311,8 @@ public class IntegrationTests {
         attndG.setTeacher_id(((int) readRespWithKey(r, "$.data.teacher_id")));
         attndG.setAttnd_id(((int) readRespWithKey(r, "$.data.attnd_id")));
 
-        AttndState attndState1 = new AttndState(stu1_Oid,stu1Name,"",1,51.022419667381016);
-        AttndState attndState2 = new AttndState(stu2_Oid,stu2Name,stu2_fillid,1,51.022419667381016);
+        AttndState attndStateStu1 = new AttndState(stu1_Oid,stu1Name,"",1,51.022419667381016);
+        AttndState attndStateStu2 = new AttndState(stu2_Oid,stu2Name,stu2_fillid,1,51.022419667381016);
 
         //stu2 chk situation
         mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
@@ -326,17 +326,17 @@ public class IntegrationTests {
                 .andExpect(status().is(200))
                 .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
                 .andExpect(jsonPath("$.data.count",is(2)))
-                .andExpect(jsonPath("$.data.attnds[0].openid",is(attndState1.getOpenid())))
-                .andExpect(jsonPath("$.data.attnds[0].name",is(attndState1.getName())))
-                .andExpect(jsonPath("$.data.attnds[0].stu_id",is(attndState1.getStu_id())))
-                .andExpect(jsonPath("$.data.attnds[0].attnd_status",is(attndState1.getAttnd_status())))
-                .andExpect(jsonPath("$.data.attnds[0].distance",is(attndState1.getDistance())))
+                .andExpect(jsonPath("$.data.attnds[0].openid",is(attndStateStu1.getOpenid())))
+                .andExpect(jsonPath("$.data.attnds[0].name",is(attndStateStu1.getName())))
+                .andExpect(jsonPath("$.data.attnds[0].stu_id",is(attndStateStu1.getStu_id())))
+                .andExpect(jsonPath("$.data.attnds[0].attnd_status",is(attndStateStu1.getAttnd_status())))
+                .andExpect(jsonPath("$.data.attnds[0].distance",is(attndStateStu1.getDistance())))
 
-                .andExpect(jsonPath("$.data.attnds[1].openid",is(attndState2.getOpenid())))
-                .andExpect(jsonPath("$.data.attnds[1].name",is(attndState2.getName())))
-                .andExpect(jsonPath("$.data.attnds[1].stu_id",is(attndState2.getStu_id())))
-                .andExpect(jsonPath("$.data.attnds[1].attnd_status",is(attndState2.getAttnd_status())))
-                .andExpect(jsonPath("$.data.attnds[1].distance",is(attndState2.getDistance())))
+                .andExpect(jsonPath("$.data.attnds[1].openid",is(attndStateStu2.getOpenid())))
+                .andExpect(jsonPath("$.data.attnds[1].name",is(attndStateStu2.getName())))
+                .andExpect(jsonPath("$.data.attnds[1].stu_id",is(attndStateStu2.getStu_id())))
+                .andExpect(jsonPath("$.data.attnds[1].attnd_status",is(attndStateStu2.getAttnd_status())))
+                .andExpect(jsonPath("$.data.attnds[1].distance",is(attndStateStu2.getDistance())))
                 .andReturn();
 
 
@@ -373,17 +373,17 @@ public class IntegrationTests {
                 .andExpect(status().is(200))
                 .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
                 .andExpect(jsonPath("$.data.count",is(2)))
-                .andExpect(jsonPath("$.data.attnds[0].openid",is(attndState1.getOpenid())))
-                .andExpect(jsonPath("$.data.attnds[0].name",is(attndState1.getName())))
-                .andExpect(jsonPath("$.data.attnds[0].stu_id",is(attndState1.getStu_id())))
-                .andExpect(jsonPath("$.data.attnds[0].attnd_status",is(attndState1.getAttnd_status())))
-                .andExpect(jsonPath("$.data.attnds[0].distance",is(attndState1.getDistance())))
+                .andExpect(jsonPath("$.data.attnds[0].openid",is(attndStateStu1.getOpenid())))
+                .andExpect(jsonPath("$.data.attnds[0].name",is(attndStateStu1.getName())))
+                .andExpect(jsonPath("$.data.attnds[0].stu_id",is(attndStateStu1.getStu_id())))
+                .andExpect(jsonPath("$.data.attnds[0].attnd_status",is(attndStateStu1.getAttnd_status())))
+                .andExpect(jsonPath("$.data.attnds[0].distance",is(attndStateStu1.getDistance())))
 
-                .andExpect(jsonPath("$.data.attnds[1].openid",is(attndState2.getOpenid())))
-                .andExpect(jsonPath("$.data.attnds[1].name",is(attndState2.getName())))
-                .andExpect(jsonPath("$.data.attnds[1].stu_id",is(attndState2.getStu_id())))
-                .andExpect(jsonPath("$.data.attnds[1].attnd_status",is(attndState2.getAttnd_status())))
-                .andExpect(jsonPath("$.data.attnds[1].distance",is(attndState2.getDistance())))
+                .andExpect(jsonPath("$.data.attnds[1].openid",is(attndStateStu2.getOpenid())))
+                .andExpect(jsonPath("$.data.attnds[1].name",is(attndStateStu2.getName())))
+                .andExpect(jsonPath("$.data.attnds[1].stu_id",is(attndStateStu2.getStu_id())))
+                .andExpect(jsonPath("$.data.attnds[1].attnd_status",is(attndStateStu2.getAttnd_status())))
+                .andExpect(jsonPath("$.data.attnds[1].distance",is(attndStateStu2.getDistance())))
                 .andReturn();
 
 
@@ -392,7 +392,7 @@ public class IntegrationTests {
         //with groupname 计科151
         //2018/5/23 21:45:15
         long attndTimeA1 = Long.valueOf("1527083115000");
-        Attnd attndA1 = new Attnd(0,"大学英语3",attndTimeA1,10,new Location(23.405,174.402,30.0),"理南315","郭思文","计科151",1,"x");
+        Attnd attndA1 = new Attnd(0,"大学英语3",attndTimeA1,10,new Location(23.405,174.402,30.0),"理南315","计科151","郭思文",1,"x");
         String attndAJson1 = mapper.writeValueAsString(attndA1);
         r = mvc.perform(MockMvcRequestBuilders.post("/attnd")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -424,8 +424,9 @@ public class IntegrationTests {
                 .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
                 .andExpect(jsonPath("$.data",is(Code.SIGNIN_LOCATION_BEYOND)));
 
-        AttndState attndState3 = new AttndState(stu1_Oid,stu1Name,"",Code.SIGNIN_LOCATION_BEYOND,555.9478812801552);
-        AttndState attndState4 = new AttndState(stu2_Oid,stu2Name,stu2_fillid,Code.SIGNIN_NOT_EXIST,-1);
+        attndStateStu1 = new AttndState(stu1_Oid,stu1Name,"",Code.SIGNIN_LOCATION_BEYOND,555.9478812801552);
+        attndStateStu2 = new AttndState(stu2_Oid,stu2Name,stu2_fillid,Code.SIGNIN_NOT_EXIST,-1);
+
         //teacher chk situation attnd A
         mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
                 .param("cipher",cipher_A1)
@@ -439,31 +440,158 @@ public class IntegrationTests {
                 .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
                 //应到两人
                 .andExpect(jsonPath("$.data.count",is(2)))
-                .andExpect(jsonPath("$.data.attnds[0].openid",is(attndState3.getOpenid())))
-                .andExpect(jsonPath("$.data.attnds[0].name",is(attndState3.getName())))
-                .andExpect(jsonPath("$.data.attnds[0].stu_id",is(attndState3.getStu_id())))
-                .andExpect(jsonPath("$.data.attnds[0].attnd_status",is(attndState3.getAttnd_status())))
-                .andExpect(jsonPath("$.data.attnds[0].distance",is(attndState3.getDistance())))
+                .andExpect(jsonPath("$.data.attnds[0].openid",is(attndStateStu1.getOpenid())))
+                .andExpect(jsonPath("$.data.attnds[0].name",is(attndStateStu1.getName())))
+                .andExpect(jsonPath("$.data.attnds[0].stu_id",is(attndStateStu1.getStu_id())))
+                .andExpect(jsonPath("$.data.attnds[0].attnd_status",is(attndStateStu1.getAttnd_status())))
+                .andExpect(jsonPath("$.data.attnds[0].distance",is(attndStateStu1.getDistance())))
 
-                .andExpect(jsonPath("$.data.attnds[1].openid",is(attndState4.getOpenid())))
-                .andExpect(jsonPath("$.data.attnds[1].name",is(attndState4.getName())))
-                .andExpect(jsonPath("$.data.attnds[1].stu_id",is(attndState4.getStu_id())))
-                .andExpect(jsonPath("$.data.attnds[1].attnd_status",is(attndState4.getAttnd_status())))
-                .andExpect(jsonPath("$.data.attnds[1].distance",is(attndState4.getDistance())))
+                .andExpect(jsonPath("$.data.attnds[1].openid",is(attndStateStu2.getOpenid())))
+                .andExpect(jsonPath("$.data.attnds[1].name",is(attndStateStu2.getName())))
+                .andExpect(jsonPath("$.data.attnds[1].stu_id",is(attndStateStu2.getStu_id())))
+                .andExpect(jsonPath("$.data.attnds[1].attnd_status",is(attndStateStu2.getAttnd_status())))
+                .andExpect(jsonPath("$.data.attnds[1].distance",is(attndStateStu2.getDistance())))
                 .andReturn();
 
-/*        //student signin
-        //sign in at 12 minutes later after add attnd
-        testTimestamp = attndTimeA1+12*60*1000;
+        //student2 signin
+        //sign in at 3 minutes later after add attnd
+        testTimestamp = attndTimeA1+3*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(String.format("{\"cipher\":\"%s\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0}}",cipher_G))
+                .content(String.format("{\"cipher\":\"%s\",\"location\":{\"latitude\":23.405,\"longitude\":174.4025,\"accuracy\":30.0}}",cipher_A1))
                 .session(s_stu2)
         )
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().is(200))
                 .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(jsonPath("$.data",is(Code.SIGNIN_OK)));*/
+                .andExpect(jsonPath("$.data",is(Code.SIGNIN_OK)));
+
+
+        attndStateStu2 = new AttndState(stu2_Oid,stu2Name,stu2_fillid,Code.SIGNIN_OK,51.02047675350656);
+        //teacher chk situation attnd A
+        mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
+                .param("cipher",cipher_A1)
+                .param("page","1")
+                .param("page_size","10")
+                .param("fail_only","false")
+                .session(s_tea1)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data.count",is(2)))
+                .andExpect(jsonPath("$.data.attnds[0].openid",is(attndStateStu1.getOpenid())))
+                .andExpect(jsonPath("$.data.attnds[0].name",is(attndStateStu1.getName())))
+                .andExpect(jsonPath("$.data.attnds[0].stu_id",is(attndStateStu1.getStu_id())))
+                .andExpect(jsonPath("$.data.attnds[0].attnd_status",is(attndStateStu1.getAttnd_status())))
+                .andExpect(jsonPath("$.data.attnds[0].distance",is(attndStateStu1.getDistance())))
+
+                .andExpect(jsonPath("$.data.attnds[1].openid",is(attndStateStu2.getOpenid())))
+                .andExpect(jsonPath("$.data.attnds[1].name",is(attndStateStu2.getName())))
+                .andExpect(jsonPath("$.data.attnds[1].stu_id",is(attndStateStu2.getStu_id())))
+                .andExpect(jsonPath("$.data.attnds[1].attnd_status",is(attndStateStu2.getAttnd_status())))
+                .andExpect(jsonPath("$.data.attnds[1].distance",is(attndStateStu2.getDistance())))
+                .andReturn();
+
+        //teacher chk situation attnd A
+        //fail only
+        //page_size 1
+        mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
+                .param("cipher",cipher_A1)
+                .param("page","1")
+                .param("page_size","1")
+                .param("fail_only","true")
+                .session(s_tea1)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data.count",is(1)))
+                .andExpect(jsonPath("$.data.attnds[0].openid",is(attndStateStu1.getOpenid())))
+                .andExpect(jsonPath("$.data.attnds[0].name",is(attndStateStu1.getName())))
+                .andExpect(jsonPath("$.data.attnds[0].stu_id",is(attndStateStu1.getStu_id())))
+                .andExpect(jsonPath("$.data.attnds[0].attnd_status",is(attndStateStu1.getAttnd_status())))
+                .andExpect(jsonPath("$.data.attnds[0].distance",is(attndStateStu1.getDistance())))
+                .andReturn();
+
+
+        //teacher add attnd N type
+        //with user 郭思文
+        //with no groupname
+        //2018/5/23 21:45:15
+        long attndTimeN1 = Long.valueOf("1527083115000");
+        Attnd attndN1 = new Attnd(0,"高等数学1",attndTimeN1,10,new Location(23.405,174.402,30.0),"文清504","","郭思文",1,"x");
+        String attndNJson1 = mapper.writeValueAsString(attndN1);
+        r = mvc.perform(MockMvcRequestBuilders.post("/attnd")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(attndNJson1)
+                .session(s_tea1)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data.cipher",startsWith(String.valueOf((Code.CIPHER_NOGROUP)))))
+                .andExpect(jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)))
+                .andReturn();
+
+        //type N
+        String cipher_N1 = ((String) readRespWithKey(r, "$.data.cipher"));
+        attndN1.setCipher(cipher_N1);
+
+
+        //student signin
+        //sign in at 5 minutes later after add attnd
+        attndStateStu1 = new AttndState(stu1_Oid,stu1Name,"",Code.SIGNIN_OK,66.71453);
+        testTimestamp = attndTimeN1+5*60*1000;
+        mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(String.format("{\"cipher\":\"%s\",\"location\":{\"latitude\":23.4056,\"longitude\":174.402,\"accuracy\":30.0}}",cipher_N1))
+                .session(s_stu1)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data",is(Code.SIGNIN_OK)));
+
+        //student signin
+        //sign in at 12 minutes later after add attnd
+        attndStateStu2 = new AttndState(stu2_Oid,stu2Name,stu2_fillid,Code.SIGNIN_EXPIRED,77.8315);
+        testTimestamp = attndTimeN1+12*60*1000;
+        mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(String.format("{\"cipher\":\"%s\",\"location\":{\"latitude\":23.4057,\"longitude\":174.402,\"accuracy\":30.0}}",cipher_N1))
+                .session(s_stu2)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data",is(Code.SIGNIN_EXPIRED)));
+
+
+        //teacher chk situation attnd N
+        mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
+                .param("cipher",cipher_N1)
+                .param("page","1")
+                .param("page_size","10")
+                .param("fail_only","false")
+                .session(s_tea1)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data.count",is(2)))
+                .andExpect(jsonPath("$.data.attnds[0].openid",is(attndStateStu1.getOpenid())))
+                .andExpect(jsonPath("$.data.attnds[0].name",is(attndStateStu1.getName())))
+                .andExpect(jsonPath("$.data.attnds[0].stu_id",is(attndStateStu1.getStu_id())))
+                .andExpect(jsonPath("$.data.attnds[0].attnd_status",is(attndStateStu1.getAttnd_status())))
+                .andExpect(jsonPath("$.data.attnds[0].distance",is(attndStateStu1.getDistance())))
+
+                .andExpect(jsonPath("$.data.attnds[1].openid",is(attndStateStu2.getOpenid())))
+                .andExpect(jsonPath("$.data.attnds[1].name",is(attndStateStu2.getName())))
+                .andExpect(jsonPath("$.data.attnds[1].stu_id",is(attndStateStu2.getStu_id())))
+                .andExpect(jsonPath("$.data.attnds[1].attnd_status",is(attndStateStu2.getAttnd_status())))
+                .andExpect(jsonPath("$.data.attnds[1].distance",is(attndStateStu2.getDistance())))
+                .andReturn();
     }
 
 }

@@ -59,8 +59,6 @@ public class SignInRepository implements SignInService {
     @Override
     public AttndState[] ChkSignInList(String cipher, int start, int count, int groupID,int statusExclude) throws DataAccessException {
         //groupID<=0 --> all student
-
-
         String query;
         Object[] args;
         if (groupID<=0){
@@ -89,7 +87,13 @@ public class SignInRepository implements SignInService {
     @Override
     public int CountSignInList(String cipher,int statusExclude) throws DataAccessException {
         String query = String.format("SELECT COUNT(id) FROM signin WHERE cipher=? %s",statusExcludeHandle(statusExclude));
+        return this.jdbcTemplate.queryForObject(query,new Object[]{cipher},int.class);
+    }
 
+    @Override
+    public int CountSignInListWithGroup(String cipher, int groupID, int statusExclude) throws DataAccessException {
+        String query = String.format("SELECT COUNT(signin.id)" +
+                " FROM user LEFT JOIN signin on (signin.openid=user.openid AND cipher=?) WHERE 1=1 %s",statusExcludeHandle(statusExclude));
         return this.jdbcTemplate.queryForObject(query,new Object[]{cipher},int.class);
     }
 }

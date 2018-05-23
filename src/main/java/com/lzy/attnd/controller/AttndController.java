@@ -457,15 +457,21 @@ public class AttndController {
             return FB.SYS_ERROR("attndStates null");
         }
 
-        int count;
+        int recTotalCount;
         if (groupID<=0){
-            count = signInService.CountSignInList(cipher,fail_only?Code.SIGNIN_OK:-1);
-        }else {
-            count = userGroupService.CountUserInGroup(groupID);
+            recTotalCount = signInService.CountSignInList(cipher,fail_only?Code.SIGNIN_OK:-1);
+        }else{
+            if (fail_only){
+                recTotalCount = signInService.CountSignInListWithGroup(cipher,groupID,Code.SIGNIN_OK);
+            }else{
+                recTotalCount = userGroupService.CountUserInGroup(groupID);
+            }
         }
 
+
+
         HashMap<String,Object> fbJson = new HashMap<>();
-        fbJson.put("count",count);
+        fbJson.put("count",recTotalCount);
         fbJson.put("attnds",attndStates);
         return FB.SUCCESS(fbJson);
     }

@@ -1,5 +1,8 @@
 package com.lzy.attnd.model;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 public class AttndState {
     public AttndState(String openid, String name, String stu_id, int attnd_status, double distance) {
         this.openid = openid;
@@ -51,7 +54,16 @@ public class AttndState {
     }
 
     public double getDistance() {
-        return distance;
+        double scaleDist;
+        try {
+            //FLOOR --> 向数轴正负方向舍入
+            BigDecimal bd = new BigDecimal(distance).setScale(2, RoundingMode.FLOOR);
+            scaleDist = bd.doubleValue();
+        } catch (Exception e) {
+            return this.distance;
+        }
+        this.distance = scaleDist;
+        return this.distance;
     }
 
     public void setDistance(double distance) {

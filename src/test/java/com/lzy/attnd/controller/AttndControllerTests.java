@@ -614,7 +614,7 @@ public class AttndControllerTests {
     @Test
     public void signinList_A_fail_only()throws Exception{
         mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
-                .param("cipher","Awcq1")
+                .param("cipher","Awvq1")
                 .param("page","1")
                 .param("page_size","10")
                 .param("fail_only","true")
@@ -623,7 +623,7 @@ public class AttndControllerTests {
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().is(200))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(3)));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(1)));
     }
 
     @Test

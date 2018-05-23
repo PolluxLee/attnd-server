@@ -24,4 +24,6 @@ public interface SignInService {
     AttndState[] ChkSignInList(@NotBlank  String cipher, @Min(0) int start, @Min(1) int count, int groupID,int statusExclude) throws DataAccessException;
 
     @Min(0) int CountSignInList(@NotBlank String cipher,int statusExclude) throws DataAccessException;
+
+    @Min(0) int CountSignInListWithGroup(@NotBlank String cipher,@Min(1) int groupID,int statusExclude) throws DataAccessException;
 }
