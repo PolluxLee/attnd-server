@@ -746,7 +746,7 @@ public class AttndControllerTests {
 
     @Test
     @Transactional
-    public void delAttnd_hasdel()throws Exception{
+    public void delAttnd_hasdeled()throws Exception{
         testTimestamp=1522512000+30*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/del")
                 .content("cipher=GZXQ6")
@@ -760,10 +760,140 @@ public class AttndControllerTests {
 
     @Test
     @Transactional
+    public void delAttnd_notexist()throws Exception{
+        testTimestamp=1522512000+30*60*1000;
+        mvc.perform(MockMvcRequestBuilders.post("/attnd/del")
+                .content("cipher=Awcq64531")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_NOT_EXIST)));
+    }
+
+    @Test
+    @Transactional
+    public void delAttnd_notbelongme()throws Exception{
+        session.setAttribute(configBean.getSession_key(),new Session(2,"lzp",0,"toid456","wxsessionkey","25"));
+        testTimestamp=1522512000+30*60*1000;
+        mvc.perform(MockMvcRequestBuilders.post("/attnd/del")
+                .content("cipher=Awcq1")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_NOT_CREATOR)));
+    }
+
+    @Test
+    @Transactional
     public void delAttnd_success()throws Exception{
         testTimestamp=1522512000+30*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/del")
                 .content("cipher=Awcq1")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
+    }
+
+    //upd status -----------------------------------------
+
+    @Test
+    @Transactional
+    public void updStatus_param_invalid()throws Exception{
+        testTimestamp=1522512000+30*60*1000;
+        mvc.perform(MockMvcRequestBuilders.post("/signin/status/upd")
+                .content("cipher=Awvq1&openid=toid7354389&attnd_us=4")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_PARAM_INVALID)));
+    }
+
+    @Test
+    @Transactional
+    public void updStatus_ongoing()throws Exception{
+        testTimestamp=1522512000+5*60*1000;
+        mvc.perform(MockMvcRequestBuilders.post("/signin/status/upd")
+                .content("cipher=Awvq1&openid=toid789&attnd_status=4")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_ONGOING)));
+    }
+
+    @Test
+    @Transactional
+    public void updStatus_hasdeled()throws Exception{
+        testTimestamp=1522512000+30*60*1000;
+        mvc.perform(MockMvcRequestBuilders.post("/signin/status/upd")
+                .content("cipher=GZXQ6&openid=toid789&attnd_status=4")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_HAS_DEL)));
+    }
+
+    @Test
+    @Transactional
+    public void updStatus_notexist()throws Exception{
+        testTimestamp=1522512000+30*60*1000;
+        mvc.perform(MockMvcRequestBuilders.post("/signin/status/upd")
+                .content("cipher=Awcq64531&openid=toid789&attnd_status=4")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_NOT_EXIST)));
+    }
+
+    @Test
+    @Transactional
+    public void updStatus_notbelongme()throws Exception{
+        session.setAttribute(configBean.getSession_key(),new Session(2,"lzp",0,"toid456","wxsessionkey","25"));
+        testTimestamp=1522512000+30*60*1000;
+        mvc.perform(MockMvcRequestBuilders.post("/signin/status/upd")
+                .content("cipher=Awvq1&openid=toid789&attnd_status=4")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_NOT_CREATOR)));
+    }
+
+    @Test
+    @Transactional
+    public void updStatus_user_notexist()throws Exception{
+        testTimestamp=1522512000+30*60*1000;
+        mvc.perform(MockMvcRequestBuilders.post("/signin/status/upd")
+                .content("cipher=Awvq1&openid=toid7354389&attnd_status=4")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_DB_FAILED)));
+    }
+
+    @Test
+    @Transactional
+    public void updStatus_success()throws Exception{
+        testTimestamp=1522512000+30*60*1000;
+        mvc.perform(MockMvcRequestBuilders.post("/signin/status/upd")
+                .content("cipher=Awvq1&openid=toid789&attnd_status=4")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .session(session)
         )

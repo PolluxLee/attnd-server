@@ -31,12 +31,14 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 put("POST/attnd/signin", Code.RIGHT_USER);
                 put("GET/attnd/situation", Code.RIGHT_USER);
                 put("POST/attnd/del", Code.RIGHT_USER);
+                put("POST/signin/status/upd", Code.RIGHT_USER);
 
                 put("GET/group/name", Code.RIGHT_USER);
                 put("GET/group/list", Code.RIGHT_USER);
                 put("GET/group", Code.RIGHT_USER);
                 put("GET/group/userlist", Code.RIGHT_USER);
                 put("POST/group/del", Code.RIGHT_USER);
+                put("POST/group/user/add", Code.RIGHT_USER);
             }
         };
     }

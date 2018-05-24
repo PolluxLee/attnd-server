@@ -1,5 +1,6 @@
 package com.lzy.attnd.repository;
 
+import com.lzy.attnd.constant.Code;
 import com.lzy.attnd.exception.DBProcessException;
 import com.lzy.attnd.model.AttndState;
 import com.lzy.attnd.model.SignIn;
@@ -95,5 +96,12 @@ public class SignInRepository implements SignInService {
         String query = String.format("SELECT COUNT(signin.id)" +
                 " FROM user LEFT JOIN signin on (signin.openid=user.openid AND cipher=?) WHERE 1=1 %s",statusExcludeHandle(statusExclude));
         return this.jdbcTemplate.queryForObject(query,new Object[]{cipher},int.class);
+    }
+
+    @Override
+    public boolean UpdSignInSituation(String cipher, String openid, int statusToUpdate) throws DataAccessException {
+        if (statusToUpdate!= Code.SIGNIN_OK && statusToUpdate!=Code.SIGNIN_NOT_EXIST)
+            throw new DBProcessException("UpdSignInSituation param invalid");
+        return 1==this.jdbcTemplate.update("UPDATE signin SET status=? WHERE cipher=? AND openid=?",statusToUpdate,cipher,openid);
     }
 }

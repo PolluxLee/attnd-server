@@ -6,6 +6,7 @@ import com.lzy.attnd.model.Attnd;
 import com.lzy.attnd.model.PaginationAttnd;
 import org.hibernate.validator.constraints.Range;
 import org.springframework.dao.DataAccessException;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -41,6 +42,7 @@ public interface AttndService {
 
     boolean UpdAttndStatus(@NotBlank String cipher, @Range(min = Code.ATTND_DEL,max = Code.ATTND_DEL) int status, @Min(1) int creatorID) throws DataAccessException;
 
-    @Validated({Attnd.Status.class,Attnd.StartTime.class,Attnd.Last.class,Attnd.Cipher.class})
-    @Valid Attnd ChkAttndStatus(@NotBlank(groups = Attnd.Cipher.class) String cipher) throws DataAccessException;
+    @Validated({Attnd.Status.class,Attnd.StartTime.class,Attnd.Last.class,Attnd.Cipher.class,Attnd.TeacherID.class})
+    @Valid @Nullable
+    Attnd ChkAttndStatus(@NotBlank(groups = Attnd.Cipher.class) String cipher) throws DataAccessException;
 }

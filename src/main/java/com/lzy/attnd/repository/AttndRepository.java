@@ -57,7 +57,6 @@ public class AttndRepository implements AttndService {
             logger.error("AddAttnd remark or location to json failed");
             throw new DBProcessException("location or remark invalid");
         }
-
         //because cipher is not null
         GeneratedKeyHolder holder = new GeneratedKeyHolder();
         jdbcTemplate.update(con -> {
@@ -226,13 +225,14 @@ public class AttndRepository implements AttndService {
     public Attnd ChkAttndStatus(String cipher) throws DataAccessException {
         Attnd attnd;
         try {
-            attnd = this.jdbcTemplate.queryForObject("SELECT starttime,lasttime,status from attnd where cipher=?",
+            attnd = this.jdbcTemplate.queryForObject("SELECT starttime,lasttime,status,teacherid from attnd where cipher=?",
                     new Object[]{cipher}, (rs, i) -> {
                         Attnd attndInner = new Attnd();
                         attndInner.setStart_time(rs.getLong("starttime"));
                         attndInner.setLast(rs.getInt("lasttime"));
                         attndInner.setStatus(rs.getInt("status"));
                         attndInner.setCipher(cipher);
+                        attndInner.setTeacher_id(rs.getInt("teacherid"));
                         return attndInner; }
                     );
         } catch (EmptyResultDataAccessException erdae) {

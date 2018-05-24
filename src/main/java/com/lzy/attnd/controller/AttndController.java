@@ -301,7 +301,7 @@ public class AttndController {
      */
     /***/
     @PostMapping("/attnd/signin")
-    public FB SignIn(@RequestAttribute("attnd") Session session,
+    public FB signIn(@RequestAttribute("attnd") Session session,
                      @RequestBody @NotNull JsonNode root){
         JsonNode cipherNode = root.get("cipher");
         if (cipherNode == null || !cipherNode.isTextual()){
@@ -422,7 +422,8 @@ public class AttndController {
      * cipher=A7184&fail_only=true&page=1&page_size=10
      *
      *
-     * @apiSuccessParam {Number} count 当类型为A 的考勤，意义为应到人数
+     * @apiSuccessParam {Number} count record total count
+     * @apiSuccessParam {Number} present_count 实到人数 only work in type A & fail_only=false
      * @apiSuccessParam {Number=1,2,3,4} attnd_status studnet attendance status 1-> ok 2-> location beyond 3 -> time expired 4 -> not exist
      * @apiSuccessExample {json} Resp:
      * {"code":1000,"msg":"","data":{"count":10,"attnds":[{"openid":"ox111","stu_id":"1506200023","name":"xiaoming","attnd_status":1,"distance":53.14},{"openid":"ox222","stu_id":"1506200024","name":"zhangli","attnd_status":1,"distance":23.14}]}}
@@ -457,32 +458,37 @@ public class AttndController {
             return FB.SYS_ERROR("attndStates null");
         }
 
+        HashMap<String,Object> fbJson = new HashMap<>();
+
         int recTotalCount;
         if (groupID<=0){
+            //TYPE G/N
             recTotalCount = signInService.CountSignInList(cipher,fail_only?Code.SIGNIN_OK:-1);
         }else{
+            //TYPE A
+            int signInFailCount = signInService.CountSignInListWithGroup(cipher,groupID,Code.SIGNIN_OK);
             if (fail_only){
-                recTotalCount = signInService.CountSignInListWithGroup(cipher,groupID,Code.SIGNIN_OK);
+                //chk user not signin in group
+                recTotalCount = signInFailCount;
             }else{
                 recTotalCount = userGroupService.CountUserInGroup(groupID);
+                //present_count = totoal_user_count - userNotSigninCount 实到人数=组内总人数-签到失败人数
+                fbJson.put("present_count",recTotalCount-signInFailCount);
             }
         }
 
 
-
-        HashMap<String,Object> fbJson = new HashMap<>();
         fbJson.put("count",recTotalCount);
         fbJson.put("attnds",attndStates);
         return FB.SUCCESS(fbJson);
     }
 
 
-
     /**
      * @api {post} /api/attnd/del delAttnd
      * @apiName delAttnd
      * @apiGroup Attnd
-     * @apiDescription [Condition]:only when the attnd has expired or stop by creator
+     * @apiDescription [Condition]:only when the attnd has expired and user should the creator
      * [Effected]:
      * 1.ChkAttnd
      * 2.ChkHisAttndName
@@ -493,8 +499,10 @@ public class AttndController {
      * @apiParamExample {String} Req:
      * cipher=GZXQAS
      *
+     * @apiError (Error-Code) 3001 attnd not exist
      * @apiError (Error-Code) 3005 attnd has del
      * @apiError (Error-Code) 3006 attnd is going an not be del
+     * @apiError (Error-Code) 3009 attnd not creator
      */
     /***/
     @PostMapping("/attnd/del")
@@ -510,13 +518,19 @@ public class AttndController {
         long nowTimeStamp = testTimestamp==0?System.currentTimeMillis():testTimestamp;
 
         Attnd attnd = attndService.ChkAttndStatus(cipher);
-
+        if (attnd==null){
+            return new FB(Code.ATTND_NOT_EXIST);
+        }
         if (attnd.getStatus()==Code.ATTND_DEL){
             return new FB(Code.ATTND_HAS_DEL);
         }
 
         if (nowTimeStamp<=attnd.getStart_time()+attnd.getLast()*60*1000){
             return new FB(Code.ATTND_ONGOING);
+        }
+
+        if (session.getUserID()!=attnd.getTeacher_id()){
+            return new FB(Code.ATTND_NOT_CREATOR);
         }
 
         if(!attndService.UpdAttndStatus(cipher,Code.ATTND_DEL,session.getUserID())){
@@ -527,18 +541,73 @@ public class AttndController {
     }
 
     /**
-     * @apiDeprecated
-     * @api {post} /api/signin/situation/upd updSignSituation
-     * @apiName updAttndSituation
+     * @api {post} /api/signin/status/upd updSignSituation
+     * @apiName updAttndStatus
      * @apiGroup Attnd
-     * @apiDescription [Condition]:only when the attnd has expired or stop by creator
+     * @apiDescription [Condition]:only when the attnd not del & has expired /-- or stop by creator--/
      *
-     * @apiParam {Number{1-}} attnd_id id for attendance
+     * @apiParam {String{1..50}} cipher
      * @apiParam {String} openid openid for student who signin
-     * @apiParam {Number=1,2} attnd_status student attendance status 1-> ok 2-> not ok
+     * @apiParam {Number=1,4} attnd_status student attendance status 1-> ok 4-> not ok
      * @apiParamExample {String} Req:
-     * attnd_id=1248&openid=1506200023&attnd_status=2
+     * cipher=A714Q&openid=oid123&attnd_status=4
      *
-     *
+     * @apiError (Error-Code) 3001 attnd not exist
+     * @apiError (Error-Code) 3005 attnd has del
+     * @apiError (Error-Code) 3006 attnd is going an not be del
+     * @apiError (Error-Code) 3009 attnd not creator
      */
+    /***/
+    @PostMapping("/signin/status/upd")
+    public FB updSituation(
+            @RequestAttribute("attnd") Session session,
+            @RequestBody MultiValueMap<String,String> formData
+    ){
+        String cipher = formData.getFirst("cipher");
+        if (cipher==null||cipher.equals("")||cipher.length()>50){
+            return FB.PARAM_INVALID("cipher invalid");
+        }
+        String signin_openid = formData.getFirst("openid");
+        if (signin_openid==null||signin_openid.equals("")||signin_openid.length()>50){
+            return FB.PARAM_INVALID("openid invalid");
+        }
+        String attnd_statusRaw = formData.getFirst("attnd_status");
+        if (attnd_statusRaw==null||attnd_statusRaw.equals("")){
+            return FB.PARAM_INVALID("attnd_status invalid null or empty");
+        }
+        int attnd_status;
+        try {
+            attnd_status = Integer.parseInt(attnd_statusRaw);
+        } catch (NumberFormatException e) {
+            return FB.PARAM_INVALID("attnd_status to int failed "+e.getMessage());
+        }
+        if (attnd_status!=Code.SIGNIN_OK && attnd_status!=Code.SIGNIN_NOT_EXIST){
+            return FB.PARAM_INVALID("attnd_status invalid");
+        }
+
+        //chk attnd whether be del
+        long nowTimeStamp = testTimestamp==0?System.currentTimeMillis():testTimestamp;
+        Attnd attnd = attndService.ChkAttndStatus(cipher);
+        if (attnd==null){
+            return new FB(Code.ATTND_NOT_EXIST);
+        }
+        if (attnd.getStatus()==Code.ATTND_DEL){
+            return new FB(Code.ATTND_HAS_DEL);
+        }
+        //chk attnd whether ongoing
+        if (nowTimeStamp<=attnd.getStart_time()+attnd.getLast()*60*1000){
+            return new FB(Code.ATTND_ONGOING);
+        }
+
+        //chk user whether creator
+        if (attnd.getTeacher_id()!=session.getUserID()){
+            return new FB(Code.ATTND_NOT_CREATOR);
+        }
+
+        if(!signInService.UpdSignInSituation(cipher,signin_openid,attnd_status)){
+            return FB.DB_FAILED("UpdSignInSituation failed");
+        }
+
+        return FB.SUCCESS();
+    }
 }

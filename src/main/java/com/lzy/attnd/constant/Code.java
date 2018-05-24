@@ -27,8 +27,12 @@ public interface Code {
     int SIGNIN_NOT_BELONG_GROUP = 3007;
     //attnd creator not allow to signin
     int SIGNIN_CREATOR = 3008;
+    int ATTND_NOT_CREATOR = 3009;
+
 
     int GROUP_NOTEXIST=4001;
+    int GROUP_NOT_CREATOR=4002;
+    int GROUP_HAS_DEL=4003;
 
     int ADD_FLAG = 1;
     int UPD_FLAG = 2;

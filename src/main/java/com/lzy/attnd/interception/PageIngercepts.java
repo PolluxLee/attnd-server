@@ -18,8 +18,20 @@ public class PageIngercepts implements HandlerInterceptor {
         if (rawPageSize==null||rawPage==null){
             throw new ConstraintViolationException("no param page or page_size",null);
         }
-        int page = Integer.valueOf(rawPage);
-        int pageSize = Integer.valueOf(rawPageSize);
+
+        int page;
+        try {
+            page = Integer.parseInt(rawPage);
+        } catch (NumberFormatException e) {
+            throw new ConstraintViolationException("page raw to int failed",null);
+        }
+        int pageSize;
+        try {
+            pageSize = Integer.parseInt(rawPageSize);
+        } catch (NumberFormatException e) {
+            throw new ConstraintViolationException("pageSize raw to int failed",null);
+        }
+
         if (page<0||pageSize<=0){
             throw new ConstraintViolationException("param page or pagesize invalid",null);
         }

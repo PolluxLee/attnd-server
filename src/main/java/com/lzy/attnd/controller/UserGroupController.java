@@ -6,6 +6,7 @@ import com.lzy.attnd.model.UserGroup;
 import com.lzy.attnd.service.UserGroupService;
 import com.lzy.attnd.utils.FB;
 import com.lzy.attnd.utils.Session;
+import com.lzy.attnd.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
@@ -155,10 +156,18 @@ public class UserGroupController {
             @RequestBody MultiValueMap<String,String> formData
     ){
         String rawGroupID = formData.getFirst("group_id");
-        if (rawGroupID==null||Integer.valueOf(rawGroupID)<=0){
+        if (rawGroupID==null){
             return FB.PARAM_INVALID("rawGroupID invalid");
         }
-        int groupID = Integer.valueOf(rawGroupID);
+        int groupID = 0;
+        try {
+            groupID = Integer.parseInt(rawGroupID);
+        } catch (NumberFormatException e) {
+            return FB.PARAM_INVALID("rawGroupID to int failed");
+        }
+        if (groupID<=0){
+            return FB.PARAM_INVALID("groupID invalid");
+        }
 
         if(!userGroupService.UpdGroupStatus(Code.GROUP_DEL,groupID,session.getUserID())){
             return FB.DB_FAILED("UpdGroupStatus failed");
@@ -168,11 +177,14 @@ public class UserGroupController {
     }
 
     /**
-     * @apiDeprecated
      * @api {post} /api/group/user/add addUserToGroup
      * @apiName addUserToGroup
      * @apiGroup Group
      * @apiDescription get cipher
+     * [Conditions]:
+     * 1. user is the creator of the group
+     * 2. group exist
+     * 3. group not del
      *
      * @apiParam {Number{1-}} group_id id for attendance
      * @apiParamExample {String} Req:
@@ -181,6 +193,51 @@ public class UserGroupController {
      *
      * @apiSuccess {String} cipher 口令 标识位(标识录入/考勤)+通过62进制时间戳后3位+group_id 的62进制表示
      * @apiSuccessExample {json} Resp:
-     * {"code":1000,"msg":"","data":{"cipher":"S154812"}}
+     * {"code":1000,"msg":"","data":"S15812"}
+     *
+     *
+     * @apiError (Error-Code) 4001 group not exist
+     * @apiError (Error-Code) 4002 group not belong current user
+     * @apiError (Error-Code) 4003 group has del
      */
+    /***/
+    @PostMapping("/group/user/add")
+    public FB addUserToGroupSingle(
+            @RequestAttribute("attnd") Session session,
+            @RequestBody MultiValueMap<String,String> formData
+    ){
+        String group_idRaw = formData.getFirst("group_id");
+        if (group_idRaw==null||group_idRaw.equals("")){
+            return FB.PARAM_INVALID("group_id RAW invalid null or empty");
+        }
+        int group_id;
+        try {
+            group_id = Integer.parseInt(group_idRaw);
+        } catch (NumberFormatException e) {
+            return FB.PARAM_INVALID("group_id to int failed "+e.getMessage());
+        }
+        if (group_id<=0){
+            return FB.PARAM_INVALID("group_id invalid <=0");
+        }
+
+        UserGroup userGroup = userGroupService.ChkGroupInfoByGroupID(group_id);
+        if (userGroup==null){
+            return new FB(Code.GROUP_NOTEXIST);
+        }
+
+        if (userGroup.getStatus()==Code.GROUP_DEL){
+            return new FB(Code.GROUP_HAS_DEL);
+        }
+
+        if (userGroup.getCreator_id()!=session.getUserID()){
+            return new FB(Code.GROUP_NOT_CREATOR);
+        }
+
+        String cipher = Utils.CalCipher(Code.CIPHER_SINGLE,userGroup.getId());
+        if (cipher==null ||"".equals(cipher)){
+            return FB.SYS_ERROR("cipher build failed");
+        }
+
+        return FB.SUCCESS(cipher);
+    }
 }

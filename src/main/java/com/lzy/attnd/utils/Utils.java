@@ -72,8 +72,14 @@ public class Utils {
     }
 
 
-    public static String CalCipher(char type,int attnd_id){
-        if (!chkCipherType(type)||attnd_id<=0){
+    /**
+     * build cipher
+     * @param type A/N/G/S
+     * @param tail_id the id in the tail to identify
+     * @return cipher
+     */
+    public static String CalCipher(char type,int tail_id){
+        if (!chkCipherType(type)||tail_id<=0){
             logger.error("CalCipher param invalid");
             return "";
         }
@@ -88,7 +94,7 @@ public class Utils {
         sb.append(timeStr);
 
 
-        String idStr = LongToBase62LastK(attnd_id,10);
+        String idStr = LongToBase62LastK(tail_id,10);
         if (idStr.equals("")) {
             logger.error("idStr empty");
             return "";

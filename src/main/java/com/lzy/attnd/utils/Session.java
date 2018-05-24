@@ -9,19 +9,6 @@ import java.io.Serializable;
 public class Session implements Serializable {
     private final static Logger logger = LoggerFactory.getLogger(Session.class);
 
-    public static Session GetAttribute(HttpSession httpSession,String session_key){
-        if (httpSession == null || session_key.equals(""))
-            return null;
-        Session sess;
-        try {
-            sess = ((Session) httpSession.getAttribute(session_key));
-        } catch (ClassCastException cce) {
-            logger.error("GetAttribute cast failed: "+cce.getMessage());
-            return null;
-        }
-        return sess;
-    }
-
     public static Logger getLogger() {
         return logger;
     }
@@ -91,11 +78,6 @@ public class Session implements Serializable {
 
     private String stuid;
     private String session_key;
-
-
-    public boolean IsUserRealyExist(){
-        return this.UserID>=1;
-    }
 
 
     @Override

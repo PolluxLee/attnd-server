@@ -24,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @ActiveProfiles("test")
 @RunWith(SpringRunner.class)
@@ -130,6 +132,23 @@ public class UserGroupControllerTests {
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().is(200))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
+
+    }
+
+    /**---------------------/group/user/add */
+    @Test
+    @Transactional
+    public void addUserGroup()throws Exception{
+        session.setAttribute(configBean.getSession_key(),new Session(1,"lzy",0,"toid123","wxsessionkey","23"));
+        mvc.perform(MockMvcRequestBuilders.post("/group/user/add")
+                .content("group_id=1")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data",startsWith(String.valueOf((Code.CIPHER_SINGLE)))));
 
     }
 }
