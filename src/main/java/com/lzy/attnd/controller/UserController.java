@@ -83,7 +83,7 @@ public class UserController {
      * code=12345
      *
      * @apiSuccessExample {json} user-exist:
-     * {"code":2002,"msg": "","data":{"id":1,"openid":"fdsafe51515","stu_id":"1506200023","name":"lzp"}}
+     * {"code":2002,"msg": "","data":{"id":1,"openid":"fdsafe51515","stu_id":"1506200023","name":"lzp","groups":[1]}}
      *
      * @apiSuccessExample {json} user-not-exist:
      * {"code":2001,"msg": "","data":{"openid":"owxxer4748"}}
@@ -125,7 +125,7 @@ public class UserController {
      * @apiParam {string} openid user openid
      *
      * @apiSuccessExample {json} Resp:
-     * {"code":1000,"msg": "","data":{"id":1,"openid":"fdsafe51515","stu_id":"1506200023","name":"lzp"}}
+     * {"code":1000,"msg": "","data":{"id":1,"openid":"fdsafe51515","stu_id":"1506200023","name":"lzp","groups":[1]}}
      *
      * @apiError (Error-Code) 2001 user not exist
      */
@@ -154,7 +154,7 @@ public class UserController {
      * {"name":"lzy","stu_id":"1506200023"}
      *
      * @apiSuccessExample {json} Resp:
-     * {"code":1000,"msg":"","data":{"id":1,"openid":"fdsafe51515","stu_id":"1506200023","name":"lzp"}}
+     * {"code":1000,"msg":"","data":{"id":1,"openid":"fdsafe51515","stu_id":"1506200023","name":"lzp","groups":[1]}}
      *
      */
     /***/

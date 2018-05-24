@@ -26,7 +26,7 @@ public interface UserService {
     boolean UpdUserInfoByOpenid(
             @Valid @NotNull(groups = User.Name.class) User user) throws DataAccessException;
 
-    @Validated({User.Name.class,User.Openid.class,User.ID.class,User.Remark.class,User.Status.class})
+    @Validated({User.Name.class,User.Openid.class,User.ID.class,User.Remark.class,User.Status.class,User.Groups.class})
     @Nullable @Valid User FindUserByOpenid(
             @NotBlank(groups = User.Openid.class) String openid) throws DataAccessException;
 

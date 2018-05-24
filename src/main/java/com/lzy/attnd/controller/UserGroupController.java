@@ -80,7 +80,9 @@ public class UserGroupController {
      * group_id=1248
      *
      * @apiSuccessExample {json} Resp:
-     * {"code":1000,"msg":"","data":{"id":100,"name":"计科151","status":2,"creator":"lzp"}}
+     * {"code":1000,"msg":"","data":{"id":100,"name":"计科151","status":2,"creator_name":"lzp"}}
+     *
+     * @apiError (Error-Code) 4001 group not exist
      */
     /***/
     @GetMapping("/group")
@@ -148,6 +150,10 @@ public class UserGroupController {
      * @apiParamExample {String} Req:
      * group_id=1248
      *
+     *
+     * @apiError (Error-Code) 4001 group not exist
+     * @apiError (Error-Code) 4002 group not belong current user
+     * @apiError (Error-Code) 4003 group has been del
      */
     /***/
     @PostMapping("/group/del")
@@ -167,6 +173,19 @@ public class UserGroupController {
         }
         if (groupID<=0){
             return FB.PARAM_INVALID("groupID invalid");
+        }
+
+        UserGroup userGroup = userGroupService.ChkGroupInfoByGroupID(groupID);
+        if (userGroup==null){
+            return new FB(Code.GROUP_NOTEXIST);
+        }
+
+        if (userGroup.getStatus()==Code.GROUP_DEL){
+            return new FB(Code.GROUP_HAS_DEL);
+        }
+
+        if (userGroup.getCreator_id()!=session.getUserID()){
+            return new FB(Code.GROUP_NOT_CREATOR);
         }
 
         if(!userGroupService.UpdGroupStatus(Code.GROUP_DEL,groupID,session.getUserID())){
@@ -198,7 +217,7 @@ public class UserGroupController {
      *
      * @apiError (Error-Code) 4001 group not exist
      * @apiError (Error-Code) 4002 group not belong current user
-     * @apiError (Error-Code) 4003 group has del
+     * @apiError (Error-Code) 4003 group has been del
      */
     /***/
     @PostMapping("/group/user/add")

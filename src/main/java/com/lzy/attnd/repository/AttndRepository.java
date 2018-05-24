@@ -184,7 +184,7 @@ public class AttndRepository implements AttndService {
                             rs.getString("teachername"),userID,rs.getString("cipher"));
                 });
         //arg start to 0
-        args[2]=0;
+        args[3]=0;
         int totalCount = this.jdbcTemplate.queryForObject("SELECT COUNT(id) FROM attnd "+conditions,args,Integer.class);
         return new PaginationAttnd(totalCount,attnds.toArray(new Attnd[0]));
     }
@@ -210,7 +210,7 @@ public class AttndRepository implements AttndService {
                             rs.getString("teachername"),rs.getInt("teacherid"),rs.getString("cipher"));
                 });
         //arg start to 0
-        args[2]=0;
+        args[3]=0;
         int totalCount = this.jdbcTemplate.queryForObject("SELECT COUNT(id) FROM attnd "+conditions,args,Integer.class);
         return new PaginationAttnd(totalCount,attnds.toArray(new Attnd[0]));
     }

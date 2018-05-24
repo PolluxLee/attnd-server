@@ -295,9 +295,17 @@ public class AttndController {
      * @apiParamExample {json} Req:
      * {"cipher":"X574AQ","location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0}}
      *
-     * @apiSuccessParam {Number} data 1-->ok 2-->location beyond 3-->expired
+     * @apiSuccess {Number} data 1-->ok 2-->location beyond 3-->expired
      * @apiSuccessExample {json} Resp:
      * {"code":1000,"msg":"","data":1}
+     *
+     *
+     * @apiError (Error-Code) 3001 attnd not exist
+     * @apiError (Error-Code) 3002 口令类型 不对应 考勤的实际类型
+     * @apiError (Error-Code) 3003 already signin
+     * @apiError (Error-Code) 3007 user not belong the group
+     * @apiError (Error-Code) 3008 user is the creator
+     *
      */
     /***/
     @PostMapping("/attnd/signin")
@@ -360,7 +368,7 @@ public class AttndController {
         //chk attnd status correspond
         attnd = attndService.ChkAttnd(cipher);
         if (attnd==null){
-            return FB.SYS_ERROR("attnd to cipher not exist");
+            return new FB(Code.ATTND_NOT_EXIST);
         }
         if (!(Utils.GetTypeViaStatus(attnd.getStatus())==attnd_type)){
             return new FB(Code.ATTND_CIPHER_NOT_CORRESPOND,"attnd status to cipher type not correspond");
@@ -422,9 +430,9 @@ public class AttndController {
      * cipher=A7184&fail_only=true&page=1&page_size=10
      *
      *
-     * @apiSuccessParam {Number} count record total count
-     * @apiSuccessParam {Number} present_count 实到人数 only work in type A & fail_only=false
-     * @apiSuccessParam {Number=1,2,3,4} attnd_status studnet attendance status 1-> ok 2-> location beyond 3 -> time expired 4 -> not exist
+     * @apiSuccess {Number} count record total count
+     * @apiSuccess {Number} present_count 实到人数 only work in type A & fail_only=false
+     * @apiSuccess {Number=1,2,3,4} attnd_status studnet attendance status 1-> ok 2-> location beyond 3 -> time expired 4 -> not exist
      * @apiSuccessExample {json} Resp:
      * {"code":1000,"msg":"","data":{"count":10,"attnds":[{"openid":"ox111","stu_id":"1506200023","name":"xiaoming","attnd_status":1,"distance":53.14},{"openid":"ox222","stu_id":"1506200024","name":"zhangli","attnd_status":1,"distance":23.14}]}}
      *
@@ -501,7 +509,7 @@ public class AttndController {
      *
      * @apiError (Error-Code) 3001 attnd not exist
      * @apiError (Error-Code) 3005 attnd has del
-     * @apiError (Error-Code) 3006 attnd is going an not be del
+     * @apiError (Error-Code) 3006 attnd is ongoing
      * @apiError (Error-Code) 3009 attnd not creator
      */
     /***/
@@ -554,7 +562,7 @@ public class AttndController {
      *
      * @apiError (Error-Code) 3001 attnd not exist
      * @apiError (Error-Code) 3005 attnd has del
-     * @apiError (Error-Code) 3006 attnd is going an not be del
+     * @apiError (Error-Code) 3006 attnd is going
      * @apiError (Error-Code) 3009 attnd not creator
      */
     /***/

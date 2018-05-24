@@ -357,7 +357,7 @@ public class AttndControllerTests {
         )
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SYS_ERROR)));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_NOT_EXIST)));
     }
 
     /**
