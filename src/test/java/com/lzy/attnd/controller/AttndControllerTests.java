@@ -130,7 +130,7 @@ public class AttndControllerTests {
     @Test
     @Transactional
     public void attnd_User_NotExist_Group_NotExist()throws Exception{
-        session.setAttribute(configBean.getSession_key(),new Session(0,"",0,"oid","wxsessionkey","23"));
+        session.setAttribute(configBean.getSession_key(),new Session(0,"",0,"oid22","wxsessionkey","23"));
         mvc.perform(MockMvcRequestBuilders.post("/attnd")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"attnd_name\":\"操作系统\",\"start_time\":15577418,\"last\":20,\"location\":{\"latitude\":23.4,\"longitude\":174.4,\"accuracy\":30.0},\"addr_name\":\"外环西路\",\"teacher_name\":\"wjx\",\"group_name\":\"计科151\"}")
@@ -140,7 +140,9 @@ public class AttndControllerTests {
                 .andExpect(MockMvcResultMatchers.status().is(200))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.cipher",startsWith(String.valueOf((Code.CIPHER_ENTRY)))))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userinfo.name", is("wjx")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userinfo.openid", is("oid22")));
     }
 
     /**
@@ -608,8 +610,10 @@ public class AttndControllerTests {
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().is(200))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(3)));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(3)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.present_count",is(3)));
     }
+
 
     @Test
     public void signinList_A_fail_only()throws Exception{
@@ -623,7 +627,8 @@ public class AttndControllerTests {
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().is(200))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(1)));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(1)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.present_count",is(2)));
     }
 
     @Test

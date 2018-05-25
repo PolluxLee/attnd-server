@@ -35,6 +35,7 @@ public class GlobalExceptionHandler {
     //db access failed
     @ExceptionHandler(DataAccessException.class)
     public FB DataAccessFailed(DataAccessException dae){
+        logger.error("db failed: "+dae.getMessage());
         return new FB(Code.GLOBAL_DB_ERROR,"[db_failed]: "+dae.getMessage());
     }
 

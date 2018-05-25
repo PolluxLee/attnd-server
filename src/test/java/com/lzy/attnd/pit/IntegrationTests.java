@@ -210,6 +210,8 @@ public class IntegrationTests {
                 .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
                 .andExpect(jsonPath("$.data.cipher",startsWith(String.valueOf((Code.CIPHER_ENTRY)))))
                 .andExpect(jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)))
+                .andExpect(jsonPath("$.data.userinfo.name", is(attndG.getTeacher_name())))
+                .andExpect(jsonPath("$.data.userinfo.openid", is(teac_Oid)))
                 .andReturn();
 
         //type G
@@ -444,6 +446,7 @@ public class IntegrationTests {
                 .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
                 //应到两人
                 .andExpect(jsonPath("$.data.count",is(2)))
+                .andExpect(jsonPath("$.data.present_count",is(1)))
                 .andExpect(jsonPath("$.data.attnds[0].openid",is(attndStateStu1.getOpenid())))
                 .andExpect(jsonPath("$.data.attnds[0].name",is(attndStateStu1.getName())))
                 .andExpect(jsonPath("$.data.attnds[0].stu_id",is(attndStateStu1.getStu_id())))
@@ -484,6 +487,7 @@ public class IntegrationTests {
                 .andExpect(status().is(200))
                 .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
                 .andExpect(jsonPath("$.data.count",is(2)))
+                .andExpect(jsonPath("$.data.present_count",is(1)))
                 .andExpect(jsonPath("$.data.attnds[0].openid",is(attndStateStu1.getOpenid())))
                 .andExpect(jsonPath("$.data.attnds[0].name",is(attndStateStu1.getName())))
                 .andExpect(jsonPath("$.data.attnds[0].stu_id",is(attndStateStu1.getStu_id())))
@@ -511,6 +515,7 @@ public class IntegrationTests {
                 .andExpect(status().is(200))
                 .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
                 .andExpect(jsonPath("$.data.count",is(1)))
+                .andExpect(jsonPath("$.data.present_count",is(1)))
                 .andExpect(jsonPath("$.data.attnds[0].openid",is(attndStateStu1.getOpenid())))
                 .andExpect(jsonPath("$.data.attnds[0].name",is(attndStateStu1.getName())))
                 .andExpect(jsonPath("$.data.attnds[0].stu_id",is(attndStateStu1.getStu_id())))

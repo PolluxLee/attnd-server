@@ -9,9 +9,9 @@ INSERT INTO user(id,name, openid,remark,stuid,groupid) VALUES(1,'lzy','toid123',
 INSERT INTO user(id,name, openid,remark,stuid,groupid) VALUES(3,'lz','toid789','{}','25','[1]');
 INSERT INTO user(id,name, openid,remark,stuid,groupid) VALUES(4,'fa','toid222','{}','25','[1]');
 
-INSERT INTO usergroup(id,name, creatorname, creatorid, remark) VALUES (1,'网工151','lzy',1,'{}');
-INSERT INTO usergroup(id,name, creatorname, creatorid, remark) VALUES (2,'计科151','lzy',1,'{}');
-INSERT INTO usergroup(id,name, creatorname, creatorid, remark,status) VALUES (3,'软工151','fa',4,'{}',4);
+INSERT INTO usergroup(id,name, creatorname, creatorid, remark,createdat) VALUES (1,'网工151','lzy',1,'{}','2018-05-21');
+INSERT INTO usergroup(id,name, creatorname, creatorid, remark,createdat) VALUES (2,'计科151','lzy',1,'{}','2018-05-22');
+INSERT INTO usergroup(id,name, creatorname, creatorid, remark,status,createdat) VALUES (3,'软工151','fa',4,'{}',4,'2018-05-23');
 
 
 INSERT INTO attnd(id,name,cipher,starttime,lasttime,location,addrname,groupname,teacherid,teachername,status,remark,createdat) VALUES

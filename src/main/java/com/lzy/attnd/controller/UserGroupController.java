@@ -54,6 +54,7 @@ public class UserGroupController {
      *
      * @apiName chkUserGrouplist
      * @apiGroup Group
+     * @apiDescription order by createdat desc
      *
      * @apiSuccessExample {json} Resp:
      * {"code":1000,"msg":"","data":[{"id":100,"name":"计科151","status":2,"creator_name":"lzp"},{"id":101,"name":"网工151","status":1,"creator_name":"lzp"}]}

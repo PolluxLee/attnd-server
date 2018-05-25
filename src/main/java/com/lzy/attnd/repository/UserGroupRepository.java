@@ -74,7 +74,7 @@ public class UserGroupRepository implements UserGroupService {
     @Override
     public UserGroup[] ChkGroupListByUser(int creatorID) throws DataAccessException {
         List<UserGroup> attndStateList=this.jdbcTemplate.query(
-                "SELECT id,name,creatorname,status FROM usergroup WHERE creatorid=? AND status<>? ",
+                "SELECT id,name,creatorname,status FROM usergroup WHERE creatorid=? AND status<>? ORDER BY createdat DESC",
                 new Object[]{creatorID,Code.GROUP_DEL},
                 (rs, i) -> new UserGroup(new Object(),rs.getInt("status"),
                         rs.getInt("id"),rs.getString("name"),creatorID,rs.getString("creatorname")));

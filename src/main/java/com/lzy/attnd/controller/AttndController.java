@@ -73,8 +73,8 @@ public class AttndController {
      * @apiSuccessExample {json} Resp-create:
      * {"code":1000,"msg":"","data":{"attnd_id":5415,"cipher":"A548QC"}}
      *
-     * @apiSuccessExample {json} Resp-update:
-     * {"code":1000,"msg":""}
+     * @apiSuccessExample {json} Resp-NewUser:
+     * {"code":1000,"msg":"","data":{"attnd_id":5415,"cipher":"G548QC","userinfo":{"id":1,"openid":"fdsafe51515","name":"lzp"}}}
      */
     /***/
     @PostMapping("/attnd")
@@ -84,6 +84,8 @@ public class AttndController {
             @Validated({Attnd.Name.class,Attnd.StartTime.class,Attnd.Last.class,Attnd.Location_Struct.class,Attnd.AddrName.class,
                     Attnd.TeacherName.class})
                                  @RequestBody Attnd attnd){
+        HashMap<String,Object> fbJson = new HashMap<>();
+
         //chk user exist get Teacherid
         User user = userService.FindUserByOpenid(session.getOpenid());
         if (user==null){
@@ -97,6 +99,7 @@ public class AttndController {
                 return FB.DB_FAILED("addAttnd InsIgnoreUserInfo failed");
             }
             user.setId(id);
+            fbJson.put("userinfo",user);
         }
         attnd.setTeacher_name(user.getName());
         session.setUserID(user.getId());
@@ -148,7 +151,7 @@ public class AttndController {
             return FB.DB_FAILED("addAttnd AddAttnd no id return");
         }
 
-        HashMap<String,Object> fbJson = new HashMap<>();
+
         fbJson.put("attnd_id",attnd.getAttnd_id());
         fbJson.put("cipher",cipher);
         return FB.SUCCESS(fbJson);
@@ -295,6 +298,9 @@ public class AttndController {
      * @apiParamExample {json} Req:
      * {"cipher":"X574AQ","location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0}}
      *
+     * @apiParamExample {json} Req-Attnd-S:
+     * {"cipher":"S574AQ"}
+     *
      * @apiSuccess {Number} data 1-->ok 2-->location beyond 3-->expired
      * @apiSuccessExample {json} Resp:
      * {"code":1000,"msg":"","data":1}
@@ -320,21 +326,22 @@ public class AttndController {
             return FB.PARAM_INVALID("cipher invalid empty or too long");
         }
 
-
-        ObjectMapper mapper = new ObjectMapper();
-        if (!root.hasNonNull("location")){
-            return FB.PARAM_INVALID("location invalid in root prop");
-        }
-
         Location signLoc = null;
-        try {
-            signLoc = mapper.treeToValue(root.get("location"),Location.class);
-        } catch (JsonProcessingException e) {
-            return FB.PARAM_INVALID("location invalid in treeToValue");
+        if (cipher.charAt(0)!=Code.CIPHER_SINGLE){
+            ObjectMapper mapper = new ObjectMapper();
+            if (!root.hasNonNull("location")){
+                return FB.PARAM_INVALID("location invalid in root prop");
+            }
+            try {
+                signLoc = mapper.treeToValue(root.get("location"),Location.class);
+            } catch (JsonProcessingException e) {
+                return FB.PARAM_INVALID("location invalid in treeToValue");
+            }
+            if (signLoc==null || signLoc.getAccuracy()<0||signLoc.getLatitude()<-90||signLoc.getLatitude()>90||signLoc.getLongitude()<-180||signLoc.getLongitude()>180){
+                return FB.PARAM_INVALID("location invalid in children prop");
+            }
         }
-        if (signLoc==null || signLoc.getAccuracy()<0||signLoc.getLatitude()<-90||signLoc.getLatitude()>90||signLoc.getLongitude()<-180||signLoc.getLongitude()>180){
-            return FB.PARAM_INVALID("location invalid in children prop");
-        }
+
 
         //--------- chk param complete
 
@@ -475,14 +482,15 @@ public class AttndController {
         }else{
             //TYPE A
             int signInFailCount = signInService.CountSignInListWithGroup(cipher,groupID,Code.SIGNIN_OK);
+            int totalGroupUserCount =  userGroupService.CountUserInGroup(groupID);
             if (fail_only){
                 //chk user not signin in group
                 recTotalCount = signInFailCount;
             }else{
-                recTotalCount = userGroupService.CountUserInGroup(groupID);
-                //present_count = totoal_user_count - userNotSigninCount 实到人数=组内总人数-签到失败人数
-                fbJson.put("present_count",recTotalCount-signInFailCount);
+                recTotalCount = totalGroupUserCount;
             }
+            //present_count = totoal_user_count - userNotSigninCount 实到人数=组内总人数-签到失败人数
+            fbJson.put("present_count",totalGroupUserCount-signInFailCount);
         }
 
 

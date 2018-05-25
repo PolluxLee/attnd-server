@@ -79,7 +79,16 @@ public class UserGroupControllerTests {
         )
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data[0].id",is(2)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data[0].name",is("计科151")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data[0].creator_name",is("lzy")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data[0].creator_id",is(1)))
+
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data[1].id",is(1)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data[1].name",is("网工151")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data[1].creator_name",is("lzy")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data[1].creator_id",is(1)));
     }
 
     /**-------------------group info ----------------*/
