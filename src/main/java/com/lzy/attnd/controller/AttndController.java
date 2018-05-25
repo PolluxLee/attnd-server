@@ -70,10 +70,7 @@ public class AttndController {
      * {"attnd_name":"操作系统","start_time":1526826235000,"last":20,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"addr_name":"外环西路","teacher_name":"wjx","group_name":"计科151"}
      *
      * @apiSuccess {String} cipher 口令 标识位(标识录入/考勤)+通过62进制时间戳后3位+ (attnd_id (when no_group) ||group_id ) 的62进制表示
-     * @apiSuccessExample {json} Resp-create:
-     * {"code":1000,"msg":"","data":{"attnd_id":5415,"cipher":"A548QC"}}
-     *
-     * @apiSuccessExample {json} Resp-NewUser:
+     * @apiSuccessExample {json} Resp:
      * {"code":1000,"msg":"","data":{"attnd_id":5415,"cipher":"G548QC","userinfo":{"id":1,"openid":"fdsafe51515","name":"lzp"}}}
      */
     /***/
@@ -84,7 +81,6 @@ public class AttndController {
             @Validated({Attnd.Name.class,Attnd.StartTime.class,Attnd.Last.class,Attnd.Location_Struct.class,Attnd.AddrName.class,
                     Attnd.TeacherName.class})
                                  @RequestBody Attnd attnd){
-        HashMap<String,Object> fbJson = new HashMap<>();
 
         //chk user exist get Teacherid
         User user = userService.FindUserByOpenid(session.getOpenid());
@@ -99,7 +95,6 @@ public class AttndController {
                 return FB.DB_FAILED("addAttnd InsIgnoreUserInfo failed");
             }
             user.setId(id);
-            fbJson.put("userinfo",user);
         }
         attnd.setTeacher_name(user.getName());
         session.setUserID(user.getId());
@@ -151,9 +146,10 @@ public class AttndController {
             return FB.DB_FAILED("addAttnd AddAttnd no id return");
         }
 
-
+        HashMap<String,Object> fbJson = new HashMap<>();
         fbJson.put("attnd_id",attnd.getAttnd_id());
         fbJson.put("cipher",cipher);
+        fbJson.put("userinfo",user);
         return FB.SUCCESS(fbJson);
     }
 

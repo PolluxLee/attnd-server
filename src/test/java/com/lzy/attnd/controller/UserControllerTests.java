@@ -23,6 +23,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
 import static org.hamcrest.Matchers.*;
@@ -186,6 +187,7 @@ public class UserControllerTests {
 
 
     @Test
+    @Transactional
     public void addOrUpdUser_INS() throws Exception{
         session.setAttribute(configBean.getSession_key(),new Session(1,"lzy",0,"oid","wxsessionkey","23"));
         mvc.perform(MockMvcRequestBuilders.post("/user/info")

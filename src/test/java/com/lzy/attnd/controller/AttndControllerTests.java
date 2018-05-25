@@ -162,7 +162,9 @@ public class AttndControllerTests {
                 .andExpect(MockMvcResultMatchers.status().is(200))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.cipher",startsWith(String.valueOf(Code.CIPHER_NOGROUP))))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userinfo.name", is("wjx")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userinfo.openid", is("oid")));
     }
 
 
@@ -183,7 +185,9 @@ public class AttndControllerTests {
                 .andExpect(MockMvcResultMatchers.status().is(200))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.cipher",startsWith(String.valueOf(Code.CIPHER_ENTRY))))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userinfo.name", is("lzy")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userinfo.openid", is("toid123")));
     }
 
     /**
@@ -203,7 +207,9 @@ public class AttndControllerTests {
                 .andExpect(MockMvcResultMatchers.status().is(200))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.cipher",startsWith(String.valueOf(Code.CIPHER_ATTND))))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userinfo.name", is("lzy")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userinfo.openid", is("toid123")));
     }
 
     /**
@@ -223,7 +229,9 @@ public class AttndControllerTests {
                 .andExpect(MockMvcResultMatchers.status().is(200))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.cipher",startsWith(String.valueOf(Code.CIPHER_ENTRY))))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userinfo.name", is("lzp")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userinfo.openid", is("toid456")));
     }
 
 

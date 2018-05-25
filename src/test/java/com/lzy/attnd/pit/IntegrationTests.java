@@ -409,6 +409,8 @@ public class IntegrationTests {
                 .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
                 .andExpect(jsonPath("$.data.cipher",startsWith(String.valueOf((Code.CIPHER_ATTND)))))
                 .andExpect(jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)))
+                .andExpect(jsonPath("$.data.userinfo.name", is(attndG.getTeacher_name())))
+                .andExpect(jsonPath("$.data.userinfo.openid", is(teac_Oid)))
                 .andReturn();
 
         //type A
@@ -571,6 +573,8 @@ public class IntegrationTests {
                 .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
                 .andExpect(jsonPath("$.data.cipher",startsWith(String.valueOf((Code.CIPHER_NOGROUP)))))
                 .andExpect(jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)))
+                .andExpect(jsonPath("$.data.userinfo.name", is(attndG.getTeacher_name())))
+                .andExpect(jsonPath("$.data.userinfo.openid", is(teac_Oid)))
                 .andReturn();
 
         //type N
