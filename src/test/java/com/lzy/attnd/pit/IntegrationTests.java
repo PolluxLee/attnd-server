@@ -340,6 +340,13 @@ public class IntegrationTests {
                 .andExpect(jsonPath("$.data.attnds[1].stu_id",is(attndStateStu2.getStu_id())))
                 .andExpect(jsonPath("$.data.attnds[1].attnd_status",is(attndStateStu2.getAttnd_status())))
                 .andExpect(jsonPath("$.data.attnds[1].distance",is(attndStateStu2.getDistance())))
+
+                .andExpect(jsonPath("$.data.my_signin.openid",is(attndStateStu2.getOpenid())))
+                .andExpect(jsonPath("$.data.my_signin.name",is(attndStateStu2.getName())))
+                .andExpect(jsonPath("$.data.my_signin.stu_id",is(attndStateStu2.getStu_id())))
+                .andExpect(jsonPath("$.data.my_signin.attnd_status",is(attndStateStu2.getAttnd_status())))
+                .andExpect(jsonPath("$.data.my_signin.distance",is(attndStateStu2.getDistance())))
+
                 .andReturn();
 
 
@@ -387,6 +394,9 @@ public class IntegrationTests {
                 .andExpect(jsonPath("$.data.attnds[1].stu_id",is(attndStateStu2.getStu_id())))
                 .andExpect(jsonPath("$.data.attnds[1].attnd_status",is(attndStateStu2.getAttnd_status())))
                 .andExpect(jsonPath("$.data.attnds[1].distance",is(attndStateStu2.getDistance())))
+
+                .andExpect(jsonPath("$.data.my_signin.size()",is(0)))
+
                 .andReturn();
 
         //sleep 50 ms mock
@@ -415,8 +425,9 @@ public class IntegrationTests {
 
         //type A
         String cipher_A1 = ((String) readRespWithKey(r, "$.data.cipher"));
+        attndA1.setAttnd_id(((int) readRespWithKey(r, "$.data.attnd_id")));
         attndA1.setCipher(cipher_A1);
-        int group_A_ID = ((int) Utils.Base62LastKToLong(cipher_A1, cipher_A1.length() - 4));
+        int group_A_ID = ((int) Utils.Base62LastKToLong(cipher_A1, cipher_A1.length() - 4-Utils.ChkIDBase62Length(attndA1.getAttnd_id(),10)));
 
         //student signin
         //sign in at 10 minutes later after add attnd
@@ -424,7 +435,7 @@ public class IntegrationTests {
         testTimestamp = attndTimeA1+5*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(String.format("{\"cipher\":\"%s\",\"location\":{\"latitude\":23.41,\"longitude\":174.402,\"accuracy\":30.0}}",cipher_A1))
+                .content(String.format("{\"cipher\":\"%s\",\"location\":{\"latitude\":23.41,\"longitude\":174.402,\"accuracy\":30.0},\"attnd_id\":%d}",cipher_A1,attndA1.getAttnd_id()))
                 .session(s_stu1)
         )
                 .andDo(MockMvcResultHandlers.print())
@@ -441,6 +452,7 @@ public class IntegrationTests {
                 .param("page","1")
                 .param("page_size","10")
                 .param("fail_only","false")
+                .param("attnd_id",Integer.toString(attndA1.getAttnd_id()))
                 .session(s_tea1)
         )
                 .andDo(MockMvcResultHandlers.print())
@@ -460,6 +472,8 @@ public class IntegrationTests {
                 .andExpect(jsonPath("$.data.attnds[1].stu_id",is(attndStateStu2.getStu_id())))
                 .andExpect(jsonPath("$.data.attnds[1].attnd_status",is(attndStateStu2.getAttnd_status())))
                 .andExpect(jsonPath("$.data.attnds[1].distance",is(attndStateStu2.getDistance())))
+
+                .andExpect(jsonPath("$.data.my_signin.size()",is(0)))
                 .andReturn();
 
         //student2 signin
@@ -467,7 +481,7 @@ public class IntegrationTests {
         testTimestamp = attndTimeA1+3*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(String.format("{\"cipher\":\"%s\",\"location\":{\"latitude\":23.405,\"longitude\":174.4025,\"accuracy\":30.0}}",cipher_A1))
+                .content(String.format("{\"cipher\":\"%s\",\"location\":{\"latitude\":23.405,\"longitude\":174.4025,\"accuracy\":30.0},\"attnd_id\":%d}",cipher_A1,attndA1.getAttnd_id()))
                 .session(s_stu2)
         )
                 .andDo(MockMvcResultHandlers.print())
@@ -483,6 +497,7 @@ public class IntegrationTests {
                 .param("page","1")
                 .param("page_size","10")
                 .param("fail_only","false")
+                .param("attnd_id",Integer.toString(attndA1.getAttnd_id()))
                 .session(s_tea1)
         )
                 .andDo(MockMvcResultHandlers.print())
@@ -501,6 +516,8 @@ public class IntegrationTests {
                 .andExpect(jsonPath("$.data.attnds[1].stu_id",is(attndStateStu2.getStu_id())))
                 .andExpect(jsonPath("$.data.attnds[1].attnd_status",is(attndStateStu2.getAttnd_status())))
                 .andExpect(jsonPath("$.data.attnds[1].distance",is(attndStateStu2.getDistance())))
+
+                .andExpect(jsonPath("$.data.my_signin.size()",is(0)))
                 .andReturn();
 
         //teacher chk situation attnd A
@@ -511,6 +528,7 @@ public class IntegrationTests {
                 .param("page","1")
                 .param("page_size","1")
                 .param("fail_only","true")
+                .param("attnd_id",Integer.toString(attndA1.getAttnd_id()))
                 .session(s_tea1)
         )
                 .andDo(MockMvcResultHandlers.print())
@@ -523,6 +541,8 @@ public class IntegrationTests {
                 .andExpect(jsonPath("$.data.attnds[0].stu_id",is(attndStateStu1.getStu_id())))
                 .andExpect(jsonPath("$.data.attnds[0].attnd_status",is(attndStateStu1.getAttnd_status())))
                 .andExpect(jsonPath("$.data.attnds[0].distance",is(attndStateStu1.getDistance())))
+
+                .andExpect(jsonPath("$.data.my_signin.size()",is(0)))
                 .andReturn();
 
 
@@ -634,6 +654,8 @@ public class IntegrationTests {
                 .andExpect(jsonPath("$.data.attnds[1].stu_id",is(attndStateStu2.getStu_id())))
                 .andExpect(jsonPath("$.data.attnds[1].attnd_status",is(attndStateStu2.getAttnd_status())))
                 .andExpect(jsonPath("$.data.attnds[1].distance",is(attndStateStu2.getDistance())))
+
+                .andExpect(jsonPath("$.data.my_signin.size()",is(0)))
                 .andReturn();
 
         String teacherNewName = "张学友";

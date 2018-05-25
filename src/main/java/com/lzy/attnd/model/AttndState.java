@@ -1,8 +1,11 @@
 package com.lzy.attnd.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class AttndState {
     public AttndState(String openid, String name, String stu_id, int attnd_status, double distance) {
         this.openid = openid;

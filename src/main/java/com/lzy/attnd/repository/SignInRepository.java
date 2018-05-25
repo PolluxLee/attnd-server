@@ -43,7 +43,7 @@ public class SignInRepository implements SignInService {
     @Override
     public boolean ChkUserHasSignIn(String openid, String cipher) throws DataAccessException {
         try {
-            this.jdbcTemplate.queryForObject("SELECT 1 FROM signin WHERE openid=? AND cipher=?",new Object[]{openid,cipher},int.class);
+            this.jdbcTemplate.queryForObject("SELECT id FROM signin WHERE openid=? AND cipher=?",new Object[]{openid,cipher},int.class);
         } catch (EmptyResultDataAccessException e) {
             return false;
         }
@@ -103,5 +103,20 @@ public class SignInRepository implements SignInService {
         if (statusToUpdate!= Code.SIGNIN_OK && statusToUpdate!=Code.SIGNIN_NOT_EXIST)
             throw new DBProcessException("UpdSignInSituation param invalid");
         return 1==this.jdbcTemplate.update("UPDATE signin SET status=? WHERE cipher=? AND openid=?",statusToUpdate,cipher,openid);
+    }
+
+    @Override
+    public AttndState ChkSignInInfo(String cipher, String openid) throws DataAccessException {
+        AttndState attndState = null;
+        try {
+            attndState = this.jdbcTemplate.queryForObject(
+                    "SELECT signin.openid,distance AS dist,signin.status,stuid,name FROM signin JOIN user on signin.openid=user.openid WHERE cipher=? AND signin.openid=?  LIMIT 1;",
+                    new Object[]{cipher,openid},
+                    (rs,i)->
+                            new AttndState(rs.getString("openid"),rs.getString("name"),rs.getString("stuid"),rs.getInt("status"),rs.getDouble("dist")));
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+        return attndState;
     }
 }

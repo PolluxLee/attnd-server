@@ -28,6 +28,7 @@ public interface Code {
     //attnd creator not allow to signin
     int SIGNIN_CREATOR = 3008;
     int ATTND_NOT_CREATOR = 3009;
+    int ATTND_HASNOT_SIGNIN = 3010;
 
 
     int GROUP_NOTEXIST=4001;

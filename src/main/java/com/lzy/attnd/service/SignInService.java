@@ -28,4 +28,6 @@ public interface SignInService {
     @Min(0) int CountSignInListWithGroup(@NotBlank String cipher,@Min(1) int groupID,int statusExclude) throws DataAccessException;
 
     boolean UpdSignInSituation(@NotBlank String cipher,@NotBlank String openid,int statusToUpdate) throws DataAccessException;
+
+    AttndState ChkSignInInfo(@NotBlank String cipher,@NotBlank String openid) throws DataAccessException;
 }

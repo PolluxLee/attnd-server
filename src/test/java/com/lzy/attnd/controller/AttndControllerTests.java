@@ -44,6 +44,7 @@ public class AttndControllerTests {
     private WebApplicationContext wac;
     private MockMvc mvc;
     private MockHttpSession session;
+    private Session sessionMy;
 
     @Autowired
     private ConfigBean configBean;
@@ -52,7 +53,8 @@ public class AttndControllerTests {
     public void setupMockMvc(){
         mvc = MockMvcBuilders.webAppContextSetup(wac).build(); //初始化MockMvc对象
         session = new MockHttpSession();
-        session.setAttribute(configBean.getSession_key(),new Session(1,"lzy",0,"toid123","wxsessionkey","23"));
+        sessionMy = new Session(1,"lzy",0,"toid123","wxsessionkey","23");
+        session.setAttribute(configBean.getSession_key(),sessionMy);
     }
 
     @After
@@ -362,7 +364,7 @@ public class AttndControllerTests {
     public void SignIn_normal_attnd_not_exist()throws Exception{
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"cipher\":\"Awvk34534\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0}}")
+                .content("{\"cipher\":\"Awvk34534\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0},\"attnd_id\":1}")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
@@ -401,7 +403,7 @@ public class AttndControllerTests {
         testTimestamp = 1522512000+10*60;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"cipher\":\"Awcq1\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0}}")
+                .content("{\"cipher\":\"Awcq31\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0},\"attnd_id\":1}")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
@@ -421,7 +423,7 @@ public class AttndControllerTests {
         testTimestamp = 1522512000+10*60;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"cipher\":\"Awcq1\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0}}")
+                .content("{\"cipher\":\"Awcq31\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0},\"attnd_id\":3}")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
@@ -441,7 +443,7 @@ public class AttndControllerTests {
         testTimestamp = System.currentTimeMillis();
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"cipher\":\"Awcq1\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0}}")
+                .content("{\"cipher\":\"Awcq31\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0},\"attnd_id\":3}")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
@@ -462,7 +464,7 @@ public class AttndControllerTests {
         testTimestamp = 1522512000+10*60;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"cipher\":\"Awcq1\",\"location\":{\"latitude\":23.4,\"longitude\":150.4005,\"accuracy\":30.0}}")
+                .content("{\"cipher\":\"Awcq31\",\"location\":{\"latitude\":23.4,\"longitude\":150.4005,\"accuracy\":30.0},\"attnd_id\":3}")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
@@ -479,7 +481,7 @@ public class AttndControllerTests {
         testTimestamp = 1522512000+10*60;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"cipher\":\"Awcq1\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0}}")
+                .content("{\"cipher\":\"Awcq31\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0},\"attnd_id\":3}")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
@@ -595,7 +597,7 @@ public class AttndControllerTests {
     @Test
     public void signinList_page_invalid()throws Exception{
         mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
-                .param("cipher","Awcq1")
+                .param("cipher","Awcq31")
                 .param("pafege","1")
                 .param("page_size","10")
                 .session(session)
@@ -609,10 +611,11 @@ public class AttndControllerTests {
     @Test
     public void signinList_A()throws Exception{
         mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
-                .param("cipher","Awcq1")
+                .param("cipher","Awcq31")
                 .param("page","1")
                 .param("page_size","10")
                 .param("fail_only","false")
+                .param("attnd_id","3")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
@@ -626,26 +629,28 @@ public class AttndControllerTests {
     @Test
     public void signinList_A_fail_only()throws Exception{
         mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
-                .param("cipher","Awvq1")
+                .param("cipher","Awcq31")
                 .param("page","1")
                 .param("page_size","10")
                 .param("fail_only","true")
+                .param("attnd_id","3")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().is(200))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(1)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.present_count",is(2)));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(0)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.present_count",is(3)));
     }
 
     @Test
     public void signinList_page_2()throws Exception{
         mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
-                .param("cipher","Awcq1")
+                .param("cipher","Awcq31")
                 .param("page","1")
                 .param("page_size","2")
                 .param("fail_only","false")
+                .param("attnd_id","3")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
@@ -655,11 +660,44 @@ public class AttndControllerTests {
     }
 
     @Test
+    public void signinList_mysignin()throws Exception{
+        mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
+                .param("cipher","Awcq31")
+                .param("page","1")
+                .param("page_size","2")
+                .param("fail_only","false")
+                .param("attnd_id","3")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(3)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.present_count",is(3)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.my_signin.size()",is(0)));
+    }
+
+    @Test
     public void signinList_G()throws Exception{
         mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
                 .param("cipher","Gwvk1")
                 .param("page","1")
                 .param("page_size","10")
+                .param("fail_only","false")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(2)));
+    }
+
+    @Test
+    public void signinList_G_P2()throws Exception{
+        mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
+                .param("cipher","Gwvk1")
+                .param("page","2")
+                .param("page_size","1")
                 .param("fail_only","false")
                 .session(session)
         )
@@ -748,7 +786,7 @@ public class AttndControllerTests {
     public void delAttnd_ongoing()throws Exception{
         testTimestamp=1522512000+10*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/del")
-                .content("cipher=Awcq1")
+                .content("cipher=Awcq31")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .session(session)
         )
@@ -791,7 +829,7 @@ public class AttndControllerTests {
         session.setAttribute(configBean.getSession_key(),new Session(2,"lzp",0,"toid456","wxsessionkey","25"));
         testTimestamp=1522512000+30*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/del")
-                .content("cipher=Awcq1")
+                .content("cipher=Awcq31")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .session(session)
         )
@@ -805,7 +843,7 @@ public class AttndControllerTests {
     public void delAttnd_success()throws Exception{
         testTimestamp=1522512000+30*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/del")
-                .content("cipher=Awcq1")
+                .content("cipher=Awcq31")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .session(session)
         )
@@ -821,7 +859,7 @@ public class AttndControllerTests {
     public void updStatus_param_invalid()throws Exception{
         testTimestamp=1522512000+30*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/signin/status/upd")
-                .content("cipher=Awvq1&openid=toid7354389&attnd_us=4")
+                .content("cipher=Awcq31&openid=toid7354389&attnd_us=4")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .session(session)
         )
@@ -835,7 +873,7 @@ public class AttndControllerTests {
     public void updStatus_ongoing()throws Exception{
         testTimestamp=1522512000+5*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/signin/status/upd")
-                .content("cipher=Awvq1&openid=toid789&attnd_status=4")
+                .content("cipher=Awcq31&openid=toid789&attnd_status=4")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .session(session)
         )
@@ -878,7 +916,7 @@ public class AttndControllerTests {
         session.setAttribute(configBean.getSession_key(),new Session(2,"lzp",0,"toid456","wxsessionkey","25"));
         testTimestamp=1522512000+30*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/signin/status/upd")
-                .content("cipher=Awvq1&openid=toid789&attnd_status=4")
+                .content("cipher=Awcq31&openid=toid789&attnd_status=4")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .session(session)
         )
@@ -892,13 +930,13 @@ public class AttndControllerTests {
     public void updStatus_user_notexist()throws Exception{
         testTimestamp=1522512000+30*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/signin/status/upd")
-                .content("cipher=Awvq1&openid=toid7354389&attnd_status=4")
+                .content("cipher=Awcq31&openid=toid7354389&attnd_status=4")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_DB_FAILED)));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_HASNOT_SIGNIN)));
     }
 
     @Test
@@ -906,7 +944,7 @@ public class AttndControllerTests {
     public void updStatus_success()throws Exception{
         testTimestamp=1522512000+30*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/signin/status/upd")
-                .content("cipher=Awvq1&openid=toid789&attnd_status=4")
+                .content("cipher=Awvq52&openid=toid789&attnd_status=4")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .session(session)
         )

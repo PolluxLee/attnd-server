@@ -68,7 +68,7 @@ public class AttndRepository implements AttndService {
             statement.setInt(5,  attnd.getTeacher_id());
             statement.setInt(6,  attnd.getStatus());
             statement.setString(7, remarkJson);
-            statement.setString(8, Utils.LongToBase62LastK(System.currentTimeMillis(),10));
+            statement.setString(8, "");
             statement.setString(9, attnd.getGroup_name());
             statement.setString(10, attnd.getTeacher_name());
             statement.setString(11, attnd.getAttnd_name());
@@ -76,8 +76,12 @@ public class AttndRepository implements AttndService {
         }, holder);
         int attndID = holder.getKey().intValue();
 
-        int cipherID = groupID<=0?attndID:groupID;
-        String cipher = Utils.CalCipher(Utils.GetTypeViaStatus(attnd.getStatus()),cipherID);
+        String cipher;
+        if (groupID<=0){
+            cipher = Utils.CalCipher(Utils.GetTypeViaStatus(attnd.getStatus()),attndID);
+        }else{
+            cipher = Utils.CalCipher(Utils.GetTypeViaStatus(attnd.getStatus()),attndID,groupID);
+        }
         if (cipher==null||cipher.equals("")){
             logger.warn("AddAttnd cipher invalid");
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();

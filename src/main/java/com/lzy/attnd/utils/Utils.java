@@ -71,10 +71,52 @@ public class Utils {
         return Code.CIPHER_ATTND;
     }
 
+    /**
+     * build cipher
+     * @param type A
+     * @param attndID
+     * @param groupID
+     * @return cipher
+     */
+    public static String CalCipher(char type,int attndID,int groupID){
+        if (type!='A'||attndID<=0||groupID<=0){
+            logger.error("CalCipher param invalid");
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(type);
+
+        long nowTime = System.currentTimeMillis();
+        String timeStr = LongToBase62LastK(nowTime,3);
+        if (timeStr.equals("")) {
+            logger.error("CalCipherB timeStr empty");
+            return "";
+        }
+        sb.append(timeStr);
+
+        String attndIDStr = LongToBase62LastK(attndID,10);
+        if (attndIDStr.equals("")) {
+            logger.error("attndIDStr empty");
+            return "";
+        }
+
+        sb.append(attndIDStr);
+
+        String groupIDStr = LongToBase62LastK(groupID,10);
+        if (groupIDStr.equals("")) {
+            logger.error("groupIDStr empty");
+            return "";
+        }
+
+        sb.append(groupIDStr);
+
+        return sb.toString();
+    }
+
 
     /**
      * build cipher
-     * @param type A/N/G/S
+     * @param type N/G/S
      * @param tail_id the id in the tail to identify
      * @return cipher
      */
@@ -130,6 +172,21 @@ public class Utils {
     private static String digths = "0123456789abcdefghijk+mnopqrstuvwxyzABCDEFGH=JKLMNOPQRSTUVWXYZ";
 
 
+    public static int ChkIDBase62Length(int ID,int max){
+        if (ID<=0){
+            return -1;
+        }
+        long flag = 62 ;
+        int len = 1;
+        while (ID>=flag){
+            flag=flag*62;
+            len++;
+            if (len>=max)
+                return max;
+        }
+        return len;
+    }
+
     //后k位
     public static String LongToBase62LastK(long id,int lastK) {
         if (id<=0||lastK<=0)
@@ -139,7 +196,7 @@ public class Utils {
         while (num != 0) {
             if (str.length()==lastK)
                 break;
-            str.append(digths.charAt((int) (num % 62)));
+            str.insert(0,digths.charAt((int) (num % 62)));
             num /= 62;
         }
         return str.toString();

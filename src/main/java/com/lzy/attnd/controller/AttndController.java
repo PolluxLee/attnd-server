@@ -294,6 +294,12 @@ public class AttndController {
      * @apiParamExample {json} Req:
      * {"cipher":"X574AQ","location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0}}
      *
+     * @apiParamExample {json} Req-Attnd-A:
+     * {"cipher":"X574AQ","location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"attnd_id":15}
+     *
+     * @apiParamExample {json} Req-Attnd-N/G:
+     * {"cipher":"X574AQ","location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0}}
+     *
      * @apiParamExample {json} Req-Attnd-S:
      * {"cipher":"S574AQ"}
      *
@@ -338,6 +344,17 @@ public class AttndController {
             }
         }
 
+        int attndID = 0;
+        if (cipher.charAt(0)==Code.CIPHER_ATTND){
+            JsonNode attndIDNode = root.get("attnd_id");
+            if (attndIDNode == null || !attndIDNode.isInt()){
+                return FB.PARAM_INVALID("attnd_id invalid");
+            }
+            attndID = attndIDNode.asInt();
+            if (attndID<=0){
+                return FB.PARAM_INVALID("attnd_id invalid <=0");
+            }
+        }
 
         //--------- chk param complete
 
@@ -358,7 +375,7 @@ public class AttndController {
             //get group ID from cipher
             //cipher length - type(1) - timestamp(3)
             int groupID = ((int) Utils.Base62LastKToLong(cipher, cipher.length() - 1 - 3));
-            if (groupID == -1){
+            if (groupID <= 0){
                 return FB.SYS_ERROR("get groupid from cipher failed");
             }
             if(!userService.AddUserToGroupByID(session.getOpenid(),groupID)){
@@ -390,7 +407,8 @@ public class AttndController {
 
         //if type = A --> judge user is this group
         if (attnd_type == Code.CIPHER_ATTND ){
-            int groupID = ((int) Utils.Base62LastKToLong(cipher, cipher.length() - 1 - 3));
+            //get groupID with cipher & attndid
+            int groupID = ((int) Utils.Base62LastKToLong(cipher, cipher.length() - 1 - 3 - Utils.ChkIDBase62Length(attndID,10)));
             if (groupID<=0){
                 return FB.SYS_ERROR("get groupid from cipher invalid");
             }
@@ -430,35 +448,52 @@ public class AttndController {
      *
      * @apiUse Pagination
      * @apiParamExample {String} Req:
-     * cipher=A7184&fail_only=true&page=1&page_size=10
+     * cipher=A7184&fail_only=true&page=1&page_size=10&attnd_id=15
      *
      *
      * @apiSuccess {Number} count record total count
      * @apiSuccess {Number} present_count 实到人数 only work in type A & fail_only=false
      * @apiSuccess {Number=1,2,3,4} attnd_status studnet attendance status 1-> ok 2-> location beyond 3 -> time expired 4 -> not exist
      * @apiSuccessExample {json} Resp:
-     * {"code":1000,"msg":"","data":{"count":10,"attnds":[{"openid":"ox111","stu_id":"1506200023","name":"xiaoming","attnd_status":1,"distance":53.14},{"openid":"ox222","stu_id":"1506200024","name":"zhangli","attnd_status":1,"distance":23.14}]}}
+     * {"code":1000,"msg":"","data":{"my_signin":{"openid":"ox111","stu_id":"1506200023","name":"xiaoming","attnd_status":1,"distance":53.14},"present_count":2,"count":10,"attnds":[{"openid":"ox111","stu_id":"1506200023","name":"xiaoming","attnd_status":1,"distance":53.14},{"openid":"ox222","stu_id":"1506200024","name":"zhangli","attnd_status":1,"distance":23.14}]}}
      *
      */
     /***/
     @GetMapping("/attnd/situation")
     public FB chkAttndSituation(
+            @RequestAttribute("attnd") Session session,
             @Min(0) @RequestAttribute("start") int start,
             @Min(1) @RequestAttribute("rows") int rows,
             @NotBlank @Size(max = 50) @RequestParam("cipher") String cipher,
-            @RequestParam("fail_only") boolean fail_only
+            @RequestParam("fail_only") boolean failOnly,
+            @RequestParam(value = "attnd_id",required = false,defaultValue = "0") int attndID
     ){
+
+        //chk user's signin info
+        //null safely
+        AttndState userSignIn = signInService.ChkSignInInfo(cipher,session.getOpenid());
+        if (userSignIn==null)
+            userSignIn = new AttndState();
+
         int groupID = 0;
+        //chk sign in list
         AttndState[] attndStates;
         switch (cipher.charAt(0)){
             case Code.CIPHER_ATTND:{
+                if (attndID<=0){
+                    return FB.PARAM_INVALID("attndID invalid");
+                }
+                //get groupID with cipher & attndid
                 //get the last groupid
-                groupID = ((int) Utils.Base62LastKToLong(cipher, cipher.length() - 1 - 3));
+                groupID = ((int) Utils.Base62LastKToLong(cipher, cipher.length() - 1 - 3 - Utils.ChkIDBase62Length(attndID,10)));
+                if (groupID <= 0){
+                    return FB.SYS_ERROR("get groupid from cipher failed");
+                }
             }
             case Code.CIPHER_ENTRY:
             case Code.CIPHER_NOGROUP:{
                 //chk sign in list
-                attndStates = signInService.ChkSignInList(cipher,start,rows,groupID,fail_only?Code.SIGNIN_OK:-1);
+                attndStates = signInService.ChkSignInList(cipher,start,rows,groupID,failOnly?Code.SIGNIN_OK:-1);
                 break;
             }
             default:
@@ -471,15 +506,16 @@ public class AttndController {
 
         HashMap<String,Object> fbJson = new HashMap<>();
 
+        //chk count
         int recTotalCount;
         if (groupID<=0){
             //TYPE G/N
-            recTotalCount = signInService.CountSignInList(cipher,fail_only?Code.SIGNIN_OK:-1);
+            recTotalCount = signInService.CountSignInList(cipher,failOnly?Code.SIGNIN_OK:-1);
         }else{
             //TYPE A
             int signInFailCount = signInService.CountSignInListWithGroup(cipher,groupID,Code.SIGNIN_OK);
             int totalGroupUserCount =  userGroupService.CountUserInGroup(groupID);
-            if (fail_only){
+            if (failOnly){
                 //chk user not signin in group
                 recTotalCount = signInFailCount;
             }else{
@@ -491,6 +527,7 @@ public class AttndController {
 
 
         fbJson.put("count",recTotalCount);
+        fbJson.put("my_signin",userSignIn);
         fbJson.put("attnds",attndStates);
         return FB.SUCCESS(fbJson);
     }
@@ -614,6 +651,11 @@ public class AttndController {
         //chk user whether creator
         if (attnd.getTeacher_id()!=session.getUserID()){
             return new FB(Code.ATTND_NOT_CREATOR);
+        }
+
+        //chk user whether signin
+        if (!signInService.ChkUserHasSignIn(signin_openid,cipher)){
+            return new FB(Code.ATTND_HASNOT_SIGNIN);
         }
 
         if(!signInService.UpdSignInSituation(cipher,signin_openid,attnd_status)){

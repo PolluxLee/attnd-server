@@ -15,44 +15,20 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.io.IOException;
 
 @RunWith(SpringRunner.class)
-@Ignore
+
 public class utilsTests {
 
-
     @Test
-    public void testA(){
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            int[] a = mapper.readValue("[1,2,3,4,5]",int[].class);
-            for (int i : a) {
-                System.out.println(i);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    public void test0(){
+        String cipherA = Utils.CalCipher('A',62,121);
 
-    @Test
-    public void testB(){
-        int a[] = new int[0];
-        System.out.println(a.length);
-        System.out.println(a==null);
+        System.out.println(cipherA);
+        System.out.println(Utils.Base62LastKToLong(cipherA, cipherA.length()-3-1-Utils.ChkIDBase62Length(105,10)));
 
-    }
+        System.out.println(Utils.LongToBase62LastK(105,10));
+        System.out.println(Utils.Base62LastKToLong("1H", 2));
 
-    @Test
-    public void testC(){
-        Location loc1 = new Location(100, 23.4,30.0);
-        Location loc2 = new Location(101, 23.5,30.0);
-        System.out.println(Location.calDistanceBetweenLocation(loc1, loc2));
-
-    }
-
-    @Test
-    public void testD(){
-
-        Assert.assertEquals(Utils.Base62LastKToLong("456=kq",3),170402);
-
+        System.out.println(Utils.ChkIDBase62Length(1024,10));
     }
 
 }
