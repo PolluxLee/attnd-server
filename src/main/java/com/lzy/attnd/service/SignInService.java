@@ -1,7 +1,9 @@
 package com.lzy.attnd.service;
 
+import com.lzy.attnd.constant.Code;
 import com.lzy.attnd.model.AttndState;
 import com.lzy.attnd.model.SignIn;
+import org.hibernate.validator.constraints.Range;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -21,13 +23,13 @@ public interface SignInService {
     boolean ChkUserHasSignIn(@NotBlank String openid,@NotBlank  String cipher) throws DataAccessException;
 
     //get signin list
-    AttndState[] ChkSignInList(@NotBlank  String cipher, @Min(0) int start, @Min(1) int count, int groupID,int statusExclude) throws DataAccessException;
+    AttndState[] ChkSignInList(@NotBlank  String cipher, @Min(0) int start, @Min(1) int count, int groupID, @Range(min = Code.SIGNIN_ALL,max = Code.SIGNIN_NOT_EXIST) int signinStatus) throws DataAccessException;
 
-    @Min(0) int CountSignInList(@NotBlank String cipher,int statusExclude) throws DataAccessException;
+    @Min(0) int CountSignInList(@NotBlank String cipher, @Range(min = Code.SIGNIN_ALL,max = Code.SIGNIN_NOT_EXIST) int signinStatus) throws DataAccessException;
 
-    @Min(0) int CountSignInListWithGroup(@NotBlank String cipher,@Min(1) int groupID,int statusExclude) throws DataAccessException;
+    @Min(0) int CountSignInListWithGroup(@NotBlank String cipher,@Min(1) int groupID, @Range(min = Code.SIGNIN_ALL,max = Code.SIGNIN_NOT_EXIST) int signinStatus) throws DataAccessException;
 
-    boolean UpdSignInSituation(@NotBlank String cipher,@NotBlank String openid,int statusToUpdate) throws DataAccessException;
+    boolean UpdSignInSituation(@NotBlank String cipher,@NotBlank String openid, @Range(min = Code.SIGNIN_OK,max = Code.SIGNIN_NOT_EXIST)int statusToUpdate) throws DataAccessException;
 
     AttndState ChkSignInInfo(@NotBlank String cipher,@NotBlank String openid) throws DataAccessException;
 }

@@ -614,7 +614,7 @@ public class AttndControllerTests {
                 .param("cipher","Awcq31")
                 .param("page","1")
                 .param("page_size","10")
-                .param("fail_only","false")
+                .param("signin_status","0")
                 .param("attnd_id","3")
                 .session(session)
         )
@@ -632,14 +632,14 @@ public class AttndControllerTests {
                 .param("cipher","Awcq31")
                 .param("page","1")
                 .param("page_size","10")
-                .param("fail_only","true")
+                .param("signin_status",Integer.toString(Code.SIGNIN_NOT_EXIST))
                 .param("attnd_id","3")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().is(200))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(0)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(3)))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.present_count",is(3)));
     }
 
@@ -649,14 +649,15 @@ public class AttndControllerTests {
                 .param("cipher","Awcq31")
                 .param("page","1")
                 .param("page_size","2")
-                .param("fail_only","false")
+                .param("signin_status",Integer.toString(Code.SIGNIN_NOT_EXIST))
                 .param("attnd_id","3")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().is(200))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(3)));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(3)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.present_count",is(3)));
     }
 
     @Test
@@ -665,7 +666,7 @@ public class AttndControllerTests {
                 .param("cipher","Awcq31")
                 .param("page","1")
                 .param("page_size","2")
-                .param("fail_only","false")
+                .param("signin_status",Integer.toString(Code.SIGNIN_ALL))
                 .param("attnd_id","3")
                 .session(session)
         )
@@ -683,7 +684,7 @@ public class AttndControllerTests {
                 .param("cipher","Gwvk1")
                 .param("page","1")
                 .param("page_size","10")
-                .param("fail_only","false")
+                .param("signin_status",Integer.toString(Code.SIGNIN_ALL))
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
@@ -693,12 +694,42 @@ public class AttndControllerTests {
     }
 
     @Test
+    public void signinList_G_OK()throws Exception{
+        mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
+                .param("cipher","Gwvk1")
+                .param("page","1")
+                .param("page_size","10")
+                .param("signin_status",Integer.toString(Code.SIGNIN_OK))
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(2)));
+    }
+
+    @Test
+    public void signinList_G_EXPIRED()throws Exception{
+        mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
+                .param("cipher","Gwvk1")
+                .param("page","1")
+                .param("page_size","10")
+                .param("signin_status",Integer.toString(Code.SIGNIN_EXPIRED))
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(0)));
+    }
+
+    @Test
     public void signinList_G_P2()throws Exception{
         mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
                 .param("cipher","Gwvk1")
                 .param("page","2")
                 .param("page_size","1")
-                .param("fail_only","false")
+                .param("signin_status",Integer.toString(Code.SIGNIN_ALL))
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())

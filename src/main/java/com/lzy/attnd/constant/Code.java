@@ -39,6 +39,7 @@ public interface Code {
     int UPD_FLAG = 2;
 
     //signin status in attnd situation
+    int SIGNIN_ALL = 0;
     int SIGNIN_OK = 1;
     int SIGNIN_LOCATION_BEYOND = 2;
     int SIGNIN_EXPIRED = 3;

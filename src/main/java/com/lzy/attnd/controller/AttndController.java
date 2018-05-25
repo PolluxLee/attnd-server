@@ -448,11 +448,11 @@ public class AttndController {
      *
      * @apiUse Pagination
      * @apiParamExample {String} Req:
-     * cipher=A7184&fail_only=true&page=1&page_size=10&attnd_id=15
+     * cipher=A7184&signin_status=true&page=1&page_size=10&attnd_id=15
      *
      *
-     * @apiSuccess {Number} count record total count
-     * @apiSuccess {Number} present_count 实到人数 only work in type A & fail_only=false
+     * @apiSuccess {Number} count group user count (A) / total count (others)
+     * @apiSuccess {Number} present_count record total count in status (A)
      * @apiSuccess {Number=1,2,3,4} attnd_status studnet attendance status 1-> ok 2-> location beyond 3 -> time expired 4 -> not exist
      * @apiSuccessExample {json} Resp:
      * {"code":1000,"msg":"","data":{"my_signin":{"openid":"ox111","stu_id":"1506200023","name":"xiaoming","attnd_status":1,"distance":53.14},"present_count":2,"count":10,"attnds":[{"openid":"ox111","stu_id":"1506200023","name":"xiaoming","attnd_status":1,"distance":53.14},{"openid":"ox222","stu_id":"1506200024","name":"zhangli","attnd_status":1,"distance":23.14}]}}
@@ -465,7 +465,7 @@ public class AttndController {
             @Min(0) @RequestAttribute("start") int start,
             @Min(1) @RequestAttribute("rows") int rows,
             @NotBlank @Size(max = 50) @RequestParam("cipher") String cipher,
-            @RequestParam("fail_only") boolean failOnly,
+            @Range(min = Code.SIGNIN_ALL,max = Code.SIGNIN_NOT_EXIST) @RequestParam("signin_status") int signinStatus,
             @RequestParam(value = "attnd_id",required = false,defaultValue = "0") int attndID
     ){
 
@@ -493,7 +493,7 @@ public class AttndController {
             case Code.CIPHER_ENTRY:
             case Code.CIPHER_NOGROUP:{
                 //chk sign in list
-                attndStates = signInService.ChkSignInList(cipher,start,rows,groupID,failOnly?Code.SIGNIN_OK:-1);
+                attndStates = signInService.ChkSignInList(cipher,start,rows,groupID,signinStatus);
                 break;
             }
             default:
@@ -510,19 +510,20 @@ public class AttndController {
         int recTotalCount;
         if (groupID<=0){
             //TYPE G/N
-            recTotalCount = signInService.CountSignInList(cipher,failOnly?Code.SIGNIN_OK:-1);
+            recTotalCount = signInService.CountSignInList(cipher,signinStatus);
         }else{
+            int presentCountInStatus = signinStatus;
             //TYPE A
-            int signInFailCount = signInService.CountSignInListWithGroup(cipher,groupID,Code.SIGNIN_OK);
             int totalGroupUserCount =  userGroupService.CountUserInGroup(groupID);
-            if (failOnly){
-                //chk user not signin in group
-                recTotalCount = signInFailCount;
-            }else{
-                recTotalCount = totalGroupUserCount;
+            if (signinStatus==Code.SIGNIN_ALL){
+                presentCountInStatus = Code.SIGNIN_OK;
             }
+            recTotalCount = totalGroupUserCount;
+
+            int signInStatusCount = signInService.CountSignInListWithGroup(cipher,groupID,presentCountInStatus);
+
             //present_count = totoal_user_count - userNotSigninCount 实到人数=组内总人数-签到失败人数
-            fbJson.put("present_count",totalGroupUserCount-signInFailCount);
+            fbJson.put("present_count",totalGroupUserCount-signInStatusCount);
         }
 
 
@@ -597,7 +598,7 @@ public class AttndController {
      *
      * @apiParam {String{1..50}} cipher
      * @apiParam {String} openid openid for student who signin
-     * @apiParam {Number=1,4} attnd_status student attendance status 1-> ok 4-> not ok
+     * @apiParam {Number=1,2,3,4} attnd_status student attendance status
      * @apiParamExample {String} Req:
      * cipher=A714Q&openid=oid123&attnd_status=4
      *
@@ -630,7 +631,7 @@ public class AttndController {
         } catch (NumberFormatException e) {
             return FB.PARAM_INVALID("attnd_status to int failed "+e.getMessage());
         }
-        if (attnd_status!=Code.SIGNIN_OK && attnd_status!=Code.SIGNIN_NOT_EXIST){
+        if (attnd_status<Code.SIGNIN_OK || attnd_status>Code.SIGNIN_NOT_EXIST){
             return FB.PARAM_INVALID("attnd_status invalid");
         }
 

@@ -13,8 +13,6 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
 import java.util.List;
 
 
@@ -50,16 +48,15 @@ public class SignInRepository implements SignInService {
         return true;
     }
 
-    private String statusExcludeHandle(int statusExclude){
-        if (statusExclude<=-1){
+    private String signinStatusHandle(int statusExclude){
+        if (statusExclude==Code.SIGNIN_ALL){
             return "";
         }
-        return " AND signin.status<>"+Integer.toString(statusExclude);
+        return " AND signin.status="+Integer.toString(statusExclude);
     }
 
     @Override
-    public AttndState[] ChkSignInList(String cipher, int start, int count, int groupID,int statusExclude) throws DataAccessException {
-        //groupID<=0 --> all student
+    public AttndState[] ChkSignInList(String cipher, int start, int count, int groupID,int signinStatus) throws DataAccessException {
         String query;
         Object[] args;
         if (groupID<=0){
@@ -72,7 +69,7 @@ public class SignInRepository implements SignInService {
             args = new Object[]{cipher,Integer.toString(groupID),start,count};
         }
 
-        query = String.format(query,statusExcludeHandle(statusExclude));
+        query = String.format(query, signinStatusHandle(signinStatus));
 
         List<AttndState> attndStateList=this.jdbcTemplate.query(
                 query,
@@ -86,22 +83,20 @@ public class SignInRepository implements SignInService {
     }
 
     @Override
-    public int CountSignInList(String cipher,int statusExclude) throws DataAccessException {
-        String query = String.format("SELECT COUNT(id) FROM signin WHERE cipher=? %s",statusExcludeHandle(statusExclude));
+    public int CountSignInList(String cipher, int signinStatus) throws DataAccessException {
+        String query = String.format("SELECT COUNT(id) FROM signin WHERE cipher=? %s", signinStatusHandle(signinStatus));
         return this.jdbcTemplate.queryForObject(query,new Object[]{cipher},int.class);
     }
 
     @Override
-    public int CountSignInListWithGroup(String cipher, int groupID, int statusExclude) throws DataAccessException {
+    public int CountSignInListWithGroup(String cipher, int groupID, int signinStatus) throws DataAccessException {
         String query = String.format("SELECT COUNT(signin.id)" +
-                " FROM user LEFT JOIN signin on (signin.openid=user.openid AND cipher=?) WHERE 1=1 %s",statusExcludeHandle(statusExclude));
+                " FROM user LEFT JOIN signin on (signin.openid=user.openid AND cipher=?) WHERE 1=1 %s", signinStatusHandle(signinStatus));
         return this.jdbcTemplate.queryForObject(query,new Object[]{cipher},int.class);
     }
 
     @Override
     public boolean UpdSignInSituation(String cipher, String openid, int statusToUpdate) throws DataAccessException {
-        if (statusToUpdate!= Code.SIGNIN_OK && statusToUpdate!=Code.SIGNIN_NOT_EXIST)
-            throw new DBProcessException("UpdSignInSituation param invalid");
         return 1==this.jdbcTemplate.update("UPDATE signin SET status=? WHERE cipher=? AND openid=?",statusToUpdate,cipher,openid);
     }
 

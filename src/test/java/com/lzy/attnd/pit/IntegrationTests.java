@@ -322,7 +322,7 @@ public class IntegrationTests {
                 .param("cipher",cipher_G)
                 .param("page","1")
                 .param("page_size","10")
-                .param("fail_only","false")
+                .param("signin_status",Integer.toString(Code.SIGNIN_ALL))
                 .session(s_stu2)
         )
                 .andDo(MockMvcResultHandlers.print())
@@ -340,6 +340,28 @@ public class IntegrationTests {
                 .andExpect(jsonPath("$.data.attnds[1].stu_id",is(attndStateStu2.getStu_id())))
                 .andExpect(jsonPath("$.data.attnds[1].attnd_status",is(attndStateStu2.getAttnd_status())))
                 .andExpect(jsonPath("$.data.attnds[1].distance",is(attndStateStu2.getDistance())))
+
+                .andExpect(jsonPath("$.data.my_signin.openid",is(attndStateStu2.getOpenid())))
+                .andExpect(jsonPath("$.data.my_signin.name",is(attndStateStu2.getName())))
+                .andExpect(jsonPath("$.data.my_signin.stu_id",is(attndStateStu2.getStu_id())))
+                .andExpect(jsonPath("$.data.my_signin.attnd_status",is(attndStateStu2.getAttnd_status())))
+                .andExpect(jsonPath("$.data.my_signin.distance",is(attndStateStu2.getDistance())))
+
+                .andReturn();
+
+        //stu2 chk situation not exist
+        mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
+                .param("cipher",cipher_G)
+                .param("page","1")
+                .param("page_size","10")
+                .param("signin_status",Integer.toString(Code.SIGNIN_NOT_EXIST))
+                .session(s_stu2)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data.count",is(0)))
+                .andExpect(jsonPath("$.data.attnds.size()",is(0)))
 
                 .andExpect(jsonPath("$.data.my_signin.openid",is(attndStateStu2.getOpenid())))
                 .andExpect(jsonPath("$.data.my_signin.name",is(attndStateStu2.getName())))
@@ -376,7 +398,7 @@ public class IntegrationTests {
                 .param("cipher",cipher_G)
                 .param("page","1")
                 .param("page_size","10")
-                .param("fail_only","false")
+                .param("signin_status",Integer.toString(Code.SIGNIN_ALL))
                 .session(s_tea1)
         )
                 .andDo(MockMvcResultHandlers.print())
@@ -451,7 +473,7 @@ public class IntegrationTests {
                 .param("cipher",cipher_A1)
                 .param("page","1")
                 .param("page_size","10")
-                .param("fail_only","false")
+                .param("signin_status",Integer.toString(Code.SIGNIN_ALL))
                 .param("attnd_id",Integer.toString(attndA1.getAttnd_id()))
                 .session(s_tea1)
         )
@@ -460,7 +482,7 @@ public class IntegrationTests {
                 .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
                 //应到两人
                 .andExpect(jsonPath("$.data.count",is(2)))
-                .andExpect(jsonPath("$.data.present_count",is(1)))
+                .andExpect(jsonPath("$.data.present_count",is(2)))
                 .andExpect(jsonPath("$.data.attnds[0].openid",is(attndStateStu1.getOpenid())))
                 .andExpect(jsonPath("$.data.attnds[0].name",is(attndStateStu1.getName())))
                 .andExpect(jsonPath("$.data.attnds[0].stu_id",is(attndStateStu1.getStu_id())))
@@ -496,7 +518,7 @@ public class IntegrationTests {
                 .param("cipher",cipher_A1)
                 .param("page","1")
                 .param("page_size","10")
-                .param("fail_only","false")
+                .param("signin_status",Integer.toString(Code.SIGNIN_ALL))
                 .param("attnd_id",Integer.toString(attndA1.getAttnd_id()))
                 .session(s_tea1)
         )
@@ -521,20 +543,20 @@ public class IntegrationTests {
                 .andReturn();
 
         //teacher chk situation attnd A
-        //fail only
+        //SIGNIN_LOCATION_BEYOND
         //page_size 1
         mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
                 .param("cipher",cipher_A1)
                 .param("page","1")
                 .param("page_size","1")
-                .param("fail_only","true")
+                .param("signin_status",Integer.toString(Code.SIGNIN_LOCATION_BEYOND))
                 .param("attnd_id",Integer.toString(attndA1.getAttnd_id()))
                 .session(s_tea1)
         )
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().is(200))
                 .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(jsonPath("$.data.count",is(1)))
+                .andExpect(jsonPath("$.data.count",is(2)))
                 .andExpect(jsonPath("$.data.present_count",is(1)))
                 .andExpect(jsonPath("$.data.attnds[0].openid",is(attndStateStu1.getOpenid())))
                 .andExpect(jsonPath("$.data.attnds[0].name",is(attndStateStu1.getName())))
@@ -636,7 +658,7 @@ public class IntegrationTests {
                 .param("cipher",cipher_N1)
                 .param("page","1")
                 .param("page_size","10")
-                .param("fail_only","false")
+                .param("signin_status",Integer.toString(Code.SIGNIN_ALL))
                 .session(s_tea1)
         )
                 .andDo(MockMvcResultHandlers.print())
