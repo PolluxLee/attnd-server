@@ -250,6 +250,7 @@ public class AttndControllerTests {
 
     @Test
     public void chk_attnd_group_existG()throws Exception{
+        testTimestamp = 1522512000+10*60;
         mvc.perform(MockMvcRequestBuilders.get("/attnd")
                 .param("cipher","Gwvk1")
                 .session(session)
@@ -274,6 +275,7 @@ public class AttndControllerTests {
 
     @Test
     public void chk_attnd_group_existA()throws Exception{
+        testTimestamp = 1522512000+10*60;
         mvc.perform(MockMvcRequestBuilders.get("/attnd")
                 .param("cipher","Awvk2")
                 .session(session)
@@ -296,6 +298,7 @@ public class AttndControllerTests {
 
     @Test
     public void chk_attnd_group_not_existN()throws Exception{
+        testTimestamp = 1522512000+10*60;
         mvc.perform(MockMvcRequestBuilders.get("/attnd")
                 .param("cipher","NQSA4")
                 .session(session)
@@ -316,9 +319,33 @@ public class AttndControllerTests {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.data.location.longitude",is(174.4)));
     }
 
+    @Test
+    public void chk_attnd_expired()throws Exception{
+        testTimestamp = 1522512000+30*60*1000;
+        mvc.perform(MockMvcRequestBuilders.get("/attnd")
+                .param("cipher","NQSA4")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(MockMvcResultMatchers.status().is(200))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.status",is(-3)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id",is(4)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_name",is("高级网站开发")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.start_time",is(1522512000)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.last",is(20)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.addr_name",is("外环西路4")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.group_name",is("")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.teacher_name",is("lzy")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.teacher_id",is(1)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.cipher",is("NQSA4")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.location.longitude",is(174.4)));
+    }
+
 
     @Test
     public void chk_attnd_not_exist()throws Exception{
+        testTimestamp = 1522512000+10*60;
         mvc.perform(MockMvcRequestBuilders.get("/attnd")
                 .param("cipher","123fe")
                 .session(session)

@@ -163,6 +163,7 @@ public class AttndController {
      * @apiParamExample {String} Req:
      * cipher=GZXQAS
      *
+     * @apiSuccess {Number} status negative number mean end
      * @apiSuccessExample {json} Resp:
      * {"code":1000,"msg":"","data":{"teacher_id":1,"attnd_id":123,"cipher":"GZXQAS","status":1,"attnd_name":"操作系统","start_time":15577418,"last":20,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"addr_name":"外环西路","teacher_name":"wjx","group_name":"计科151"}}
      *
@@ -178,6 +179,13 @@ public class AttndController {
         if (attnd==null){
             return new FB(Code.ATTND_NOT_EXIST);
         }
+
+        long nowTimeStamp = testTimestamp==0?System.currentTimeMillis():testTimestamp;
+
+        if (nowTimeStamp>attnd.getStart_time()+attnd.getLast()*60*1000){
+            attnd.setStatus(-1 * attnd.getStatus());
+        }
+
         return FB.SUCCESS(attnd);
     }
 
