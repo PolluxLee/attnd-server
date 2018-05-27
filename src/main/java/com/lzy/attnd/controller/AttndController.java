@@ -131,7 +131,7 @@ public class AttndController {
      * @apiParamExample {String} Req:
      * cipher=AZXQAS
      *
-     * @apiSuccess {Number=1,-1,-4,5} status negative number mean end by time 1-->NORMAL 4-->DEL 5 -> end by creator
+     * @apiSuccess {Number} status 1-->NORMAL 4-->DEL 5 -> end by creator
      * @apiSuccessExample {json} Resp:
      * {"code":1000,"msg":"","data":{"teacher_id":1,"attnd_id":123,"cipher":"GZXQAS","status":1,"attnd_name":"操作系统","start_time":15577418,"last":20,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"addr_name":"外环西路","teacher_name":"wjx"}}
      *
@@ -146,13 +146,6 @@ public class AttndController {
         Attnd attnd = attndService.ChkAttnd(cipher);
         if (attnd==null){
             return new FB(Code.ATTND_NOT_EXIST);
-        }
-
-        long nowTimeStamp = testTimestamp==0?System.currentTimeMillis():testTimestamp;
-
-        //chk if not end by creator & expired--> -1*status
-        if (attnd.getStatus()!=Code.ATTND_END && Utils.chkAttndEnd(nowTimeStamp,attnd.getStart_time(),attnd.getLast())){
-            attnd.setStatus(-1 * attnd.getStatus());
         }
 
         return FB.SUCCESS(attnd);

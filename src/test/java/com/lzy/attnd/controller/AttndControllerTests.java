@@ -240,7 +240,7 @@ public class AttndControllerTests {
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().is(200))
                 .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(jsonPath("$.data.status",is(-1)))
+                .andExpect(jsonPath("$.data.status",is(1)))
                 .andExpect(jsonPath("$.data.attnd_id",is(2)))
                 .andExpect(jsonPath("$.data.attnd_name",is("计算机网络")))
                 .andExpect(jsonPath("$.data.start_time",is(1522512000)))
