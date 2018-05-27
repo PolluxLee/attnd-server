@@ -50,17 +50,16 @@ public class AttndRepository implements AttndService {
 
     @Transactional
     @Override
-    public String AddAttnd(Attnd attnd,int groupID) throws DataAccessException {
+    public String AddAttnd(Attnd attnd) throws DataAccessException {
         String locationJson = attnd.getLocationJson();
         String remarkJson = attnd.getRemarkJson();
         if (locationJson==null||remarkJson==null){
-            logger.error("AddAttnd remark or location to json failed");
             throw new DBProcessException("location or remark invalid");
         }
         //because cipher is not null
         GeneratedKeyHolder holder = new GeneratedKeyHolder();
         jdbcTemplate.update(con -> {
-            PreparedStatement statement = con.prepareStatement("INSERT INTO attnd(starttime,lasttime,location,addrname,teacherid,status,remark,cipher,groupname,teachername,name) VALUES(?,?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement statement = con.prepareStatement("INSERT INTO attnd(starttime,lasttime,location,addrname,teacherid,status,remark,cipher,teachername,name) VALUES(?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
             statement.setLong(1, attnd.getStart_time());
             statement.setInt(2, attnd.getLast());
             statement.setString(3, locationJson);
@@ -69,30 +68,23 @@ public class AttndRepository implements AttndService {
             statement.setInt(6,  attnd.getStatus());
             statement.setString(7, remarkJson);
             statement.setString(8, "");
-            statement.setString(9, attnd.getGroup_name());
-            statement.setString(10, attnd.getTeacher_name());
-            statement.setString(11, attnd.getAttnd_name());
+            statement.setString(9, attnd.getTeacher_name());
+            statement.setString(10, attnd.getAttnd_name());
             return statement;
         }, holder);
         int attndID = holder.getKey().intValue();
 
-        String cipher;
-        if (groupID<=0){
-            cipher = Utils.CalCipher(Utils.GetTypeViaStatus(attnd.getStatus()),attndID);
-        }else{
-            cipher = Utils.CalCipher(Utils.GetTypeViaStatus(attnd.getStatus()),attndID,groupID);
-        }
+        String cipher = Utils.CalCipher(Utils.GetTypeViaStatus(attnd.getStatus()),attndID);
+
         if (cipher==null||cipher.equals("")){
-            logger.warn("AddAttnd cipher invalid");
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             throw new DBProcessException("cal cipher failed");
         }
 
         int effectedRows = this.jdbcTemplate.update("UPDATE attnd SET cipher=? WHERE id=?",cipher,attndID);
         if (effectedRows != 1){
-            logger.error("AddAttnd update cipher failed");
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            throw new DBProcessException("UPDATE effected not 1");
+            throw new DBProcessException("AddAttnd update cipher failed UPDATE effected not 1");
         }
 
         attnd.setAttnd_id(attndID);
@@ -101,7 +93,7 @@ public class AttndRepository implements AttndService {
 
     private Location getLocation(String locStr){
         if (locStr==null||locStr.equals("")){
-            return null;
+            throw new DBProcessException("getLocation paramInvalid");
         }
         Location location = null;
         try {
@@ -125,7 +117,7 @@ public class AttndRepository implements AttndService {
     public Attnd ChkAttnd(String cipher) throws DataAccessException {
         Attnd attnd;
         try {
-            attnd = this.jdbcTemplate.queryForObject("SELECT id,name,starttime,lasttime,location,addrname,teacherid,teachername,groupname,status,remark from attnd where cipher=? AND status<>? ",
+            attnd = this.jdbcTemplate.queryForObject("SELECT id,name,starttime,lasttime,location,addrname,teacherid,teachername,status,remark from attnd where cipher=? AND status<>? ",
                     new Object[]{cipher,Code.ATTND_DEL}, (rs, i) -> {
                         String locStr = rs.getString("location");
                         Location location = getLocation(locStr);
@@ -136,7 +128,7 @@ public class AttndRepository implements AttndService {
                         return new Attnd(rs.getObject("remark"),rs.getInt("status"),
                                 rs.getInt("id"),rs.getString("name"),rs.getLong("starttime"),
                                 rs.getInt("lasttime"),location,rs.getString("addrname"),
-                                rs.getString("groupname"),rs.getString("teachername"),rs.getInt("teacherid"),cipher);
+                                rs.getString("teachername"),rs.getInt("teacherid"),cipher);
 
                     });
         } catch (EmptyResultDataAccessException erdae) {
@@ -149,9 +141,7 @@ public class AttndRepository implements AttndService {
     public String[] ChkHisAttndName(int userID,int limit) throws DataAccessException {
         List<String> list= this.jdbcTemplate.queryForList("SELECT name FROM attnd WHERE teacherid=?  AND status<>?  GROUP BY name ORDER BY max(createdat) desc limit ? ",String.class,userID,Code.ATTND_DEL,limit);
         if (list==null){
-            String msg = "ChkHisAttndName list null";
-            logger.error(msg);
-            throw new DBProcessException(msg);
+            throw new DBProcessException("ChkHisAttndName list null");
         }
         return list.toArray(new String[0]);
     }
@@ -160,9 +150,7 @@ public class AttndRepository implements AttndService {
     public @NotNull String[] ChkHisAttndAddr(@Min(1) int userID, @Min(1) int limit) throws DataAccessException {
         List<String> list= this.jdbcTemplate.queryForList("SELECT addrname FROM attnd WHERE teacherid=?  AND status<>? GROUP BY addrname ORDER BY max(createdat) desc limit ?",String.class,userID,Code.ATTND_DEL,limit);
         if (list==null){
-            String msg = "ChkHisAttndAddr list null";
-            logger.error(msg);
-            throw new DBProcessException(msg);
+            throw new DBProcessException("ChkHisAttndAddr list null");
         }
         return list.toArray(new String[0]);
     }
@@ -174,7 +162,7 @@ public class AttndRepository implements AttndService {
         Object[] args = new Object[]{userID,query,Code.ATTND_DEL,start,rows};
         String conditions = " WHERE teacherid=? AND name like ?  AND status<>? ORDER BY createdat desc LIMIT ?,? ";
         List<Attnd> attnds=this.jdbcTemplate.query(
-                "SELECT id,name,cipher,starttime,lasttime,location,addrname,groupname,teachername,status FROM attnd "+conditions,
+                "SELECT id,name,cipher,starttime,lasttime,location,addrname,teachername,status FROM attnd "+conditions,
                 args,
                 (rs, i) -> {
                     String locStr = rs.getString("location");
@@ -184,7 +172,7 @@ public class AttndRepository implements AttndService {
                     }
 
                     return new Attnd(rs.getInt("id"),rs.getString("name"),rs.getLong("starttime"),
-                            rs.getInt("lasttime"),location,rs.getString("addrname"),rs.getString("groupname"),
+                            rs.getInt("lasttime"),location,rs.getString("addrname"),
                             rs.getString("teachername"),userID,rs.getString("cipher"));
                 });
         //arg start to 0
@@ -200,7 +188,7 @@ public class AttndRepository implements AttndService {
         Object[] args = new Object[]{signIn_openid,query,Code.ATTND_DEL,start,rows};
         String conditions = " WHERE cipher in (SELECT cipher FROM signin WHERE openid=?) AND name like ?  AND status<>? ORDER BY createdat desc LIMIT ?,? ";
         List<Attnd> attnds = this.jdbcTemplate.query(
-                "SELECT id,name,cipher,starttime,lasttime,location,addrname,groupname,teachername,status,teacherid FROM attnd "+conditions,
+                "SELECT id,name,cipher,starttime,lasttime,location,addrname,teachername,status,teacherid FROM attnd "+conditions,
                 args,
                 (rs, i) -> {
                     String locStr = rs.getString("location");
@@ -210,7 +198,7 @@ public class AttndRepository implements AttndService {
                     }
 
                     return new Attnd(rs.getInt("id"),rs.getString("name"),rs.getLong("starttime"),
-                            rs.getInt("lasttime"),location,rs.getString("addrname"),rs.getString("groupname"),
+                            rs.getInt("lasttime"),location,rs.getString("addrname"),
                             rs.getString("teachername"),rs.getInt("teacherid"),rs.getString("cipher"));
                 });
         //arg start to 0

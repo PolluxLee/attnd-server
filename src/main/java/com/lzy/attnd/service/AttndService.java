@@ -20,9 +20,8 @@ import javax.validation.constraints.NotNull;
 public interface AttndService {
     @Validated({
             Attnd.StartTime.class,Attnd.Last.class,Attnd.Location_Struct.class,Attnd.AddrName.class,Attnd.Name.class,
-            Attnd.TeacherID.class,Attnd.Status.class,Attnd.Remark.class,Attnd.GroupNameNotNull.class, Attnd.TeacherName.class})
-        //if group <=0 cipher build with attnd_id otherwise groupID
-    String AddAttnd(@Valid Attnd attnd,int groupID) throws DataAccessException;
+            Attnd.TeacherID.class,Attnd.Status.class,Attnd.Remark.class, Attnd.TeacherName.class})
+    String AddAttnd(@Valid Attnd attnd) throws DataAccessException;
 
     //exclude by del
     @Validated({Attnd.All.class,Attnd.BaseAll.class})

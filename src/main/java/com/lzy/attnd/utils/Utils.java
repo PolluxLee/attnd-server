@@ -18,16 +18,11 @@ public class Utils {
     private final static Logger logger = LoggerFactory.getLogger(Utils.class);
 
     public static boolean chkCipherType(char c){
-        if (c==Code.CIPHER_ATTND||c==Code.CIPHER_ENTRY||c==Code.CIPHER_SINGLE||c==Code.CIPHER_NOGROUP)
+        if (c==Code.CIPHER_ATTND)
             return true;
         return false;
     }
 
-    public static boolean chkCipherType_Attnd(char c){
-        if (c==Code.CIPHER_ATTND||c==Code.CIPHER_ENTRY||c==Code.CIPHER_NOGROUP)
-            return true;
-        return false;
-    }
 
 
     //chk location , time

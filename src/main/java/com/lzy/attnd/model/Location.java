@@ -74,12 +74,14 @@ public class Location {
 
     }
 
-    @Range(min = -90,max = 90,groups = {Attnd.Location_Struct.class,Attnd.All.class})
+    @Range(min = -90,max = 90,groups = {Location_Struct.class,Attnd.Location_Struct.class,Attnd.All.class})
     private double latitude;
 
-    @Range(min = -180,max = 180,groups = {Attnd.Location_Struct.class,Attnd.All.class})
+    @Range(min = -180,max = 180,groups = {Location_Struct.class,Attnd.Location_Struct.class,Attnd.All.class})
     private double longitude;
 
-    @Min(value = 0,groups = {Attnd.Location_Struct.class,Attnd.All.class})
+    @Min(value = 0,groups = {Location_Struct.class,Attnd.Location_Struct.class,Attnd.All.class})
     private double accuracy;
+
+    public interface Location_Struct{}
 }

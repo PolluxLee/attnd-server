@@ -40,7 +40,7 @@ public class UserRepository implements UserService {
     }
 
     @Override
-    public boolean InsOrUpdUserInfo(User user) {
+    public boolean InsOrUpdUserInfo(User user)  throws DataAccessException {
         ObjectMapper mapper = new ObjectMapper();
         //test will failed if not this sentence
         mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
@@ -48,12 +48,11 @@ public class UserRepository implements UserService {
         try {
             remarkJson = mapper.writeValueAsString(user.getRemark());
         }catch (JsonProcessingException jpe){
-            logger.warn("AddUser failed: "+jpe.getMessage());
-            return false;
+            throw new DBProcessException("writeValueAsString failed "+jpe.getMessage());
         }
 
-        this.jdbcTemplate.update("INSERT INTO user(name,openid,stuid,remark,groupid) VALUES(?,?,?,?,?) ON DUPLICATE KEY UPDATE name=?, stuid=?;",
-                user.getName(),user.getOpenid(),user.getStu_id(),remarkJson,"[]",user.getName(),user.getStu_id());
+        this.jdbcTemplate.update("INSERT INTO user(name,openid,stuid,remark) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE name=?, stuid=?;",
+                user.getName(),user.getOpenid(),user.getStu_id(),remarkJson,user.getName(),user.getStu_id());
         return true;
     }
 
@@ -69,12 +68,11 @@ public class UserRepository implements UserService {
         jdbcTemplate.update(new PreparedStatementCreator() {
             @Override
             public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-                PreparedStatement statement = con.prepareStatement("INSERT IGNORE INTO user(name,openid,stuid,remark,groupid) VALUES(?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
+                PreparedStatement statement = con.prepareStatement("INSERT IGNORE INTO user(name,openid,stuid,remark) VALUES(?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
                 statement.setString(1, user.getName());
                 statement.setString(2, user.getOpenid());
                 statement.setString(3, user.getStu_id());
                 statement.setString(4, remarkJson);
-                statement.setString(5, "[]");
                 return statement;
             }
         }, holder);
@@ -100,22 +98,8 @@ public class UserRepository implements UserService {
         User user;
         try {
             //TODO remark in this place is a String
-            user = this.jdbcTemplate.queryForObject("SELECT id,name,stuid,remark,status,groupid from user where openid=?",new Object[]{openid},
-                    (rs, rowNum) -> {
-                        String groupsStr = rs.getString("groupid");
-                        ObjectMapper mapper = new ObjectMapper();
-                        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-                        int[] groups = new int[0];
-                        try {
-                            groups = mapper.readValue(groupsStr,int[].class);
-                        } catch (IOException e) {
-                            String msg = "FindUserByOpenid groupsStr to object failed: "+e.getMessage();
-                            logger.error(msg);
-                            throw new DBProcessException(msg);
-                        }
-
-                        return new User(rs.getInt("id"),rs.getString("name"),openid,rs.getObject("remark"),rs.getInt("status"),rs.getString("stuid"),groups);
-                    }
+            user = this.jdbcTemplate.queryForObject("SELECT id,name,stuid,remark,status from user where openid=?",new Object[]{openid},
+                    (rs, rowNum) -> new User(rs.getInt("id"),rs.getString("name"),openid,rs.getObject("remark"),rs.getInt("status"),rs.getString("stuid"))
                     );
 
         } catch (EmptyResultDataAccessException erdae) {
@@ -134,47 +118,4 @@ public class UserRepository implements UserService {
         return true;
     }
 
-    @Override
-    public boolean AddUserToGroup(String openid, String groupName, int creatorID) throws DataAccessException {
-        //group exist
-        int groupID;
-        try {
-            groupID = this.jdbcTemplate.queryForObject("SELECT id FROM usergroup WHERE name=? and creatorid=? and status<>? ",new Object[]{groupName,creatorID, Code.GROUP_DEL},int.class);
-        } catch (EmptyResultDataAccessException e) {
-            throw new DBProcessException("group not exist");
-        }
-
-        return this.addUserToGroupByID(openid,groupID);
-
-    }
-
-    private boolean addUserToGroupByID(String openid,int groupID) throws DataAccessException {
-        this.jdbcTemplate.update(
-                "UPDATE user SET groupid=JSON_ARRAY_APPEND(groupid,'$',?) WHERE openid=? AND JSON_CONTAINS(groupid,?,'$')=0",
-                groupID,openid,Integer.toString(groupID));
-        return true;
-    }
-
-    @Override
-    public boolean AddUserToGroupByID(String openid,int groupID) throws DataAccessException {
-        //group exist
-        try {
-            this.jdbcTemplate.queryForObject("SELECT 1 FROM usergroup WHERE id=? and status<>?",new Object[]{groupID, Code.GROUP_DEL},int.class);
-        } catch (EmptyResultDataAccessException e) {
-            throw new DBProcessException("group not exist");
-        }
-
-        return this.addUserToGroupByID(openid,groupID);
-    }
-
-    @Override
-    public boolean ChkUserIsGroupByGroupID(int userID, int groupID) throws DataAccessException {
-        try {
-            this.jdbcTemplate.queryForObject("SELECT 1 FROM user WHERE id=? AND JSON_CONTAINS(groupid,?,'$')=1",
-                    new Object[]{userID,Integer.toString(groupID)},int.class);
-        } catch (EmptyResultDataAccessException e) {
-            return false;
-        }
-        return true;
-    }
 }

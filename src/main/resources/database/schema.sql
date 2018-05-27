@@ -5,7 +5,6 @@ CREATE TABLE IF NOT EXISTS user(
   openid varchar(255) NOT NULL UNIQUE,
   status INT NOT NULL DEFAULT 0,
   remark JSON NOT NULL ,
-  groupid JSON NOT NULL ,
   createdat datetime NOT NULL default NOW(),
   updatedat datetime NOT NULL default NOW()
 )DEFAULT CHARACTER SET = utf8;
@@ -18,7 +17,6 @@ CREATE TABLE IF NOT EXISTS attnd(
   lasttime INT NOT NULL,
   location JSON NOT NULL,
   addrname varchar(255) NOT NULL,
-  groupname varchar(255) NOT NULL DEFAULT '',
   teacherid INT NOT NULL,
   teachername varchar(255) NOT NULL,
   status INT NOT NULL DEFAULT 0,
@@ -27,17 +25,6 @@ CREATE TABLE IF NOT EXISTS attnd(
   updatedat datetime NOT NULL default NOW()
 )DEFAULT CHARACTER SET = utf8;
 
-CREATE TABLE IF NOT EXISTS usergroup(
-  id INT PRIMARY KEY AUTO_INCREMENT,
-  name varchar(255) NOT NULL,
-  creatorname varchar(255) NOT NULL,
-  creatorid INT NOT NULL,
-  status INT NOT NULL DEFAULT 0,
-  remark JSON NOT NULL ,
-  createdat datetime NOT NULL default NOW(),
-  updatedat datetime NOT NULL default NOW(),
-  UNIQUE KEY(name,creatorid)
-)DEFAULT CHARACTER SET = utf8;
 
 CREATE TABLE IF NOT EXISTS signin(
   id INT PRIMARY KEY AUTO_INCREMENT,
@@ -110,14 +97,14 @@ CREATE TRIGGER t_user_update_time_before_upd BEFORE UPDATE on user FOR EACH ROW
 CREATE TRIGGER t_user_update_time_before_ins BEFORE INSERT on user FOR EACH ROW
     set NEW.updatedat = now();
 
-DROP TRIGGER IF EXISTS  t_usergroup_update_time_before_upd;
+/*DROP TRIGGER IF EXISTS  t_usergroup_update_time_before_upd;
 DROP TRIGGER IF EXISTS  t_usergroup_update_time_before_ins;
 
 CREATE TRIGGER t_usergroup_update_time_before_upd BEFORE UPDATE on usergroup FOR EACH ROW
     set NEW.updatedat = now();
 
 CREATE TRIGGER t_usergroup_update_time_before_ins BEFORE INSERT on usergroup FOR EACH ROW
-    set NEW.updatedat = now();
+    set NEW.updatedat = now();*/
 
 
 DROP TRIGGER IF EXISTS  t_signin_update_time_before_upd;

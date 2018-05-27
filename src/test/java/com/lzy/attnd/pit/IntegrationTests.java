@@ -1,3 +1,4 @@
+/*
 package com.lzy.attnd.pit;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -45,7 +46,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(locations="classpath:application-pit.properties")
 @SpringBootTest
 public class IntegrationTests {
-    /*
+    */
+/*
 
 
      //get his group name
@@ -56,7 +58,8 @@ public class IntegrationTests {
                 .andExpect(status().is(200))
                 .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
                 .andExpect(jsonPath("$.data",Matchers.arrayWithSize(0)));
-*/
+*//*
+
     @Autowired
     private WebApplicationContext wac;
     private MockMvc mvc;
@@ -131,10 +134,12 @@ public class IntegrationTests {
     }
 
 
-    /**
+    */
+/**
      *
      * @throws Exception
-     */
+     *//*
+
     @Test
     @Transactional
     public void TestPIT()throws Exception{
@@ -900,3 +905,4 @@ public class IntegrationTests {
     }
 
 }
+*/

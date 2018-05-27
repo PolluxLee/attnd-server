@@ -61,13 +61,6 @@ public class User {
         this.stu_id = stu_id;
     }
 
-    public int[] getGroups() {
-        return groups;
-    }
-
-    public void setGroups(int[] groups) {
-        this.groups = groups;
-    }
 
     public User() {
         this.name = "";
@@ -79,14 +72,13 @@ public class User {
 
     public User(@Min(value = 1, groups = ID.class) @Min(0) int id, @NotBlank(groups = Name.class) String name, @NotBlank(groups = Openid.class) String openid,
                 @NotNull(groups = Remark.class) Object remark, @Min(value = 0, groups = Status.class) int status,
-                @NotBlank(groups = StuID.class) String stu_id, @NotNull(groups = {Groups.class,All.class}) int[] groups ) {
+                @NotBlank(groups = StuID.class) String stu_id) {
         this.id = id;
         this.name = name;
         this.openid = openid;
         this.remark = remark;
         this.status = status;
         this.stu_id = stu_id;
-        this.groups = groups;
     }
 
     @Min(value = 1,groups = {ID.class,All.class})
@@ -103,8 +95,6 @@ public class User {
     @NotBlank(groups = {StuID.class,All.class})
     @NotNull(groups = {StuIDNotNUll.class})
     private String stu_id;
-    @NotNull(groups = {Groups.class,All.class})
-    private int[] groups;
 
     public interface ID {}
     public interface Name {}
@@ -113,7 +103,6 @@ public class User {
     public interface Status {}
     public interface StuID {}
     public interface StuIDNotNUll {}
-    public interface Groups {}
 
     public interface All {}
 

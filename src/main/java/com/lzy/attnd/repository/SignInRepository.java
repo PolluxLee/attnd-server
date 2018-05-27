@@ -56,18 +56,11 @@ public class SignInRepository implements SignInService {
     }
 
     @Override
-    public AttndState[] ChkSignInList(String cipher, int start, int count, int groupID,int signinStatus) throws DataAccessException {
+    public AttndState[] ChkSignInList(String cipher, int start, int count,int signinStatus) throws DataAccessException {
         String query;
         Object[] args;
-        if (groupID<=0){
-            query = "SELECT signin.openid,distance AS dist,signin.status,stuid,name FROM signin JOIN user on signin.openid=user.openid WHERE cipher=? %s ORDER BY stuid ASC LIMIT ?,?;";
-            args = new Object[]{cipher,start,count};
-        }else {
-            query="SELECT user.openid,coalesce(distance, -1) AS dist,coalesce(signin.status, 4) AS status,stuid,name\n" +
-                    "FROM user LEFT JOIN signin on (signin.openid=user.openid AND cipher=?)\n" +
-                    "WHERE JSON_CONTAINS(user.groupid,?,'$')=1 %s ORDER BY stuid ASC LIMIT ?,?;";
-            args = new Object[]{cipher,Integer.toString(groupID),start,count};
-        }
+        query = "SELECT signin.openid,distance AS dist,signin.status,stuid,name FROM signin JOIN user on signin.openid=user.openid WHERE cipher=? %s ORDER BY stuid ASC LIMIT ?,?;";
+        args = new Object[]{cipher,start,count};
 
         query = String.format(query, signinStatusHandle(signinStatus));
 
@@ -85,13 +78,6 @@ public class SignInRepository implements SignInService {
     @Override
     public int CountSignInList(String cipher, int signinStatus) throws DataAccessException {
         String query = String.format("SELECT COUNT(id) FROM signin WHERE cipher=? %s", signinStatusHandle(signinStatus));
-        return this.jdbcTemplate.queryForObject(query,new Object[]{cipher},int.class);
-    }
-
-    @Override
-    public int CountSignInListWithGroup(String cipher, int groupID, int signinStatus) throws DataAccessException {
-        String query = String.format("SELECT COUNT(signin.id)" +
-                " FROM user LEFT JOIN signin on (signin.openid=user.openid AND cipher=?) WHERE 1=1 %s", signinStatusHandle(signinStatus));
         return this.jdbcTemplate.queryForObject(query,new Object[]{cipher},int.class);
     }
 

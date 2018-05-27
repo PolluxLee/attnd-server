@@ -8,7 +8,6 @@ import com.lzy.attnd.constant.Code;
 import com.lzy.attnd.model.*;
 import com.lzy.attnd.service.AttndService;
 import com.lzy.attnd.service.SignInService;
-import com.lzy.attnd.service.UserGroupService;
 import com.lzy.attnd.service.UserService;
 import com.lzy.attnd.utils.FB;
 import com.lzy.attnd.utils.Session;
@@ -22,6 +21,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
+import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -36,16 +36,14 @@ public class AttndController {
 
 
     private final AttndService attndService;
-    private final UserGroupService userGroupService;
     private final UserService userService;
     private final SignInService signInService;
 
     private final ConfigBean configBean;
 
     @Autowired
-    public AttndController(AttndService attndService,UserGroupService userGroupService, UserService userService, SignInService signInService, ConfigBean configBean) {
+    public AttndController(AttndService attndService,UserService userService, SignInService signInService, ConfigBean configBean) {
         this.attndService = attndService;
-        this.userGroupService = userGroupService;
         this.userService = userService;
         this.signInService = signInService;
         this.configBean = configBean;
@@ -63,13 +61,12 @@ public class AttndController {
      * @apiParam {Number{-90-90}} latitude float
      * @apiParam {Number{-180-180}} longitude float
      * @apiParam {Number{0-}} accuracy float
-     * @apiParam {String{0..50}} [group_name] attnd group only work when creating , tag this attnd is member adding
      * @apiParam {String{0..50}} addr_name location name
      * @apiParam {String{0..50}} teacher_name if user exist -> do nothing
      * @apiParamExample {json} Req-create:
-     * {"attnd_name":"操作系统","start_time":1526826235000,"last":20,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"addr_name":"外环西路","teacher_name":"wjx","group_name":"计科151"}
+     * {"attnd_name":"操作系统","start_time":1526826235000,"last":20,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"addr_name":"外环西路","teacher_name":"wjx"}
      *
-     * @apiSuccess {String} cipher 口令 标识位(标识录入/考勤)+通过62进制时间戳后3位+ (attnd_id (when no_group) ||group_id ) 的62进制表示
+     * @apiSuccess {String} cipher 口令 标识位(标识录入/考勤)+通过62进制时间戳后3位 + attnd_id 的62进制表示
      * @apiSuccessExample {json} Resp:
      * {"code":1000,"msg":"","data":{"attnd_id":5415,"cipher":"G548QC","userinfo":{"id":1,"openid":"fdsafe51515","name":"lzp"}}}
      */
@@ -103,41 +100,12 @@ public class AttndController {
         //if user info has updated -> update session
         httpSession.setAttribute(configBean.getSession_key(),session);
 
-        int attndStatus = Code.ATTND_NORMAL;
-
-        //no group fill
-        int groupID = 0;
-        if (attnd.getGroup_name()==null || attnd.getGroup_name().equals("")){
-            attnd.setGroup_name("");
-            attndStatus = Code.ATTND_NOGROUP;
-        }else{
-            if (attnd.getGroup_name().length()>50){
-                return FB.PARAM_INVALID("addAttnd group name length > 50");
-            }
-            //chk group exist by name
-            UserGroup userGroup = new UserGroup();
-            userGroup.setName(attnd.getGroup_name());
-            userGroup.setCreator_id(user.getId());
-            userGroup.setCreator_name(user.getName());
-            groupID =userGroupService.ChkUserGroupExistByName(userGroup);
-            if (groupID<=0){
-                //create a new group
-                userGroup.setRemark(new Object());
-                boolean addGroupSuccess = userGroupService.AddNewGroup(userGroup);
-                if (!addGroupSuccess){
-                    return FB.DB_FAILED("addAttnd AddNewGroup failed");
-                }
-                attndStatus = Code.ATTND_ENTRY;
-            }
-        }
-
-
-        attnd.setStatus(attndStatus);
+        attnd.setStatus(Code.ATTND_NORMAL);
 
         //add attnd
         attnd.setRemark(new Object());
         attnd.setTeacher_id(session.getUserID());
-        String cipher = attndService.AddAttnd(attnd,groupID);
+        String cipher = attndService.AddAttnd(attnd);
         if (cipher==null||cipher.equals("")){
             return FB.DB_FAILED("addAttnd cipher invalid");
         }
@@ -161,11 +129,11 @@ public class AttndController {
      * @apiGroup Attnd
      *
      * @apiParamExample {String} Req:
-     * cipher=GZXQAS
+     * cipher=AZXQAS
      *
-     * @apiSuccess {Number} status negative number mean end
+     * @apiSuccess {Number=1,-1,-4} status negative number mean end 1-->NORMAL 4-->DEL
      * @apiSuccessExample {json} Resp:
-     * {"code":1000,"msg":"","data":{"teacher_id":1,"attnd_id":123,"cipher":"GZXQAS","status":1,"attnd_name":"操作系统","start_time":15577418,"last":20,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"addr_name":"外环西路","teacher_name":"wjx","group_name":"计科151"}}
+     * {"code":1000,"msg":"","data":{"teacher_id":1,"attnd_id":123,"cipher":"GZXQAS","status":1,"attnd_name":"操作系统","start_time":15577418,"last":20,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"addr_name":"外环西路","teacher_name":"wjx"}}
      *
      *
      * @apiError (Error-Code) 3001 attnd not exist
@@ -259,7 +227,7 @@ public class AttndController {
      * @apiParam list_type {Number=1,2} 查看的是 1->我创建的考勤/2->我的签到
      *
      * @apiSuccessExample {json} Resp:
-     * {"code":1000,"msg":"","data":{"attnds":[{"attnd_id":1,"attnd_name":"操作系统1","start_time":1522512000,"last":20,"location":{"latitude":23.4,"longitude":174.4,"accuracy":30.0},"addr_name":"外环西路","group_name":"网工151","teacher_name":"lzy","teacher_id":1,"cipher":"Gwvk1"}],"count":1}}
+     * {"code":1000,"msg":"","data":{"attnds":[{"attnd_id":1,"attnd_name":"操作系统1","start_time":1522512000,"last":20,"location":{"latitude":23.4,"longitude":174.4,"accuracy":30.0},"addr_name":"外环西路","teacher_name":"lzy","teacher_id":1,"cipher":"Gwvk1"}],"count":1}}
      *
      */
     /***/
@@ -273,6 +241,7 @@ public class AttndController {
     ){
         PaginationAttnd attndsPage = null;
 
+        //ORDER BY CREATEDAT ASC
         if (listType==1){
             attndsPage = attndService.ChkAttndListByUser(session.getUserID(),start,rows,query);
         }
@@ -292,6 +261,41 @@ public class AttndController {
 
     public static long testTimestamp = 0;
 
+    public static class SigninParam{
+        public SigninParam(@NotBlank @Size(max = 50) String cipher, @Valid @NotNull Location location) {
+            this.cipher = cipher;
+            this.location = location;
+        }
+
+        public String getCipher() {
+            return cipher;
+        }
+
+        public Location getLocation() {
+            return location;
+        }
+
+        public void setCipher(String cipher) {
+            this.cipher = cipher;
+        }
+
+        public void setLocation(Location location) {
+            this.location = location;
+        }
+
+        public SigninParam() {
+        }
+
+        @NotBlank(groups = All.class)
+        @Size(max=50,groups = All.class)
+        private String cipher;
+        @NotNull(groups = All.class)
+        @Valid
+        private Location location;
+
+        public interface All{}
+    }
+
     /**
      * @api {post} /api/attnd/signin attnd_signin
      * @apiName attnd_signin
@@ -300,16 +304,9 @@ public class AttndController {
      *
      * @apiParam {String} cipher cipher for attendance
      * @apiParamExample {json} Req:
-     * {"cipher":"X574AQ","location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0}}
+     * {"cipher":"A574AQ","location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0}}
      *
-     * @apiParamExample {json} Req-Attnd-A:
-     * {"cipher":"X574AQ","location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"attnd_id":15}
      *
-     * @apiParamExample {json} Req-Attnd-N/G:
-     * {"cipher":"X574AQ","location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0}}
-     *
-     * @apiParamExample {json} Req-Attnd-S:
-     * {"cipher":"S574AQ"}
      *
      * @apiSuccess {Number} data 1-->ok 2-->location beyond 3-->expired
      * @apiSuccessExample {json} Resp:
@@ -319,82 +316,27 @@ public class AttndController {
      * @apiError (Error-Code) 3001 attnd not exist
      * @apiError (Error-Code) 3002 口令类型 不对应 考勤的实际类型
      * @apiError (Error-Code) 3003 already signin
-     * @apiError (Error-Code) 3007 user not belong the group
      * @apiError (Error-Code) 3008 user is the creator
      *
      */
     /***/
     @PostMapping("/attnd/signin")
     public FB signIn(@RequestAttribute("attnd") Session session,
-                     @RequestBody @NotNull JsonNode root){
-        JsonNode cipherNode = root.get("cipher");
-        if (cipherNode == null || !cipherNode.isTextual()){
-            return FB.PARAM_INVALID("cipher invalid");
-        }
-        String cipher = cipherNode.asText();
-        if (cipher == null ||cipher.equals("") || cipher.length()>50){
-            return FB.PARAM_INVALID("cipher invalid empty or too long");
-        }
-
-        Location signLoc = null;
-        if (cipher.charAt(0)!=Code.CIPHER_SINGLE){
-            ObjectMapper mapper = new ObjectMapper();
-            if (!root.hasNonNull("location")){
-                return FB.PARAM_INVALID("location invalid in root prop");
-            }
-            try {
-                signLoc = mapper.treeToValue(root.get("location"),Location.class);
-            } catch (JsonProcessingException e) {
-                return FB.PARAM_INVALID("location invalid in treeToValue");
-            }
-            if (signLoc==null || signLoc.getAccuracy()<0||signLoc.getLatitude()<-90||signLoc.getLatitude()>90||signLoc.getLongitude()<-180||signLoc.getLongitude()>180){
-                return FB.PARAM_INVALID("location invalid in children prop");
-            }
-        }
-
-        int attndID = 0;
-        if (cipher.charAt(0)==Code.CIPHER_ATTND){
-            JsonNode attndIDNode = root.get("attnd_id");
-            if (attndIDNode == null || !attndIDNode.isInt()){
-                return FB.PARAM_INVALID("attnd_id invalid");
-            }
-            attndID = attndIDNode.asInt();
-            if (attndID<=0){
-                return FB.PARAM_INVALID("attnd_id invalid <=0");
-            }
-        }
-
-        //--------- chk param complete
-
+                     @Validated({Location.Location_Struct.class,SigninParam.All.class})
+                     @RequestBody SigninParam param){
         //just chk user
         boolean userExist = userService.ChkUserExist(session.getOpenid());
         if (!userExist){
             return FB.SYS_ERROR("user not exist");
         }
 
-        Attnd attnd = null;
-        char attnd_type = cipher.charAt(0);
+        char attnd_type = param.cipher.charAt(0);
 
         if (!Utils.chkCipherType(attnd_type))
             return FB.PARAM_INVALID("SignIn cipher param unknown type");
 
-        //attnd_type = S
-        if (attnd_type == Code.CIPHER_SINGLE){
-            //get group ID from cipher
-            //cipher length - type(1) - timestamp(3)
-            int groupID = ((int) Utils.Base62LastKToLong(cipher, cipher.length() - 1 - 3));
-            if (groupID <= 0){
-                return FB.SYS_ERROR("get groupid from cipher failed");
-            }
-            if(!userService.AddUserToGroupByID(session.getOpenid(),groupID)){
-                return FB.DB_FAILED("AddUserToGroupByID in CIPHER_SINGLE failed");
-            }
-            return FB.SUCCESS();
-        }
-
-        //attnd_type = A,G,N
-        //chk attnd status correspond
-        attnd = attndService.ChkAttnd(cipher);
+        //chk attnd status correspond exclude del
+        Attnd attnd = attndService.ChkAttnd(param.cipher);
         if (attnd==null){
             return new FB(Code.ATTND_NOT_EXIST);
         }
@@ -403,7 +345,7 @@ public class AttndController {
         }
 
         //chk user whether has signed in
-        boolean hasSignIn = signInService.ChkUserHasSignIn(session.getOpenid(),cipher);
+        boolean hasSignIn = signInService.ChkUserHasSignIn(session.getOpenid(),param.cipher);
         if (hasSignIn){
             return new FB(Code.ATTND_HAS_SIGNIN);
         }
@@ -413,32 +355,14 @@ public class AttndController {
             return new FB(Code.SIGNIN_CREATOR);
         }
 
-        //if type = A --> judge user is this group
-        if (attnd_type == Code.CIPHER_ATTND ){
-            //get groupID with cipher & attndid
-            int groupID = ((int) Utils.Base62LastKToLong(cipher, cipher.length() - 1 - 3 - Utils.ChkIDBase62Length(attndID,10)));
-            if (groupID<=0){
-                return FB.SYS_ERROR("get groupid from cipher invalid");
-            }
-
-            if (!userService.ChkUserIsGroupByGroupID(session.getUserID(),groupID)){
-                return new FB(Code.SIGNIN_NOT_BELONG_GROUP);
-            }
-        }
-
-        if (attnd_type==Code.CIPHER_ENTRY){
-            if(!userService.AddUserToGroup(session.getOpenid(),attnd.getGroup_name(),attnd.getTeacher_id())){
-                return FB.DB_FAILED("AddUserToGroup in CIPHER_ENTRY failed");
-            }
-        }
 
         //judge sign in whether success CHK LOCATION CHK TIME
         SignIn signIn = new SignIn();
         signIn.setOpenid(session.getOpenid());
-        signIn.setCipher(cipher);
-        signIn.setLocation(signLoc);
+        signIn.setCipher(param.cipher);
+        signIn.setLocation(param.location);
         int signInFlag = Utils.calSignInState(
-                attnd,signLoc,AttndController.testTimestamp==0?System.currentTimeMillis():AttndController.testTimestamp,
+                attnd,param.location,AttndController.testTimestamp==0?System.currentTimeMillis():AttndController.testTimestamp,
                 configBean.getMeter_limit(),signIn);
 
         signIn.setStatus(signInFlag);
@@ -456,12 +380,11 @@ public class AttndController {
      *
      * @apiUse Pagination
      * @apiParamExample {String} Req:
-     * cipher=A7184&signin_status=true&page=1&page_size=10&attnd_id=15
+     * cipher=A7184&signin_status=true&page=1&page_size=10
      *
      *
-     * @apiSuccess {Number} count group user count (A) / total count (others)
-     * @apiSuccess {Number} present_count record total count in status (A)
-     * @apiSuccess {Number=1,2,3,4} attnd_status studnet attendance status 1-> ok 2-> location beyond 3 -> time expired 4 -> not exist
+     * @apiSuccess {Number} count record total count
+     * @apiSuccess {Number=1,2,3} attnd_status studnet attendance status 1-> ok 2-> location beyond 3 -> time expired
      * @apiSuccessExample {json} Resp:
      * {"code":1000,"msg":"","data":{"my_signin":{"openid":"ox111","stu_id":"1506200023","name":"xiaoming","attnd_status":1,"distance":53.14},"present_count":2,"count":10,"attnds":[{"openid":"ox111","stu_id":"1506200023","name":"xiaoming","attnd_status":1,"distance":53.14},{"openid":"ox222","stu_id":"1506200024","name":"zhangli","attnd_status":1,"distance":23.14}]}}
      *
@@ -473,67 +396,27 @@ public class AttndController {
             @Min(0) @RequestAttribute("start") int start,
             @Min(1) @RequestAttribute("rows") int rows,
             @NotBlank @Size(max = 50) @RequestParam("cipher") String cipher,
-            @Range(min = Code.SIGNIN_ALL,max = Code.SIGNIN_NOT_EXIST) @RequestParam("signin_status") int signinStatus,
-            @RequestParam(value = "attnd_id",required = false,defaultValue = "0") int attndID
+            @Range(min = Code.SIGNIN_ALL,max = Code.SIGNIN_EXPIRED) @RequestParam("signin_status") int signinStatus
     ){
 
         //chk user's signin info
-        //null safely
+        //null means nothing
         AttndState userSignIn = signInService.ChkSignInInfo(cipher,session.getOpenid());
         if (userSignIn==null)
             userSignIn = new AttndState();
 
-        int groupID = 0;
+
         //chk sign in list
         AttndState[] attndStates;
-        switch (cipher.charAt(0)){
-            case Code.CIPHER_ATTND:{
-                if (attndID<=0){
-                    return FB.PARAM_INVALID("attndID invalid");
-                }
-                //get groupID with cipher & attndid
-                //get the last groupid
-                groupID = ((int) Utils.Base62LastKToLong(cipher, cipher.length() - 1 - 3 - Utils.ChkIDBase62Length(attndID,10)));
-                if (groupID <= 0){
-                    return FB.SYS_ERROR("get groupid from cipher failed");
-                }
-            }
-            case Code.CIPHER_ENTRY:
-            case Code.CIPHER_NOGROUP:{
-                //chk sign in list
-                attndStates = signInService.ChkSignInList(cipher,start,rows,groupID,signinStatus);
-                break;
-            }
-            default:
-                return FB.SYS_ERROR("unknown cipher type");
-        }
-
+        attndStates = signInService.ChkSignInList(cipher,start,rows,signinStatus);
         if (attndStates==null){
             return FB.SYS_ERROR("attndStates null");
         }
 
-        HashMap<String,Object> fbJson = new HashMap<>();
-
         //chk count
-        int recTotalCount;
-        if (groupID<=0){
-            //TYPE G/N
-            recTotalCount = signInService.CountSignInList(cipher,signinStatus);
-        }else{
-            int presentCountInStatus = signinStatus;
-            //TYPE A
-            int totalGroupUserCount =  userGroupService.CountUserInGroup(groupID);
-            if (signinStatus==Code.SIGNIN_ALL){
-                presentCountInStatus = Code.SIGNIN_OK;
-            }
-            recTotalCount = totalGroupUserCount;
+        int recTotalCount = signInService.CountSignInList(cipher,signinStatus);
 
-            int signInStatusCount = signInService.CountSignInListWithGroup(cipher,groupID,presentCountInStatus);
-
-            //present_count = totoal_user_count - userNotSigninCount 实到人数=组内总人数-签到失败人数
-            fbJson.put("present_count",totalGroupUserCount-signInStatusCount);
-        }
-
+        HashMap<String,Object> fbJson = new HashMap<>();
 
         fbJson.put("count",recTotalCount);
         fbJson.put("my_signin",userSignIn);

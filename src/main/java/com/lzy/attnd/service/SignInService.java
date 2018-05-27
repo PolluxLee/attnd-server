@@ -23,11 +23,9 @@ public interface SignInService {
     boolean ChkUserHasSignIn(@NotBlank String openid,@NotBlank  String cipher) throws DataAccessException;
 
     //get signin list
-    AttndState[] ChkSignInList(@NotBlank  String cipher, @Min(0) int start, @Min(1) int count, int groupID, @Range(min = Code.SIGNIN_ALL,max = Code.SIGNIN_NOT_EXIST) int signinStatus) throws DataAccessException;
+    AttndState[] ChkSignInList(@NotBlank  String cipher, @Min(0) int start, @Min(1) int count,@Range(min = Code.SIGNIN_ALL,max = Code.SIGNIN_NOT_EXIST) int signinStatus) throws DataAccessException;
 
     @Min(0) int CountSignInList(@NotBlank String cipher, @Range(min = Code.SIGNIN_ALL,max = Code.SIGNIN_NOT_EXIST) int signinStatus) throws DataAccessException;
-
-    @Min(0) int CountSignInListWithGroup(@NotBlank String cipher,@Min(1) int groupID, @Range(min = Code.SIGNIN_ALL,max = Code.SIGNIN_NOT_EXIST) int signinStatus) throws DataAccessException;
 
     boolean UpdSignInSituation(@NotBlank String cipher,@NotBlank String openid, @Range(min = Code.SIGNIN_OK,max = Code.SIGNIN_NOT_EXIST)int statusToUpdate) throws DataAccessException;
 

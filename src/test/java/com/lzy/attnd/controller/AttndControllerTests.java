@@ -31,6 +31,8 @@ import org.springframework.web.context.WebApplicationContext;
 
 import static com.lzy.attnd.controller.AttndController.testTimestamp;
 import static org.hamcrest.Matchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ActiveProfiles("test")
 @RunWith(SpringRunner.class)
@@ -73,8 +75,8 @@ public class AttndControllerTests {
                 .content("")
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_NOAUTH)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_NOAUTH)));
     }
 
     /**
@@ -89,7 +91,7 @@ public class AttndControllerTests {
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(400));
+                .andExpect(status().is(400));
     }
 
     /**
@@ -104,8 +106,8 @@ public class AttndControllerTests {
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_PARAM_INVALID)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_PARAM_INVALID)));
     }
 
     /**
@@ -116,17 +118,17 @@ public class AttndControllerTests {
     public void attnd_Location_Invalid()throws Exception{
         mvc.perform(MockMvcRequestBuilders.post("/attnd")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"attnd_name\":\"操作系统\",\"start_time\":15577418,\"last\":20,\"location\":{\"latitude\":-100000,\"longitude\":174.4,\"accuracy\":30.0},\"addr_name\":\"外环西路\",\"teacher_name\":\"wjx\",\"group_name\":\"计科151\"}")
+                .content("{\"attnd_name\":\"操作系统\",\"start_time\":15577418,\"last\":20,\"location\":{\"latitude\":-100000,\"longitude\":174.4,\"accuracy\":30.0},\"addr_name\":\"外环西路\",\"teacher_name\":\"wjx\"}")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_PARAM_INVALID)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_PARAM_INVALID)));
     }
 
 
     /**
-     * 发布考勤 ， 第一次 用户需要新建，用户组需要新建+录入
+     * 发布考勤 ， 第一次 用户需要新建
      * @throws Exception
      */
     @Test
@@ -135,43 +137,20 @@ public class AttndControllerTests {
         session.setAttribute(configBean.getSession_key(),new Session(0,"",0,"oid22","wxsessionkey","23"));
         mvc.perform(MockMvcRequestBuilders.post("/attnd")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"attnd_name\":\"操作系统\",\"start_time\":15577418,\"last\":20,\"location\":{\"latitude\":23.4,\"longitude\":174.4,\"accuracy\":30.0},\"addr_name\":\"外环西路\",\"teacher_name\":\"wjx\",\"group_name\":\"计科151\"}")
-                .session(session)
-        )
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.cipher",startsWith(String.valueOf((Code.CIPHER_ENTRY)))))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userinfo.name", is("wjx")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userinfo.openid", is("oid22")));
-    }
-
-    /**
-     * 发布考勤 ， 第一次 用户需要新建，不填用户组名
-     * @throws Exception
-     */
-    @Test
-    @Transactional
-    public void attnd_User_NotExist_Group_NotFill()throws Exception{
-        session.setAttribute(configBean.getSession_key(),new Session(0,"",0,"oid","wxsessionkey","23"));
-        mvc.perform(MockMvcRequestBuilders.post("/attnd")
-                .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"attnd_name\":\"操作系统\",\"start_time\":15577418,\"last\":20,\"location\":{\"latitude\":23.4,\"longitude\":174.4,\"accuracy\":30.0},\"addr_name\":\"外环西路\",\"teacher_name\":\"wjx\"}")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.cipher",startsWith(String.valueOf(Code.CIPHER_NOGROUP))))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userinfo.name", is("wjx")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userinfo.openid", is("oid")));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data.cipher",startsWith(String.valueOf((Code.CIPHER_ATTND)))))
+                .andExpect(jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)))
+                .andExpect(jsonPath("$.data.userinfo.name", is("wjx")))
+                .andExpect(jsonPath("$.data.userinfo.openid", is("oid22")));
     }
 
-
     /**
-     * 发布考勤 ， 用户存在，对应名称用户组不存在
+     * 发布考勤 ， 用户存在
      * @throws Exception
      */
     @Test
@@ -180,61 +159,18 @@ public class AttndControllerTests {
         session.setAttribute(configBean.getSession_key(),new Session(1,"lzy",0,"toid123","wxsessionkey","23"));
         mvc.perform(MockMvcRequestBuilders.post("/attnd")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"attnd_name\":\"操作系统\",\"start_time\":15577418,\"last\":20,\"location\":{\"latitude\":23.4,\"longitude\":174.4,\"accuracy\":30.0},\"addr_name\":\"外环西路\",\"teacher_name\":\"wjx\",\"group_name\":\"计科141\"}")
+                .content("{\"attnd_name\":\"操作系统\",\"start_time\":15577418,\"last\":20,\"location\":{\"latitude\":23.4,\"longitude\":174.4,\"accuracy\":30.0},\"addr_name\":\"外环西路\",\"teacher_name\":\"wjx\"}")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.cipher",startsWith(String.valueOf(Code.CIPHER_ENTRY))))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userinfo.name", is("lzy")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userinfo.openid", is("toid123")));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data.cipher",startsWith(String.valueOf(Code.CIPHER_ATTND))))
+                .andExpect(jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)))
+                .andExpect(jsonPath("$.data.userinfo.name", is("lzy")))
+                .andExpect(jsonPath("$.data.userinfo.openid", is("toid123")));
     }
 
-    /**
-     * 发布考勤 ， 用户存在，对应名称用户组存在
-     * @throws Exception
-     */
-    @Test
-    @Transactional
-    public void attnd_User_Exist_Group_Exist_BELONG_ME()throws Exception{
-        session.setAttribute(configBean.getSession_key(),new Session(1,"lzy",0,"toid123","wxsessionkey2","23"));
-        mvc.perform(MockMvcRequestBuilders.post("/attnd")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"attnd_name\":\"操作系统\",\"start_time\":15577418,\"last\":20,\"location\":{\"latitude\":23.4,\"longitude\":174.4,\"accuracy\":30.0},\"addr_name\":\"外环西路\",\"teacher_name\":\"wjx\",\"group_name\":\"网工151\"}")
-                .session(session)
-        )
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.cipher",startsWith(String.valueOf(Code.CIPHER_ATTND))))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userinfo.name", is("lzy")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userinfo.openid", is("toid123")));
-    }
-
-    /**
-     * 发布考勤 ， 用户存在，对应名称用户组存在，但是不是自己建的用户组
-     * @throws Exception
-     */
-    @Test
-    @Transactional
-    public void attnd_User_Exist_Group_Exist_BELONG_NOTME()throws Exception{
-        session.setAttribute(configBean.getSession_key(),new Session(2,"lzp",0,"toid456","wxsessionkey22","23"));
-        mvc.perform(MockMvcRequestBuilders.post("/attnd")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"attnd_name\":\"操作系统\",\"start_time\":15577418,\"last\":20,\"location\":{\"latitude\":23.4,\"longitude\":174.4,\"accuracy\":30.0},\"addr_name\":\"外环西路\",\"teacher_name\":\"wjx\",\"group_name\":\"网工151\"}")
-                .session(session)
-        )
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.cipher",startsWith(String.valueOf(Code.CIPHER_ENTRY))))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userinfo.name", is("lzp")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userinfo.openid", is("toid456")));
-    }
 
 
     /*chk attnd------------------------------------------------------**/
@@ -245,101 +181,65 @@ public class AttndControllerTests {
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(400));
+                .andExpect(status().is(400));
     }
-
-    @Test
-    public void chk_attnd_group_existG()throws Exception{
-        testTimestamp = 1522512000+10*60;
-        mvc.perform(MockMvcRequestBuilders.get("/attnd")
-                .param("cipher","Gwvk1")
-                .session(session)
-        )
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.status",is(2)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id",is(1)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_name",is("操作系统1")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.start_time",is(1522512000)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.last",is(20)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.addr_name",is("外环西路1")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.group_name",is("网工151")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.teacher_name",is("lzy")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.teacher_id",is(1)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.cipher",is("Gwvk1")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.location.longitude",is(174.4)));
-
-    }
-
 
     @Test
     public void chk_attnd_group_existA()throws Exception{
         testTimestamp = 1522512000+10*60;
         mvc.perform(MockMvcRequestBuilders.get("/attnd")
-                .param("cipher","Awvk2")
+                .param("cipher","AwXk2")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.status",is(1)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id",is(2)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_name",is("计算机网络")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.start_time",is(1522512000)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.last",is(20)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.addr_name",is("外环西路2")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.group_name",is("计科151")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.teacher_name",is("lzy")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.teacher_id",is(1)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.cipher",is("Awvk2")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.location.longitude",is(174.4)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data.status",is(1)))
+                .andExpect(jsonPath("$.data.attnd_id",is(2)))
+                .andExpect(jsonPath("$.data.attnd_name",is("计算机网络")))
+                .andExpect(jsonPath("$.data.start_time",is(1522512000)))
+                .andExpect(jsonPath("$.data.last",is(20)))
+                .andExpect(jsonPath("$.data.addr_name",is("理南315")))
+                .andExpect(jsonPath("$.data.teacher_name",is("lzy")))
+                .andExpect(jsonPath("$.data.teacher_id",is(1)))
+                .andExpect(jsonPath("$.data.cipher",is("AwXk2")))
+                .andExpect(jsonPath("$.data.location.longitude",is(174.4)));
+
     }
 
-    @Test
-    public void chk_attnd_group_not_existN()throws Exception{
-        testTimestamp = 1522512000+10*60;
-        mvc.perform(MockMvcRequestBuilders.get("/attnd")
-                .param("cipher","NQSA4")
-                .session(session)
-        )
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.status",is(3)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id",is(4)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_name",is("高级网站开发")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.start_time",is(1522512000)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.last",is(20)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.addr_name",is("外环西路4")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.group_name",is("")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.teacher_name",is("lzy")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.teacher_id",is(1)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.cipher",is("NQSA4")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.location.longitude",is(174.4)));
-    }
 
     @Test
     public void chk_attnd_expired()throws Exception{
         testTimestamp = 1522512000+30*60*1000;
         mvc.perform(MockMvcRequestBuilders.get("/attnd")
-                .param("cipher","NQSA4")
+                .param("cipher","AwXk2")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.status",is(-3)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_id",is(4)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.attnd_name",is("高级网站开发")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.start_time",is(1522512000)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.last",is(20)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.addr_name",is("外环西路4")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.group_name",is("")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.teacher_name",is("lzy")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.teacher_id",is(1)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.cipher",is("NQSA4")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.location.longitude",is(174.4)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data.status",is(-1)))
+                .andExpect(jsonPath("$.data.attnd_id",is(2)))
+                .andExpect(jsonPath("$.data.attnd_name",is("计算机网络")))
+                .andExpect(jsonPath("$.data.start_time",is(1522512000)))
+                .andExpect(jsonPath("$.data.last",is(20)))
+                .andExpect(jsonPath("$.data.addr_name",is("理南315")))
+                .andExpect(jsonPath("$.data.teacher_name",is("lzy")))
+                .andExpect(jsonPath("$.data.teacher_id",is(1)))
+                .andExpect(jsonPath("$.data.cipher",is("AwXk2")))
+                .andExpect(jsonPath("$.data.location.longitude",is(174.4)));
+    }
+
+    @Test
+    public void chk_attnd_bedel()throws Exception{
+        testTimestamp = 1522512000+30*60*1000;
+        mvc.perform(MockMvcRequestBuilders.get("/attnd")
+                .param("cipher","AQSA4")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.ATTND_NOT_EXIST)));
     }
 
 
@@ -351,8 +251,8 @@ public class AttndControllerTests {
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_NOT_EXIST)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.ATTND_NOT_EXIST)));
 
     }
 
@@ -366,11 +266,12 @@ public class AttndControllerTests {
             .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_PARAM_INVALID)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_PARAM_INVALID)));
     }
 
     @Test
+    @Transactional
     public void SignIn_location_invalid()throws Exception{
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -378,8 +279,40 @@ public class AttndControllerTests {
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_PARAM_INVALID)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_PARAM_INVALID)));
+    }
+
+    @Test
+    @Transactional
+    public void SignIn_cipher_empty()throws Exception{
+        mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"cipher\":\"\",\"location\":{\"latitude\":-10,\"longitude\":174.4,\"accuracy\":30.0}}")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_PARAM_INVALID)));
+    }
+
+    /**
+     * 用户不存在
+     * @throws Exception
+     */
+    @Test
+    @Transactional
+    public void SignIn_normal_user_not_exist()throws Exception{
+        session.setAttribute(configBean.getSession_key(),new Session(3,"db",0,"dawczx","wxsessionkey","23"));
+
+        mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"cipher\":\"Awvk34534\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0}}")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SYS_ERROR)));
     }
 
     /**
@@ -391,12 +324,12 @@ public class AttndControllerTests {
     public void SignIn_normal_attnd_not_exist()throws Exception{
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"cipher\":\"Awvk34534\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0},\"attnd_id\":1}")
+                .content("{\"cipher\":\"Awvk34534\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0}}")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_NOT_EXIST)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.ATTND_NOT_EXIST)));
     }
 
     /**
@@ -409,12 +342,12 @@ public class AttndControllerTests {
         session.setAttribute(configBean.getSession_key(),new Session(3,"lz",0,"toid789","wxsessionkey","23"));
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"cipher\":\"Gwvk1\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0}}")
+                .content("{\"cipher\":\"Awvk1\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0}}")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_HAS_SIGNIN)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.ATTND_HAS_SIGNIN)));
     }
 
 
@@ -430,32 +363,12 @@ public class AttndControllerTests {
         testTimestamp = 1522512000+10*60;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"cipher\":\"Awcq31\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0},\"attnd_id\":1}")
+                .content("{\"cipher\":\"AwvF5\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0},\"attnd_id\":1}")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.SIGNIN_CREATOR)));
-    }
-
-    /**
-     * 非本组用户去签到
-     * @throws Exception
-     */
-    @Test
-    @Transactional
-    public void SignIn_user_not_in_group()throws Exception{
-        //sign in at 10 minutes later after add attnd
-        session.setAttribute(configBean.getSession_key(),new Session(2,"lzp",0,"toid456","wxsessionkey","24"));
-        testTimestamp = 1522512000+10*60;
-        mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"cipher\":\"Awcq31\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0},\"attnd_id\":3}")
-                .session(session)
-        )
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.SIGNIN_NOT_BELONG_GROUP)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.SIGNIN_CREATOR)));
     }
 
 
@@ -470,13 +383,13 @@ public class AttndControllerTests {
         testTimestamp = System.currentTimeMillis();
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"cipher\":\"Awcq31\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0},\"attnd_id\":3}")
+                .content("{\"cipher\":\"AwvF5\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0}}")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data",is(Code.SIGNIN_EXPIRED)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data",is(Code.SIGNIN_EXPIRED)));
     }
 
     /**
@@ -491,13 +404,13 @@ public class AttndControllerTests {
         testTimestamp = 1522512000+10*60;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"cipher\":\"Awcq31\",\"location\":{\"latitude\":23.4,\"longitude\":150.4005,\"accuracy\":30.0},\"attnd_id\":3}")
+                .content("{\"cipher\":\"AwvF5\",\"location\":{\"latitude\":23.4,\"longitude\":150.4005,\"accuracy\":30.0}}")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data",is(Code.SIGNIN_LOCATION_BEYOND)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data",is(Code.SIGNIN_LOCATION_BEYOND)));
     }
 
     @Test
@@ -508,65 +421,13 @@ public class AttndControllerTests {
         testTimestamp = 1522512000+10*60;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"cipher\":\"Awcq31\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0},\"attnd_id\":3}")
+                .content("{\"cipher\":\"AwvF5\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0}}")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data",is(Code.SIGNIN_OK)));
-    }
-
-
-    @Test
-    @Transactional
-    public void SignIn_NOGROUP_ok()throws Exception{
-        session.setAttribute(configBean.getSession_key(),new Session(2,"lzp",0,"toid456","wxsessionkey","25"));
-
-        //sign in at 10 minutes later after add attnd
-        testTimestamp = 1522512000+10*60;
-        mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"cipher\":\"NQSA4\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0}}")
-                .session(session)
-        )
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data",is(Code.SIGNIN_OK)));
-    }
-
-    @Test
-    @Transactional
-    public void SignIn_GROUP_ok()throws Exception{
-        session.setAttribute(configBean.getSession_key(),new Session(2,"lzp",0,"toid456","wxsessionkey","25"));
-        //sign in at 10 minutes later after add attnd
-        testTimestamp = 1522512000+10*60;
-        mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"cipher\":\"Gwvk1\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0}}")
-                .session(session)
-        )
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data",is(Code.SIGNIN_OK)));
-    }
-
-    @Test
-    @Transactional
-    public void SignIn_Entry_TOGROUP_1()throws Exception{
-        //sign in at 10 minutes later after add attnd
-        testTimestamp = 1522512000+10*60;
-        mvc.perform(MockMvcRequestBuilders.post("/attnd/signin")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"cipher\":\"Swvk1\",\"location\":{\"latitude\":23.4,\"longitude\":174.4005,\"accuracy\":30.0}}")
-                .session(session)
-        )
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data").doesNotExist());
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data",is(Code.SIGNIN_OK)));
     }
 
     //get his attnd name ---------------------------------------------
@@ -577,25 +438,23 @@ public class AttndControllerTests {
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_USER_NOT_EXIST)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_USER_NOT_EXIST)));
     }
 
     @Test
     public void HisName_user_exist()throws Exception{
-        //{"高级网站开发","计算机网络","操作系统1","编译原理"}
-        session.setAttribute(configBean.getSession_key(),new Session(1,"lzy",0,"toid123","wxsessionkey","23"));
+        //["计算机网络","操作系统1","数据结构"]
+        session.setAttribute(configBean.getSession_key(),new Session(1,"lzy",0,"toid123","wxsessionkey",""));
         mvc.perform(MockMvcRequestBuilders.get("/attnd/hisname")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data[0]",is("高级网站开发")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data[1]",is("计算机网络")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data[2]",is("操作系统1")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data[3]",is("编译原理")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data[4]",is("数据结构")));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data[0]",is("计算机网络")))
+                .andExpect(jsonPath("$.data[1]",is("操作系统1")))
+                .andExpect(jsonPath("$.data[2]",is("数据结构")));
     }
 
 
@@ -604,18 +463,16 @@ public class AttndControllerTests {
     @Test
     public void HisAddr_user_exist()throws Exception{
         //{"高级网站开发","计算机网络","操作系统1","编译原理"}
-        session.setAttribute(configBean.getSession_key(),new Session(1,"lzy",0,"toid123","wxsessionkey","23"));
+        session.setAttribute(configBean.getSession_key(),new Session(1,"lzy",0,"toid123","wxsessionkey",""));
         mvc.perform(MockMvcRequestBuilders.get("/attnd/hisaddr")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data[0]",is("外环西路4")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data[1]",is("外环西路2")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data[2]",is("外环西路1")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data[3]",is("外环西路3")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data[4]",is("外环西路5")));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data[0]",is("理南315")))
+                .andExpect(jsonPath("$.data[1]",is("文新512")))
+                .andExpect(jsonPath("$.data[2]",is("电子417")));
     }
 
 
@@ -624,146 +481,107 @@ public class AttndControllerTests {
     @Test
     public void signinList_page_invalid()throws Exception{
         mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
-                .param("cipher","Awcq31")
+                .param("cipher","ACcq3")
                 .param("pafege","1")
                 .param("page_size","10")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_PARAM_INVALID)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_PARAM_INVALID)));
 
     }
 
     @Test
-    public void signinList_A()throws Exception{
+    public void signinList_ALL()throws Exception{
         mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
-                .param("cipher","Awcq31")
+                .param("cipher","ACcq3")
                 .param("page","1")
                 .param("page_size","10")
                 .param("signin_status","0")
-                .param("attnd_id","3")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(3)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.present_count",is(3)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data.count",is(2)))
+
+                .andExpect(jsonPath("$.data.attnds[0].openid",is("toid123")))
+                .andExpect(jsonPath("$.data.attnds[0].name",is("lzy")))
+                .andExpect(jsonPath("$.data.attnds[0].stu_id",is("23")))
+                .andExpect(jsonPath("$.data.attnds[0].attnd_status",is(Code.SIGNIN_LOCATION_BEYOND)))
+                .andExpect(jsonPath("$.data.attnds[0].distance",is(64.4)))
+
+                .andExpect(jsonPath("$.data.attnds[1].openid",is("toid789")))
+                .andExpect(jsonPath("$.data.attnds[1].name",is("lz")))
+                .andExpect(jsonPath("$.data.attnds[1].attnd_status",is(Code.SIGNIN_OK)))
+
+                .andExpect(jsonPath("$.data.my_signin.openid",is("toid123")))
+                .andExpect(jsonPath("$.data.my_signin.name",is("lzy")))
+                .andExpect(jsonPath("$.data.my_signin.stu_id",is("23")))
+                .andExpect(jsonPath("$.data.my_signin.attnd_status",is(Code.SIGNIN_LOCATION_BEYOND)))
+                .andExpect(jsonPath("$.data.my_signin.distance",is(64.4)));
     }
 
 
     @Test
-    public void signinList_A_fail_only()throws Exception{
+    public void signinList_A_param_invalid()throws Exception{
         mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
                 .param("cipher","Awcq31")
                 .param("page","1")
                 .param("page_size","10")
                 .param("signin_status",Integer.toString(Code.SIGNIN_NOT_EXIST))
-                .param("attnd_id","3")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(3)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.present_count",is(3)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_PARAM_INVALID)));
     }
 
     @Test
-    public void signinList_page_2()throws Exception{
+    public void signinList_status_loc()throws Exception{
+        session.setAttribute(configBean.getSession_key(),new Session(4,"wj",0,"toid222","wxsessionkey",""));
+
         mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
-                .param("cipher","Awcq31")
+                .param("cipher","ACcq3")
                 .param("page","1")
-                .param("page_size","2")
-                .param("signin_status",Integer.toString(Code.SIGNIN_NOT_EXIST))
-                .param("attnd_id","3")
+                .param("page_size","5")
+                .param("signin_status",Integer.toString(Code.SIGNIN_LOCATION_BEYOND))
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(3)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.present_count",is(3)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data.count",is(1)))
+
+                .andExpect(jsonPath("$.data.attnds[0].openid",is("toid123")))
+                .andExpect(jsonPath("$.data.attnds[0].name",is("lzy")))
+                .andExpect(jsonPath("$.data.attnds[0].stu_id",is("23")))
+                .andExpect(jsonPath("$.data.attnds[0].attnd_status",is(Code.SIGNIN_LOCATION_BEYOND)))
+                .andExpect(jsonPath("$.data.attnds[0].distance",is(64.4)))
+
+                .andExpect(jsonPath("$.data.my_signin.size()",is(0)));
     }
 
     @Test
-    public void signinList_mysignin()throws Exception{
+    public void signinList_page2()throws Exception{
         mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
-                .param("cipher","Awcq31")
-                .param("page","1")
-                .param("page_size","2")
-                .param("signin_status",Integer.toString(Code.SIGNIN_ALL))
-                .param("attnd_id","3")
-                .session(session)
-        )
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(3)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.present_count",is(3)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.my_signin.size()",is(0)));
-    }
-
-    @Test
-    public void signinList_G()throws Exception{
-        mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
-                .param("cipher","Gwvk1")
-                .param("page","1")
-                .param("page_size","10")
-                .param("signin_status",Integer.toString(Code.SIGNIN_ALL))
-                .session(session)
-        )
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(2)));
-    }
-
-    @Test
-    public void signinList_G_OK()throws Exception{
-        mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
-                .param("cipher","Gwvk1")
-                .param("page","1")
-                .param("page_size","10")
-                .param("signin_status",Integer.toString(Code.SIGNIN_OK))
-                .session(session)
-        )
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(2)));
-    }
-
-    @Test
-    public void signinList_G_EXPIRED()throws Exception{
-        mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
-                .param("cipher","Gwvk1")
-                .param("page","1")
-                .param("page_size","10")
-                .param("signin_status",Integer.toString(Code.SIGNIN_EXPIRED))
-                .session(session)
-        )
-                .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(0)));
-    }
-
-    @Test
-    public void signinList_G_P2()throws Exception{
-        mvc.perform(MockMvcRequestBuilders.get("/attnd/situation")
-                .param("cipher","Gwvk1")
+                .param("cipher","ACcq3")
                 .param("page","2")
                 .param("page_size","1")
                 .param("signin_status",Integer.toString(Code.SIGNIN_ALL))
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.data.count",is(2)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data.count",is(2)))
+
+                .andExpect(jsonPath("$.data.attnds[0].openid",is("toid789")))
+                .andExpect(jsonPath("$.data.attnds[0].name",is("lz")))
+                .andExpect(jsonPath("$.data.attnds[0].attnd_status",is(Code.SIGNIN_OK)));
     }
+
 
     /*---------------------------------------chkAttndlist------------------*/
 
@@ -777,8 +595,8 @@ public class AttndControllerTests {
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_PARAM_INVALID)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_PARAM_INVALID)));
     }
 
     @Test
@@ -791,8 +609,27 @@ public class AttndControllerTests {
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data.count",is(3)))
+
+                .andExpect(jsonPath("$.data.attnds[0].attnd_id",is(2)))
+                .andExpect(jsonPath("$.data.attnds[0].attnd_name",is("计算机网络")))
+                .andExpect(jsonPath("$.data.attnds[0].start_time",is(1522512000)))
+                .andExpect(jsonPath("$.data.attnds[0].addr_name",is("理南315")))
+                .andExpect(jsonPath("$.data.attnds[0].teacher_name",is("lzy")))
+                .andExpect(jsonPath("$.data.attnds[0].cipher",is("AwXk2")))
+                .andExpect(jsonPath("$.data.attnds[0].location.longitude",is(174.4)))
+
+                .andExpect(jsonPath("$.data.attnds[1].attnd_id",is(1)))
+                .andExpect(jsonPath("$.data.attnds[1].attnd_name",is("操作系统1")))
+                .andExpect(jsonPath("$.data.attnds[1].start_time",is(1522512000)))
+                .andExpect(jsonPath("$.data.attnds[1].addr_name",is("文新512")))
+                .andExpect(jsonPath("$.data.attnds[1].teacher_name",is("lzy")))
+                .andExpect(jsonPath("$.data.attnds[1].cipher",is("Awvk1")))
+
+                .andExpect(jsonPath("$.data.attnds[2].attnd_id",is(5)))
+                .andExpect(jsonPath("$.data.attnds[2].attnd_name",is("数据结构")));
     }
 
     @Test
@@ -805,37 +642,103 @@ public class AttndControllerTests {
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+
+                .andExpect(jsonPath("$.data.count",is(1)))
+
+                .andExpect(jsonPath("$.data.attnds[0].attnd_id",is(1)))
+                .andExpect(jsonPath("$.data.attnds[0].attnd_name",is("操作系统1")))
+                .andExpect(jsonPath("$.data.attnds[0].start_time",is(1522512000)))
+                .andExpect(jsonPath("$.data.attnds[0].addr_name",is("文新512")))
+                .andExpect(jsonPath("$.data.attnds[0].teacher_name",is("lzy")))
+                .andExpect(jsonPath("$.data.attnds[0].cipher",is("Awvk1")));
+    }
+
+    @Test
+    public void attndlist_chkAttnd_page1()throws Exception{
+        mvc.perform(MockMvcRequestBuilders.get("/attndlist")
+                .param("page","1")
+                .param("page_size","1")
+                .param("list_type","1")
+                .param("query","")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data.count",is(3)))
+
+                .andExpect(jsonPath("$.data.attnds[0].attnd_id",is(2)))
+                .andExpect(jsonPath("$.data.attnds[0].attnd_name",is("计算机网络")))
+                .andExpect(jsonPath("$.data.attnds[0].start_time",is(1522512000)))
+                .andExpect(jsonPath("$.data.attnds[0].addr_name",is("理南315")))
+                .andExpect(jsonPath("$.data.attnds[0].teacher_name",is("lzy")))
+                .andExpect(jsonPath("$.data.attnds[0].cipher",is("AwXk2")))
+                .andExpect(jsonPath("$.data.attnds[0].location.longitude",is(174.4)));
+    }
+
+    @Test
+    public void attndlist_chkAttnd_page2()throws Exception{
+        mvc.perform(MockMvcRequestBuilders.get("/attndlist")
+                .param("page","2")
+                .param("page_size","2")
+                .param("list_type","1")
+                .param("query","")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data.count",is(3)))
+
+                .andExpect(jsonPath("$.data.attnds[0].attnd_id",is(5)))
+                .andExpect(jsonPath("$.data.attnds[0].attnd_name",is("数据结构")));
     }
 
 
     @Test
-    public void attndlist_chkAttnd_signin_query()throws Exception{
+    public void attndlist_chksignin_query()throws Exception{
         mvc.perform(MockMvcRequestBuilders.get("/attndlist")
                 .param("page","1")
                 .param("page_size","10")
                 .param("list_type","2")
-                .param("query","数据")
+                .param("query","编译原理")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+
+                .andExpect(jsonPath("$.data.count",is(1)))
+                .andExpect(jsonPath("$.data.attnds[0].attnd_id",is(3)))
+                .andExpect(jsonPath("$.data.attnds[0].attnd_name",is("编译原理")));
     }
 
     @Test
     public void attndlist_chkAttnd_signin_page()throws Exception{
+        session.setAttribute(configBean.getSession_key(),new Session(3,"lz",0,"toid789","wxsessionkey","25"));
         mvc.perform(MockMvcRequestBuilders.get("/attndlist")
                 .param("page","1")
-                .param("page_size","1")
+                .param("page_size","10")
                 .param("list_type","2")
                 .param("query","")
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data.count",is(2)))
+
+                .andExpect(jsonPath("$.data.attnds[0].attnd_id",is(1)))
+                .andExpect(jsonPath("$.data.attnds[0].attnd_name",is("操作系统1")))
+                .andExpect(jsonPath("$.data.attnds[0].start_time",is(1522512000)))
+                .andExpect(jsonPath("$.data.attnds[0].addr_name",is("文新512")))
+                .andExpect(jsonPath("$.data.attnds[0].teacher_name",is("lzy")))
+                .andExpect(jsonPath("$.data.attnds[0].cipher",is("Awvk1")))
+
+                .andExpect(jsonPath("$.data.attnds[1].attnd_id",is(3)))
+                .andExpect(jsonPath("$.data.attnds[1].attnd_name",is("编译原理")));
     }
 
     /**-----------------del ATTND --------------------------*/
@@ -844,13 +747,13 @@ public class AttndControllerTests {
     public void delAttnd_ongoing()throws Exception{
         testTimestamp=1522512000+10*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/del")
-                .content("cipher=Awcq31")
+                .content("cipher=AwXk2")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_ONGOING)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.ATTND_ONGOING)));
     }
 
     @Test
@@ -858,13 +761,13 @@ public class AttndControllerTests {
     public void delAttnd_hasdeled()throws Exception{
         testTimestamp=1522512000+30*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/del")
-                .content("cipher=GZXQ6")
+                .content("cipher=AQSA4")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_HAS_DEL)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.ATTND_HAS_DEL)));
     }
 
     @Test
@@ -877,8 +780,8 @@ public class AttndControllerTests {
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_NOT_EXIST)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.ATTND_NOT_EXIST)));
     }
 
     @Test
@@ -887,13 +790,13 @@ public class AttndControllerTests {
         session.setAttribute(configBean.getSession_key(),new Session(2,"lzp",0,"toid456","wxsessionkey","25"));
         testTimestamp=1522512000+30*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/del")
-                .content("cipher=Awcq31")
+                .content("cipher=Awvk1")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_NOT_CREATOR)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.ATTND_NOT_CREATOR)));
     }
 
     @Test
@@ -901,13 +804,13 @@ public class AttndControllerTests {
     public void delAttnd_success()throws Exception{
         testTimestamp=1522512000+30*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/attnd/del")
-                .content("cipher=Awcq31")
+                .content("cipher=AwXk2")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
     }
 
     //upd status -----------------------------------------
@@ -922,38 +825,50 @@ public class AttndControllerTests {
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_PARAM_INVALID)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_PARAM_INVALID)));
     }
 
+    /**
+     * 考勤进行中
+     * @throws Exception
+     */
     @Test
     @Transactional
     public void updStatus_ongoing()throws Exception{
         testTimestamp=1522512000+5*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/signin/status/upd")
-                .content("cipher=Awcq31&openid=toid789&attnd_status=4")
+                .content("cipher=AwXk2&openid=toid789&attnd_status=4")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_ONGOING)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.ATTND_ONGOING)));
     }
 
+    /**
+     * 考勤已经被删除
+     * @throws Exception
+     */
     @Test
     @Transactional
     public void updStatus_hasdeled()throws Exception{
         testTimestamp=1522512000+30*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/signin/status/upd")
-                .content("cipher=GZXQ6&openid=toid789&attnd_status=4")
+                .content("cipher=AQSA4&openid=toid789&attnd_status=4")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_HAS_DEL)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.ATTND_HAS_DEL)));
     }
 
+    /**
+     * 考勤不存在
+     * @throws Exception
+     */
     @Test
     @Transactional
     public void updStatus_notexist()throws Exception{
@@ -964,37 +879,45 @@ public class AttndControllerTests {
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_NOT_EXIST)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.ATTND_NOT_EXIST)));
     }
 
+    /**
+     * 非本考勤的创建者
+     * @throws Exception
+     */
     @Test
     @Transactional
     public void updStatus_notbelongme()throws Exception{
         session.setAttribute(configBean.getSession_key(),new Session(2,"lzp",0,"toid456","wxsessionkey","25"));
         testTimestamp=1522512000+30*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/signin/status/upd")
-                .content("cipher=Awcq31&openid=toid789&attnd_status=4")
+                .content("cipher=Awvk1&openid=toid789&attnd_status=4")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_NOT_CREATOR)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.ATTND_NOT_CREATOR)));
     }
 
+    /**
+     * 用户不存在
+     * @throws Exception
+     */
     @Test
     @Transactional
     public void updStatus_user_notexist()throws Exception{
         testTimestamp=1522512000+30*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/signin/status/upd")
-                .content("cipher=Awcq31&openid=toid7354389&attnd_status=4")
+                .content("cipher=Awvk1&openid=toid7354389&attnd_status=4")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.ATTND_HASNOT_SIGNIN)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.ATTND_HASNOT_SIGNIN)));
     }
 
     @Test
@@ -1002,12 +925,12 @@ public class AttndControllerTests {
     public void updStatus_success()throws Exception{
         testTimestamp=1522512000+30*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/signin/status/upd")
-                .content("cipher=Awvq52&openid=toid789&attnd_status=4")
+                .content("cipher=Awvk1&openid=toid789&attnd_status=4")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .session(session)
         )
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(MockMvcResultMatchers.status().is(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
     }
 }

@@ -26,16 +26,10 @@ public interface UserService {
     boolean UpdUserInfoByOpenid(
             @Valid @NotNull(groups = User.Name.class) User user) throws DataAccessException;
 
-    @Validated({User.Name.class,User.Openid.class,User.ID.class,User.Remark.class,User.Status.class,User.Groups.class})
+    @Validated({User.Name.class,User.Openid.class,User.ID.class,User.Remark.class,User.Status.class})
     @Nullable @Valid User FindUserByOpenid(
             @NotBlank(groups = User.Openid.class) String openid) throws DataAccessException;
 
     boolean ChkUserExist(@NotBlank String openid) throws DataAccessException;
 
-    //exclude group del
-    boolean AddUserToGroup(@NotBlank String openid,@NotBlank String groupName, @Min(1) int creatorID) throws DataAccessException;
-    //exclude group del
-    boolean AddUserToGroupByID(@NotBlank String openid,@Min(1) int groupID) throws DataAccessException;
-
-    boolean ChkUserIsGroupByGroupID(@Min(1) int userID, @Min(1) int groupID) throws DataAccessException;
 }

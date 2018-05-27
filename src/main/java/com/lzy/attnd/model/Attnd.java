@@ -22,14 +22,13 @@ public class Attnd extends Base {
     public interface Last{}
     public interface Location_Struct{}
     public interface AddrName{}
-    public interface GroupNameNotNull {}
     public interface TeacherName{}
     public interface TeacherID{}
     public interface Cipher{}
     public interface All{}
 
 
-    public Attnd(@NotNull(groups = {Remark.class, BaseAll.class}) Object remark, @Min(value = 0, groups = {Status.class, BaseAll.class}) int status, @Min(value = 0, groups = {ID.class, All.class}) int attnd_id, @NotBlank @Size(max = 50, groups = {Name.class, All.class}) String attnd_name, @Min(value = 0, groups = {StartTime.class, All.class}) long start_time, @Range(min = 0, max = 1440, groups = {Last.class, All.class}) int last, @NotNull(groups = {Location_Struct.class, All.class}) @Valid Location location, @NotBlank(groups = {AddrName.class, All.class}) String addr_name, @NotNull(groups = {GroupNameNotNull.class, All.class}) String group_name, @NotBlank(groups = {TeacherName.class, All.class}) @Size(max = 50, groups = {TeacherName.class, All.class}) String teacher_name, @Min(value = 1, groups = {TeacherID.class, All.class}) int teacher_id, @NotBlank(groups = {Cipher.class, All.class}) @Size(max = 50, groups = {Cipher.class, All.class}) String cipher) {
+    public Attnd(@NotNull(groups = {Remark.class, BaseAll.class}) Object remark, @Min(value = 0, groups = {Status.class, BaseAll.class}) int status, @Min(value = 0, groups = {ID.class, All.class}) int attnd_id, @NotBlank @Size(max = 50, groups = {Name.class, All.class}) String attnd_name, @Min(value = 0, groups = {StartTime.class, All.class}) long start_time, @Range(min = 0, max = 1440, groups = {Last.class, All.class}) int last, @NotNull(groups = {Location_Struct.class, All.class}) @Valid Location location, @NotBlank(groups = {AddrName.class, All.class}) String addr_name, @NotBlank(groups = {TeacherName.class, All.class}) @Size(max = 50, groups = {TeacherName.class, All.class}) String teacher_name, @Min(value = 1, groups = {TeacherID.class, All.class}) int teacher_id, @NotBlank(groups = {Cipher.class, All.class}) @Size(max = 50, groups = {Cipher.class, All.class}) String cipher) {
         super(remark, status);
         this.attnd_id = attnd_id;
         this.attnd_name = attnd_name;
@@ -37,20 +36,18 @@ public class Attnd extends Base {
         this.last = last;
         this.location = location;
         this.addr_name = addr_name;
-        this.group_name = group_name;
         this.teacher_name = teacher_name;
         this.teacher_id = teacher_id;
         this.cipher = cipher;
     }
 
-    public Attnd(@Min(value = 0, groups = {ID.class, All.class}) int attnd_id, @NotBlank @Size(max = 50, groups = {Name.class, All.class}) String attnd_name, @Min(value = 0, groups = {StartTime.class, All.class}) long start_time, @Range(min = 0, max = 1440, groups = {Last.class, All.class}) int last, @NotNull(groups = {Location_Struct.class, All.class}) @Valid Location location, @NotBlank(groups = {AddrName.class, All.class}) String addr_name, @NotNull(groups = {GroupNameNotNull.class, All.class}) String group_name, @NotBlank(groups = {TeacherName.class, All.class}) @Size(max = 50, groups = {TeacherName.class, All.class}) String teacher_name, @Min(value = 1, groups = {TeacherID.class, All.class}) int teacher_id, @NotBlank(groups = {Cipher.class, All.class}) @Size(max = 50, groups = {Cipher.class, All.class}) String cipher) {
+    public Attnd(@Min(value = 0, groups = {ID.class, All.class}) int attnd_id, @NotBlank @Size(max = 50, groups = {Name.class, All.class}) String attnd_name, @Min(value = 0, groups = {StartTime.class, All.class}) long start_time, @Range(min = 0, max = 1440, groups = {Last.class, All.class}) int last, @NotNull(groups = {Location_Struct.class, All.class}) @Valid Location location, @NotBlank(groups = {AddrName.class, All.class}) String addr_name, @NotBlank(groups = {TeacherName.class, All.class}) @Size(max = 50, groups = {TeacherName.class, All.class}) String teacher_name, @Min(value = 1, groups = {TeacherID.class, All.class}) int teacher_id, @NotBlank(groups = {Cipher.class, All.class}) @Size(max = 50, groups = {Cipher.class, All.class}) String cipher) {
         this.attnd_id = attnd_id;
         this.attnd_name = attnd_name;
         this.start_time = start_time;
         this.last = last;
         this.location = location;
         this.addr_name = addr_name;
-        this.group_name = group_name;
         this.teacher_name = teacher_name;
         this.teacher_id = teacher_id;
         this.cipher = cipher;
@@ -77,9 +74,6 @@ public class Attnd extends Base {
     @NotBlank(groups = {AddrName.class,All.class})
     @Size(max = 50,groups = {AddrName.class,All.class})
     private String addr_name;
-
-    @NotNull(groups = {GroupNameNotNull.class,All.class})
-    private String group_name;
 
     @NotBlank(groups = {TeacherName.class,All.class})
     @Size(max = 50,groups = {TeacherName.class,All.class})
@@ -150,14 +144,6 @@ public class Attnd extends Base {
 
     public void setAddr_name(String addr_name) {
         this.addr_name = addr_name;
-    }
-
-    public String getGroup_name() {
-        return group_name;
-    }
-
-    public void setGroup_name(String group_name) {
-        this.group_name = group_name;
     }
 
     public String getTeacher_name() {
