@@ -57,7 +57,7 @@ public class AttndController {
      * @apiParam {String{0..50}} attnd_name 考勤名称
      * @apiParam {String{0..50}} addr_name location name
      * @apiParam {Number{0-}} start_time need check start_time + last > now milliseconds
-     * @apiParam {Number{0-1440}} last attendance last time unit->minutes
+     * @apiParam {Number{0-1440}} [last] attendance last time unit->minutes
      * @apiParam {Number{-90-90}} latitude float
      * @apiParam {Number{-180-180}} longitude float
      * @apiParam {Number{0-}} accuracy float
@@ -75,7 +75,7 @@ public class AttndController {
     public FB addAttnd(
             HttpSession httpSession,
             @RequestAttribute("attnd") Session session,
-            @Validated({Attnd.Name.class,Attnd.StartTime.class,Attnd.Last.class,Attnd.Location_Struct.class,Attnd.AddrName.class,
+            @Validated({Attnd.Name.class,Attnd.StartTime.class,Attnd.Location_Struct.class,Attnd.AddrName.class,
                     Attnd.TeacherName.class})
                                  @RequestBody Attnd attnd){
 
@@ -131,7 +131,7 @@ public class AttndController {
      * @apiParamExample {String} Req:
      * cipher=AZXQAS
      *
-     * @apiSuccess {Number=1,-1,-4} status negative number mean end 1-->NORMAL 4-->DEL
+     * @apiSuccess {Number=1,-1,-4,5} status negative number mean end by time 1-->NORMAL 4-->DEL 5 -> end by creator
      * @apiSuccessExample {json} Resp:
      * {"code":1000,"msg":"","data":{"teacher_id":1,"attnd_id":123,"cipher":"GZXQAS","status":1,"attnd_name":"操作系统","start_time":15577418,"last":20,"location":{"latitude":35.4,"longitude":174.4,"accuracy":30.0},"addr_name":"外环西路","teacher_name":"wjx"}}
      *
@@ -150,7 +150,8 @@ public class AttndController {
 
         long nowTimeStamp = testTimestamp==0?System.currentTimeMillis():testTimestamp;
 
-        if (nowTimeStamp>attnd.getStart_time()+attnd.getLast()*60*1000){
+        //chk if not end by creator & expired--> -1*status
+        if (attnd.getStatus()!=Code.ATTND_END && Utils.chkAttndEnd(nowTimeStamp,attnd.getStart_time(),attnd.getLast())){
             attnd.setStatus(-1 * attnd.getStatus());
         }
 
@@ -466,7 +467,8 @@ public class AttndController {
             return new FB(Code.ATTND_HAS_DEL);
         }
 
-        if (nowTimeStamp<=attnd.getStart_time()+attnd.getLast()*60*1000){
+        //not end by creator and not expired --> ongoing
+        if (attnd.getStatus()!=Code.ATTND_END && !Utils.chkAttndEnd(nowTimeStamp,attnd.getStart_time(),attnd.getLast())){
             return new FB(Code.ATTND_ONGOING);
         }
 
@@ -485,7 +487,7 @@ public class AttndController {
      * @api {post} /api/signin/status/upd updSignSituation
      * @apiName updAttndStatus
      * @apiGroup Attnd
-     * @apiDescription [Condition]:only when the attnd not del & has expired /-- or stop by creator--/
+     * @apiDescription [Condition]:only when the attnd not del & has expired or end by creator
      *
      * @apiParam {String{1..50}} cipher
      * @apiParam {String} openid openid for student who signin
@@ -536,9 +538,10 @@ public class AttndController {
             return new FB(Code.ATTND_HAS_DEL);
         }
         //chk attnd whether ongoing
-        if (nowTimeStamp<=attnd.getStart_time()+attnd.getLast()*60*1000){
+        if (attnd.getStatus()!=Code.ATTND_END && !Utils.chkAttndEnd(nowTimeStamp,attnd.getStart_time(),attnd.getLast())){
             return new FB(Code.ATTND_ONGOING);
         }
+
 
         //chk user whether creator
         if (attnd.getTeacher_id()!=session.getUserID()){
@@ -552,6 +555,65 @@ public class AttndController {
 
         if(!signInService.UpdSignInSituation(cipher,signin_openid,attnd_status)){
             return FB.DB_FAILED("UpdSignInSituation failed");
+        }
+
+        return FB.SUCCESS();
+    }
+
+
+    /**
+     * @api {post} /api/attnd/end endAttnd
+     * @apiName endAttnd
+     * @apiGroup Attnd
+     * @apiDescription
+     * [Condition]:only when
+     * 1. the attnd ongoing
+     * 2. user should the creator
+     * 3. the attnd not be del
+     * [Effected]:
+     * all about expired judge
+     *
+     * @apiParam {String{1..50}} cipher
+     * @apiParamExample {String} Req:
+     * cipher=A714Q
+     *
+     * @apiError (Error-Code) 3001 attnd not exist
+     * @apiError (Error-Code) 3005 attnd has del
+     * @apiError (Error-Code) 3012 attnd has be end by creator
+     * @apiError (Error-Code) 3009 attnd not creator
+     */
+    /***/
+    @PostMapping("/attnd/end")
+    public FB endAttnd(
+            @RequestAttribute("attnd") Session session,
+            @RequestBody MultiValueMap<String,String> formData
+    ){
+        String cipher = formData.getFirst("cipher");
+        if (cipher==null||cipher.equals("")||cipher.length()>50){
+            return FB.PARAM_INVALID("cipher invalid");
+        }
+
+        long nowTimeStamp = testTimestamp==0?System.currentTimeMillis():testTimestamp;
+
+        Attnd attnd = attndService.ChkAttndStatus(cipher);
+        if (attnd==null){
+            return new FB(Code.ATTND_NOT_EXIST);
+        }
+        if (attnd.getStatus()==Code.ATTND_DEL){
+            return new FB(Code.ATTND_HAS_DEL);
+        }
+
+        if (attnd.getStatus()==Code.ATTND_END){
+            return new FB(Code.ATTND_HAS_BE_END);
+        }
+
+
+        if (session.getUserID()!=attnd.getTeacher_id()){
+            return new FB(Code.ATTND_NOT_CREATOR);
+        }
+
+        if(!attndService.UpdAttndStatus(cipher,Code.ATTND_END,session.getUserID())){
+            return FB.DB_FAILED("UpdAttndStatus failed");
         }
 
         return FB.SUCCESS();

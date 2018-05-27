@@ -29,6 +29,8 @@ public interface Code {
     int SIGNIN_CREATOR = 3008;
     int ATTND_NOT_CREATOR = 3009;
     int ATTND_HASNOT_SIGNIN = 3010;
+    int ATTND_EXPIRED = 3011;
+    int ATTND_HAS_BE_END = 3012;
 
 
     int GROUP_NOTEXIST=4001;
@@ -50,6 +52,7 @@ public interface Code {
     int ATTND_ENTRY=2;
     int ATTND_NOGROUP=3;
     int ATTND_DEL=4;
+    int ATTND_END=5;
 
     //cipher type
     char CIPHER_ATTND = 'A';

@@ -19,7 +19,7 @@ import javax.validation.constraints.NotNull;
 @Validated
 public interface AttndService {
     @Validated({
-            Attnd.StartTime.class,Attnd.Last.class,Attnd.Location_Struct.class,Attnd.AddrName.class,Attnd.Name.class,
+            Attnd.StartTime.class,Attnd.Location_Struct.class,Attnd.AddrName.class,Attnd.Name.class,
             Attnd.TeacherID.class,Attnd.Status.class,Attnd.Remark.class, Attnd.TeacherName.class})
     String AddAttnd(@Valid Attnd attnd) throws DataAccessException;
 
@@ -39,7 +39,7 @@ public interface AttndService {
     //exclude by del
     @NotNull PaginationAttnd ChkAttndList_SigninByUser(@NotBlank String signIn_openid, @Min(0) int start, @Min(1) int rows, @NotNull String query) throws DataAccessException;
 
-    boolean UpdAttndStatus(@NotBlank String cipher, @Range(min = Code.ATTND_DEL,max = Code.ATTND_DEL) int status, @Min(1) int creatorID) throws DataAccessException;
+    boolean UpdAttndStatus(@NotBlank String cipher, @Range(min = Code.ATTND_DEL,max = Code.ATTND_END) int status, @Min(1) int creatorID) throws DataAccessException;
 
     @Validated({Attnd.Status.class,Attnd.StartTime.class,Attnd.Last.class,Attnd.Cipher.class,Attnd.TeacherID.class})
     @Valid @Nullable

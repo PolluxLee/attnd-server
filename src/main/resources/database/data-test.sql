@@ -28,6 +28,9 @@ INSERT INTO attnd(id,name,cipher,starttime,lasttime,location,addrname,teacherid,
 INSERT INTO attnd(id,name,cipher,starttime,lasttime,location,addrname,teacherid,teachername,status,remark,createdat) VALUES
 (6,'通信原理','AZXQ6',1522512000,20,'{"accuracy": 30.0, "latitude": 23.4, "longitude": 174.4}','副楼401',1	,'lzy',4,'{}','2018-05-17');
 
+INSERT INTO attnd(id,name,cipher,starttime,lasttime,location,addrname,teacherid,teachername,status,remark,createdat) VALUES
+(7,'高性能服务器开发','A4Fg7',1522512000,0,'{"accuracy": 30.0, "latitude": 23.4, "longitude": 174.4}','副楼401',1	,'lzy',1,'{}','2018-05-16');
+
 INSERT INTO signin(id,openid, cipher, location, remark,status,distance) VALUES (1,'toid789','ACcq3','{"accuracy": 30.0, "latitude": 23.4, "longitude": 174.4}','{}',1,175.4);
 INSERT INTO signin(id,openid, cipher, location, remark,status,distance) VALUES (2,'toid123','ACcq3','{"accuracy": 30.0, "latitude": 23.4, "longitude": 174.4}','{}',2,64.4);
 INSERT INTO signin(id,openid, cipher, location, remark,status,distance) VALUES (3,'toid123','AQSA4','{"accuracy": 30.0, "latitude": 23.4, "longitude": 174.4}','{}',1,32.75);

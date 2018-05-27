@@ -23,6 +23,25 @@ public class Utils {
         return false;
     }
 
+    /**
+     *
+     * @param nowTime
+     * @param attndStartTime
+     * @param last
+     * @return true -> end false -> ongoing
+     */
+    public static boolean chkAttndEnd(long nowTime,long attndStartTime,int last){
+        if(nowTime<=0||attndStartTime<=0||last<0){
+            throw new SysErrException("chkAttndEnd param invalid");
+        }
+        //last == 0 --> inf --> no end
+        if (last!=0 && nowTime>attndStartTime+last*60*1000){
+            return true;
+        }
+
+        return false;
+    }
+
 
 
     //chk location , time
@@ -43,7 +62,8 @@ public class Utils {
             signin_status = Code.SIGNIN_LOCATION_BEYOND;
         }
 
-        if (signInTime>attnd.getStart_time()+attnd.getLast()*60*1000){
+        //end by creator or expired --> expired
+        if (attnd.getStatus()==Code.ATTND_END || chkAttndEnd(signInTime,attnd.getStart_time(),attnd.getLast())){
             signin_status = Code.SIGNIN_EXPIRED;
         }
 

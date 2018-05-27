@@ -171,6 +171,28 @@ public class AttndControllerTests {
                 .andExpect(jsonPath("$.data.userinfo.openid", is("toid123")));
     }
 
+    /**
+     * 发布考勤 ， 用户存在 无 last 字段
+     * @throws Exception
+     */
+    @Test
+    @Transactional
+    public void attnd_User_Exist_Group_NotExist_NoLast()throws Exception{
+        session.setAttribute(configBean.getSession_key(),new Session(1,"lzy",0,"toid123","wxsessionkey","23"));
+        mvc.perform(MockMvcRequestBuilders.post("/attnd")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"attnd_name\":\"操作系统\",\"start_time\":15577418,\"location\":{\"latitude\":23.4,\"longitude\":174.4,\"accuracy\":30.0},\"addr_name\":\"外环西路\",\"teacher_name\":\"wjx\"}")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data.cipher",startsWith(String.valueOf(Code.CIPHER_ATTND))))
+                .andExpect(jsonPath("$.data.attnd_id", Matchers.isA(Integer.TYPE)))
+                .andExpect(jsonPath("$.data.userinfo.name", is("lzy")))
+                .andExpect(jsonPath("$.data.userinfo.openid", is("toid123")));
+    }
+
 
 
     /*chk attnd------------------------------------------------------**/
@@ -227,6 +249,28 @@ public class AttndControllerTests {
                 .andExpect(jsonPath("$.data.teacher_name",is("lzy")))
                 .andExpect(jsonPath("$.data.teacher_id",is(1)))
                 .andExpect(jsonPath("$.data.cipher",is("AwXk2")))
+                .andExpect(jsonPath("$.data.location.longitude",is(174.4)));
+    }
+
+
+    @Test
+    public void chk_attnd_no_last()throws Exception{
+        testTimestamp = 1522512000+100*60*1000;
+        mvc.perform(MockMvcRequestBuilders.get("/attnd")
+                .param("cipher","A4Fg7")
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
+                .andExpect(jsonPath("$.data.status",is(1)))
+                .andExpect(jsonPath("$.data.attnd_id",is(7)))
+                .andExpect(jsonPath("$.data.attnd_name",is("高性能服务器开发")))
+                .andExpect(jsonPath("$.data.start_time",is(1522512000)))
+                .andExpect(jsonPath("$.data.addr_name",is("副楼401")))
+                .andExpect(jsonPath("$.data.teacher_name",is("lzy")))
+                .andExpect(jsonPath("$.data.teacher_id",is(1)))
+                .andExpect(jsonPath("$.data.cipher",is("A4Fg7")))
                 .andExpect(jsonPath("$.data.location.longitude",is(174.4)));
     }
 
@@ -454,7 +498,8 @@ public class AttndControllerTests {
                 .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
                 .andExpect(jsonPath("$.data[0]",is("计算机网络")))
                 .andExpect(jsonPath("$.data[1]",is("操作系统1")))
-                .andExpect(jsonPath("$.data[2]",is("数据结构")));
+                .andExpect(jsonPath("$.data[2]",is("高性能服务器开发")))
+                .andExpect(jsonPath("$.data[3]",is("数据结构")));
     }
 
 
@@ -472,7 +517,8 @@ public class AttndControllerTests {
                 .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
                 .andExpect(jsonPath("$.data[0]",is("理南315")))
                 .andExpect(jsonPath("$.data[1]",is("文新512")))
-                .andExpect(jsonPath("$.data[2]",is("电子417")));
+                .andExpect(jsonPath("$.data[2]",is("副楼401")))
+                .andExpect(jsonPath("$.data[3]",is("电子417")));
     }
 
 
@@ -611,7 +657,7 @@ public class AttndControllerTests {
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().is(200))
                 .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(jsonPath("$.data.count",is(3)))
+                .andExpect(jsonPath("$.data.count",is(4)))
 
                 .andExpect(jsonPath("$.data.attnds[0].attnd_id",is(2)))
                 .andExpect(jsonPath("$.data.attnds[0].attnd_name",is("计算机网络")))
@@ -620,6 +666,7 @@ public class AttndControllerTests {
                 .andExpect(jsonPath("$.data.attnds[0].teacher_name",is("lzy")))
                 .andExpect(jsonPath("$.data.attnds[0].cipher",is("AwXk2")))
                 .andExpect(jsonPath("$.data.attnds[0].location.longitude",is(174.4)))
+                .andExpect(jsonPath("$.data.attnds[0].status",is(Code.ATTND_NORMAL)))
 
                 .andExpect(jsonPath("$.data.attnds[1].attnd_id",is(1)))
                 .andExpect(jsonPath("$.data.attnds[1].attnd_name",is("操作系统1")))
@@ -627,9 +674,15 @@ public class AttndControllerTests {
                 .andExpect(jsonPath("$.data.attnds[1].addr_name",is("文新512")))
                 .andExpect(jsonPath("$.data.attnds[1].teacher_name",is("lzy")))
                 .andExpect(jsonPath("$.data.attnds[1].cipher",is("Awvk1")))
+                .andExpect(jsonPath("$.data.attnds[1].status",is(Code.ATTND_NORMAL)))
 
-                .andExpect(jsonPath("$.data.attnds[2].attnd_id",is(5)))
-                .andExpect(jsonPath("$.data.attnds[2].attnd_name",is("数据结构")));
+                .andExpect(jsonPath("$.data.attnds[2].attnd_id",is(7)))
+                .andExpect(jsonPath("$.data.attnds[2].attnd_name",is("高性能服务器开发")))
+                .andExpect(jsonPath("$.data.attnds[2].status",is(Code.ATTND_NORMAL)))
+
+                .andExpect(jsonPath("$.data.attnds[3].status",is(Code.ATTND_NORMAL)))
+                .andExpect(jsonPath("$.data.attnds[3].attnd_id",is(5)))
+                .andExpect(jsonPath("$.data.attnds[3].attnd_name",is("数据结构")));
     }
 
     @Test
@@ -667,7 +720,7 @@ public class AttndControllerTests {
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().is(200))
                 .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(jsonPath("$.data.count",is(3)))
+                .andExpect(jsonPath("$.data.count",is(4)))
 
                 .andExpect(jsonPath("$.data.attnds[0].attnd_id",is(2)))
                 .andExpect(jsonPath("$.data.attnds[0].attnd_name",is("计算机网络")))
@@ -690,10 +743,13 @@ public class AttndControllerTests {
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().is(200))
                 .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)))
-                .andExpect(jsonPath("$.data.count",is(3)))
+                .andExpect(jsonPath("$.data.count",is(4)))
 
-                .andExpect(jsonPath("$.data.attnds[0].attnd_id",is(5)))
-                .andExpect(jsonPath("$.data.attnds[0].attnd_name",is("数据结构")));
+                .andExpect(jsonPath("$.data.attnds[0].attnd_id",is(7)))
+                .andExpect(jsonPath("$.data.attnds[0].attnd_name",is("高性能服务器开发")))
+
+                .andExpect(jsonPath("$.data.attnds[1].attnd_id",is(5)))
+                .andExpect(jsonPath("$.data.attnds[1].attnd_name",is("数据结构")));
     }
 
 
@@ -926,6 +982,22 @@ public class AttndControllerTests {
         testTimestamp=1522512000+30*60*1000;
         mvc.perform(MockMvcRequestBuilders.post("/signin/status/upd")
                 .content("cipher=Awvk1&openid=toid789&attnd_status=4")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                .session(session)
+        )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is(200))
+                .andExpect(jsonPath("$.code",is(Code.GLOBAL_SUCCESS)));
+    }
+
+    /*-----------------------endAttnd------------------*/
+
+    @Test
+    @Transactional
+    public void updStatus_end()throws Exception{
+        testTimestamp=1522512000+5*60*1000;
+        mvc.perform(MockMvcRequestBuilders.post("/attnd/end")
+                .content("cipher=Awvk1")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
                 .session(session)
         )

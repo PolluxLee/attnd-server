@@ -51,6 +51,8 @@ public class AttndRepository implements AttndService {
     @Transactional
     @Override
     public String AddAttnd(Attnd attnd) throws DataAccessException {
+        //lasttime 0 means inf
+
         String locationJson = attnd.getLocationJson();
         String remarkJson = attnd.getRemarkJson();
         if (locationJson==null||remarkJson==null){
@@ -171,9 +173,11 @@ public class AttndRepository implements AttndService {
                         throw new DBProcessException("ChkAttndListByUser location null");
                     }
 
-                    return new Attnd(rs.getInt("id"),rs.getString("name"),rs.getLong("starttime"),
+                    Attnd attndInner = new Attnd(rs.getInt("id"),rs.getString("name"),rs.getLong("starttime"),
                             rs.getInt("lasttime"),location,rs.getString("addrname"),
                             rs.getString("teachername"),userID,rs.getString("cipher"));
+                    attndInner.setStatus(rs.getInt("status"));
+                    return attndInner;
                 });
         //arg start to 0
         args[3]=0;
@@ -196,10 +200,11 @@ public class AttndRepository implements AttndService {
                     if (location == null){
                         throw new DBProcessException("ChkAttndListByUser location null");
                     }
-
-                    return new Attnd(rs.getInt("id"),rs.getString("name"),rs.getLong("starttime"),
+                    Attnd attndInner = new Attnd(rs.getInt("id"),rs.getString("name"),rs.getLong("starttime"),
                             rs.getInt("lasttime"),location,rs.getString("addrname"),
                             rs.getString("teachername"),rs.getInt("teacherid"),rs.getString("cipher"));
+                    attndInner.setStatus(rs.getInt("status"));
+                    return attndInner;
                 });
         //arg start to 0
         args[3]=0;
