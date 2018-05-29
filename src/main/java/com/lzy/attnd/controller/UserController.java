@@ -51,12 +51,13 @@ public class UserController {
         return sb.toString();
     }
 
+    //?id=0&openid=123&name=lzy&stuid=23&session_key=456
     @GetMapping("/mocklogin")
     public String mocklogin(
-            @Min(1) @RequestParam("id") int id,
-            @NotBlank @RequestParam("name") String name,
+            @RequestParam("id") int id,
+            @RequestParam("name") String name,
             @NotBlank @RequestParam("openid") String openid,
-            @NotBlank @RequestParam("stuid") String stuid,
+            @RequestParam("stuid") String stuid,
             @NotBlank @RequestParam("session_key") String session_key,
             HttpServletRequest request, HttpSession session){
         session.setAttribute(configBean.getSession_key(),new Session(id,name,0,openid,session_key,stuid));

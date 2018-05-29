@@ -7,12 +7,12 @@ CREATE TABLE IF NOT EXISTS user(
   remark JSON NOT NULL ,
   createdat datetime NOT NULL default NOW(),
   updatedat datetime NOT NULL default NOW()
-)DEFAULT CHARACTER SET = utf8;
+)DEFAULT CHARACTER SET = utf8mb4;
 
 CREATE TABLE IF NOT EXISTS attnd(
   id INT PRIMARY KEY AUTO_INCREMENT,
   name varchar(255) NOT NULL,
-  cipher varchar(32) NOT NULL UNIQUE,
+  cipher varchar(32) UNIQUE,
   starttime BIGINT NOT NULL,
   lasttime INT NOT NULL,
   location JSON NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS attnd(
   remark JSON NOT NULL ,
   createdat datetime NOT NULL default NOW(),
   updatedat datetime NOT NULL default NOW()
-)DEFAULT CHARACTER SET = utf8;
+)DEFAULT CHARACTER SET = utf8mb4;
 
 
 CREATE TABLE IF NOT EXISTS signin(
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS signin(
   createdat datetime NOT NULL default NOW(),
   updatedat datetime NOT NULL default NOW(),
   UNIQUE KEY(openid,cipher)
-)DEFAULT CHARACTER SET = utf8;
+)DEFAULT CHARACTER SET = utf8mb4;
 
 /* logback table */
 CREATE TABLE IF NOT EXISTS logging_event

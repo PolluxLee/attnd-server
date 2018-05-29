@@ -48,8 +48,8 @@ public class AttndRepository implements AttndService {
     }
 
 
-    @Transactional
     @Override
+    @Transactional
     public String AddAttnd(Attnd attnd) throws DataAccessException {
         //lasttime 0 means inf
 
@@ -61,7 +61,7 @@ public class AttndRepository implements AttndService {
         //because cipher is not null
         GeneratedKeyHolder holder = new GeneratedKeyHolder();
         jdbcTemplate.update(con -> {
-            PreparedStatement statement = con.prepareStatement("INSERT INTO attnd(starttime,lasttime,location,addrname,teacherid,status,remark,cipher,teachername,name) VALUES(?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement statement = con.prepareStatement("INSERT INTO attnd(starttime,lasttime,location,addrname,teacherid,status,remark,teachername,name) VALUES(?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
             statement.setLong(1, attnd.getStart_time());
             statement.setInt(2, attnd.getLast());
             statement.setString(3, locationJson);
@@ -69,9 +69,8 @@ public class AttndRepository implements AttndService {
             statement.setInt(5,  attnd.getTeacher_id());
             statement.setInt(6,  attnd.getStatus());
             statement.setString(7, remarkJson);
-            statement.setString(8, "");
-            statement.setString(9, attnd.getTeacher_name());
-            statement.setString(10, attnd.getAttnd_name());
+            statement.setString(8, attnd.getTeacher_name());
+            statement.setString(9, attnd.getAttnd_name());
             return statement;
         }, holder);
         int attndID = holder.getKey().intValue();
