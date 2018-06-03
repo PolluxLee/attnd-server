@@ -2,9 +2,13 @@ package com.lzy.attnd.utils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.lzy.attnd.constant.Code;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FB<T> {
+    private final static Logger logger = LoggerFactory.getLogger(FB.class);
+
     private int code;
 
     public FB(int code) {
@@ -32,10 +36,12 @@ public class FB<T> {
     }
 
     public static FB SYS_ERROR(String msg){
+        logger.warn("[SYS_ERROR]: ",msg==null?"":msg);
         return new FB(Code.GLOBAL_SYS_ERROR,msg==null?"":msg);
     }
 
     public static FB DB_FAILED(String msg){
+        logger.warn("[DB_FAILED]: ",msg==null?"":msg);
         return new FB(Code.GLOBAL_DB_FAILED,msg==null?"":msg);
     }
 

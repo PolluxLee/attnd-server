@@ -321,7 +321,7 @@ public class AttndController {
         //just chk user
         boolean userExist = userService.ChkUserExist(session.getOpenid());
         if (!userExist){
-            return FB.SYS_ERROR("user not exist");
+            return FB.SYS_ERROR("signIn user not exist");
         }
 
         char attnd_type = param.cipher.charAt(0);
@@ -404,7 +404,7 @@ public class AttndController {
         AttndState[] attndStates;
         attndStates = signInService.ChkSignInList(cipher,start,rows,signinStatus);
         if (attndStates==null){
-            return FB.SYS_ERROR("attndStates null");
+            return FB.SYS_ERROR("chkAttndSituation attndStates null");
         }
 
         //chk count
