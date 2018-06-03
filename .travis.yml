@@ -2,6 +2,10 @@ language: java
 
 sudo: required
 
+branches:
+  only:
+  - master
+
 cache:
   directories:
   - ".autoconf"
