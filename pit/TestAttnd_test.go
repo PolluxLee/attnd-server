@@ -13,9 +13,11 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
-	"sync"
+	"container/list"
+	"io"
 )
 
 type reqParams struct {
@@ -46,6 +48,8 @@ func reqTest(t *testing.T, params *reqParams, info *UserInfo) {
 	if params.proto == "" {
 		params.proto = protocol
 	}
+
+	defer timeTrack(time.Now(),params.reqURL)
 
 	var err error
 
@@ -132,8 +136,7 @@ func reqTest(t *testing.T, params *reqParams, info *UserInfo) {
 	}
 
 	if enableFncPerf {
-		log.Println(resp.StatusCode())
-		log.Println(string(resp.Body()))
+		log.Println(fmt.Sprintf("desc:%s,code:%d,reqBody:%s",params.desc,resp.StatusCode(),string(resp.Body())))
 	}
 
 	if params.expectJson != nil {
@@ -154,7 +157,7 @@ func reqTest(t *testing.T, params *reqParams, info *UserInfo) {
 				return
 			}
 			if v != data {
-				log.Fatalln(params.desc+"k:%s ----- v:%s != data:%s", k, v, data)
+				log.Fatalf(params.desc+"k:%s ----- v:%s != data:%s", k, v, data)
 				return
 			}
 		}
@@ -230,6 +233,8 @@ func TestMain(m *testing.M) {
 	//test setup
 	enableFncPerf = true
 
+	rt = make(map[string]*ReportInfo)
+
 	fmt.Println("start testing\ncleanup old test data if exists any")
 	setup()
 
@@ -245,6 +250,22 @@ func TestMain(m *testing.M) {
 }
 
 var lock sync.Mutex
+
+var rt map[string]*ReportInfo
+
+func responseTimeTrack(url string,rtDuration time.Duration) {
+	if url == "" || rtDuration <= 0 {
+		log.Fatalln("responseTimeTrack param invalid")
+		return
+	}
+	if rt[url]==nil {
+		ri := &ReportInfo{
+			SrcRT:list.New(),
+		}
+		rt[url] = ri
+	}
+	rt[url].SrcRT.PushBack(rtDuration)
+}
 
 func createName() string {
 	lock.Lock()
@@ -290,14 +311,14 @@ type Attnd struct {
 
 func timeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
-	if elapsed > 2 * time.Second {
+	responseTimeTrack(name,elapsed)
+	if elapsed > 1*time.Second {
 		fmt.Printf("%30s: %s\n", name, elapsed.String())
 	}
 
 }
 
-
-func addAttnd(info *UserInfo, attnd *Attnd,t *testing.T) {
+func addAttnd(info *UserInfo, attnd *Attnd, t *testing.T) {
 	attndData, err := json.Marshal(attnd)
 	if err != nil {
 		log.Fatalln("Marshal attnd failed: " + err.Error())
@@ -325,7 +346,7 @@ func addAttnd(info *UserInfo, attnd *Attnd,t *testing.T) {
 }
 
 func TestUserProcess(t *testing.T) {
-	defer timeTrack(time.Now(), "spider")
+	//defer timeTrack(time.Now(), "spider")
 
 	teacher1 := &UserInfo{
 		Client:     &fasthttp.Client{},
@@ -347,9 +368,14 @@ func TestUserProcess(t *testing.T) {
 		OpenID:     "_T__4" + createName(),
 		SessionKey: "222",
 	}
+	stu4 := &UserInfo{
+		Client:     &fasthttp.Client{},
+		OpenID:     "_T__5" + createName(),
+		SessionKey: "333",
+	}
 
 	spider <- 1
-/*	defer func() {
+	/*	defer func() {
 		spider <- -1
 	}()*/
 
@@ -372,9 +398,10 @@ func TestUserProcess(t *testing.T) {
 	login(stu1)
 	login(stu2)
 	login(stu3)
+	login(stu4)
 
 	attnd1 := &Attnd{
-		AttndName:   "_T__"+createName(),
+		AttndName:   "_T__" + createName(),
 		StartTime:   1526996690000,
 		TeacherName: "郭思文",
 		AddrName:    "文新510",
@@ -384,178 +411,380 @@ func TestUserProcess(t *testing.T) {
 			Accuracy:  30.0,
 		},
 	}
-	addAttnd(teacher1, attnd1,t)
-	/*
-		stu1.Name = "__T_11"+createName()
-		stu2.Name = "__T_22"+createName()
-		stu2.StuID = "__T_33"+createName()
-		stu3.Name = "__T_44"+createName()
-		stu3.StuID = "__T_55"+createName()
-		fillInfo := func(info *UserInfo) {
-			reqTest(t,&reqParams{
-				expectResp:"",
-				method:"POST",
-				reqURL:"/api/user/info",
-				jsonArgs:fmt.Sprintf(`{"name":"%s","stu_id":"%s"}`,info.Name,info.StuID),
-				expectJson: map[string]interface{}{
-					"$.code":1000.0,
-				},
-				desc:"fillInfo ",
+	addAttnd(teacher1, attnd1, t)
 
-			},info)
-		}
+	stu1.Name = "__T_11" + createName()
+	stu2.Name = "__T_22" + createName()
+	stu2.StuID = "__T_33" + createName()
+	stu3.Name = "__T_44" + createName()
+	stu3.StuID = "__T_55" + createName()
+	stu4.Name = "__T_66" + createName()
+	fillInfo := func(info *UserInfo) {
+		reqTest(t, &reqParams{
+			expectResp: "",
+			method:     "POST",
+			reqURL:     "/api/user/info",
+			jsonArgs:   fmt.Sprintf(`{"name":"%s","stu_id":"%s"}`, info.Name, info.StuID),
+			expectJson: map[string]interface{}{
+				"$.code": 1000.0,
+			},
+			desc: "fillInfo ",
+		}, info)
+	}
 
-		fillInfo(stu1)
-		fillInfo(stu2)
-		fillInfo(stu3)
+	fillInfo(stu1)
+	fillInfo(stu2)
+	fillInfo(stu3)
+	fillInfo(stu4)
 
-		signin := func(cipher string,info *UserInfo) {
-			reqTest(t,&reqParams{
-				expectResp:"",
-				method:"POST",
-				reqURL:"/api/attnd/signin",
-				jsonArgs:fmt.Sprintf(`{"cipher":"%s","location":{"latitude":23.4,"longitude":174.4005,"accuracy":30.0}}`,cipher),
-				expectJson: map[string]interface{}{
-					"$.code":1000.0,
-					"$.data":1.0,
-				},
-				desc:"signin ",
-			},info)
-		}
+	signin := func(cipher string, info *UserInfo) {
+		reqTest(t, &reqParams{
+			expectResp: "",
+			method:     "POST",
+			reqURL:     "/api/attnd/signin",
+			jsonArgs:   fmt.Sprintf(`{"cipher":"%s","location":{"latitude":23.4,"longitude":174.4005,"accuracy":30.0}}`, cipher),
+			expectJson: map[string]interface{}{
+				"$.code": 1000.0,
+				"$.data": 1.0,
+			},
+			desc: "signin ",
+		}, info)
+	}
 
-		signin_beyond := func(cipher string,info *UserInfo) {
-			reqTest(t,&reqParams{
-				expectResp:"",
-				method:"POST",
-				reqURL:"/api/attnd/signin",
-				jsonArgs:fmt.Sprintf(`{"cipher":"%s","location":{"latitude":28.4,"longitude":174.4005,"accuracy":30.0}}`,cipher),
-				expectJson: map[string]interface{}{
-					"$.code":1000.0,
-					"$.data":2.0,
-				},
-				desc:"signin_beyond ",
-			},info)
-		}
+	signinLate := func(cipher string, info *UserInfo) {
+		reqTest(t, &reqParams{
+			expectResp: "",
+			method:     "POST",
+			reqURL:     "/api/attnd/signin",
+			jsonArgs:   fmt.Sprintf(`{"cipher":"%s","location":{"latitude":23.4,"longitude":174.4005,"accuracy":30.0}}`, cipher),
+			expectJson: map[string]interface{}{
+				"$.code": 1000.0,
+				"$.data": 3.0,
+			},
+			desc: "signin late",
+		}, info)
+	}
 
-		signin_repeat := func(cipher string,info *UserInfo) {
-			reqTest(t,&reqParams{
-				expectResp:"",
-				method:"POST",
-				reqURL:"/api/attnd/signin",
-				jsonArgs:fmt.Sprintf(`{"cipher":"%s","location":{"latitude":28.4,"longitude":174.4005,"accuracy":30.0}}`,cipher),
-				expectJson: map[string]interface{}{
-					"$.code":3003.0,
-				},
-				desc:"signin_repeat ",
-			},info)
-		}
+	signin_beyond := func(cipher string, info *UserInfo) {
+		reqTest(t, &reqParams{
+			expectResp: "",
+			method:     "POST",
+			reqURL:     "/api/attnd/signin",
+			jsonArgs:   fmt.Sprintf(`{"cipher":"%s","location":{"latitude":28.4,"longitude":174.4005,"accuracy":30.0}}`, cipher),
+			expectJson: map[string]interface{}{
+				"$.code": 1000.0,
+				"$.data": 2.0,
+			},
+			desc: "signin_beyond ",
+		}, info)
+	}
 
-		signin(attnd1.Cipher,stu1)
-		signin_beyond(attnd1.Cipher,stu2)
-		signin(attnd1.Cipher,stu3)
+	signin_repeat := func(cipher string, info *UserInfo) {
+		reqTest(t, &reqParams{
+			expectResp: "",
+			method:     "POST",
+			reqURL:     "/api/attnd/signin",
+			jsonArgs:   fmt.Sprintf(`{"cipher":"%s","location":{"latitude":28.4,"longitude":174.4005,"accuracy":30.0}}`, cipher),
+			expectJson: map[string]interface{}{
+				"$.code": 3003.0,
+			},
+			desc: "signin_repeat ",
+		}, info)
+	}
 
-		signin_repeat(attnd1.Cipher,stu1)
+	wg := &sync.WaitGroup{}
 
-		chkAttnd := func(info *UserInfo,attnd *Attnd) {
-			reqTest(t,&reqParams{
-				expectResp:"",
-				method:"GET",
-				reqURL:"/api/attnd",
-				args:map[string]string{
-					"cipher":attnd.Cipher,
-				},
-				expectJson: map[string]interface{}{
-					"$.code":1000.0,
-					"$.data.status":1.0,
-					"$.data.attnd_name":attnd.AttndName,
-					"$.data.start_time":float64(attnd.StartTime),
-					"$.data.addr_name":attnd.AddrName,
-					"$.data.teacher_name":attnd.TeacherName,
-					"$.data.location.longitude":attnd.Location.Longitude,
-				},
-				desc:"chkAttnd ",
-			},info)
-		}
+	//stu1 signin
+	WaitGroupWrapper(wg, func() {
+		signin(attnd1.Cipher, stu1)
+	})
 
-		chkAttnd(teacher1,attnd1)
+	//stu2 signin beyond
+	WaitGroupWrapper(wg, func() {
+		signin_beyond(attnd1.Cipher, stu2)
+	})
 
+	//stu3 signin
+	WaitGroupWrapper(wg, func() {
+		signin(attnd1.Cipher, stu3)
+	})
+	wg.Wait()
 
-		reqTest(t,&reqParams{
-			expectResp:"",
-			method:"GET",
-			reqURL:"/api/attnd/situation",
-			args:map[string]string{
-				"cipher":attnd1.Cipher,
-				"page":"1",
-				"page_size":"20",
-				"signin_status":"0",
+	//stu1 try to signin again
+	WaitGroupWrapper(wg, func() {
+		signin_repeat(attnd1.Cipher, stu1)
+	})
+	wg.Wait()
+
+	chkAttnd := func(info *UserInfo, attnd *Attnd) {
+		reqTest(t, &reqParams{
+			expectResp: "",
+			method:     "GET",
+			reqURL:     "/api/attnd",
+			args: map[string]string{
+				"cipher": attnd.Cipher,
 			},
 			expectJson: map[string]interface{}{
-				"$.code":1000.0,
-				"$.data.count":3.0,
-				"$.data.attnds[0].openid":stu1.OpenID,
-				"$.data.attnds[0].name":stu1.Name,
-				"$.data.attnds[0].stu_id":stu1.StuID,
-				"$.data.attnds[0].attnd_status":1.0,
-				"$.data.attnds[0].distance":51.020,
-
-				"$.data.attnds[1].openid":stu2.OpenID,
-				"$.data.attnds[1].name":stu2.Name,
-				"$.data.attnds[1].stu_id":stu2.StuID,
-				"$.data.attnds[1].attnd_status":2.0,
-				"$.data.attnds[1].distance":555947.880,
-
-				"$.data.attnds[2].openid":stu3.OpenID,
-				"$.data.attnds[2].name":stu3.Name,
-				"$.data.attnds[2].stu_id":stu3.StuID,
-				"$.data.attnds[2].attnd_status":1.0,
-				"$.data.attnds[2].distance":51.020,
-
-
-				"$.data.my_signin.openid":stu1.OpenID,
-				"$.data.my_signin.name":stu1.Name,
-				"$.data.my_signin.stu_id":stu1.StuID,
-				"$.data.my_signin.attnd_status":1.0,
-				"$.data.my_signin.distance":51.020,
+				"$.code":                    1000.0,
+				"$.data.status":             1.0,
+				"$.data.attnd_name":         attnd.AttndName,
+				"$.data.start_time":         float64(attnd.StartTime),
+				"$.data.addr_name":          attnd.AddrName,
+				"$.data.teacher_name":       attnd.TeacherName,
+				"$.data.location.longitude": attnd.Location.Longitude,
 			},
-			desc:"chkAttndSituation ",
+			desc: "chkAttnd ",
+		}, info)
+	}
 
-		},stu1)
+	chkAttnd(teacher1, attnd1)
+
+	reqTest(t, &reqParams{
+		expectResp: "",
+		method:     "GET",
+		reqURL:     "/api/attnd/situation",
+		args: map[string]string{
+			"cipher":        attnd1.Cipher,
+			"page":          "1",
+			"page_size":     "20",
+			"signin_status": "0",
+		},
+		expectJson: map[string]interface{}{
+			"$.code":                        1000.0,
+			"$.data.count":                  3.0,
+			"$.data.attnds[0].openid":       stu1.OpenID,
+			"$.data.attnds[0].name":         stu1.Name,
+			"$.data.attnds[0].stu_id":       stu1.StuID,
+			"$.data.attnds[0].attnd_status": 1.0,
+			"$.data.attnds[0].distance":     51.020,
+
+			"$.data.attnds[1].openid":       stu2.OpenID,
+			"$.data.attnds[1].name":         stu2.Name,
+			"$.data.attnds[1].stu_id":       stu2.StuID,
+			"$.data.attnds[1].attnd_status": 2.0,
+			"$.data.attnds[1].distance":     555947.880,
+
+			"$.data.attnds[2].openid":       stu3.OpenID,
+			"$.data.attnds[2].name":         stu3.Name,
+			"$.data.attnds[2].stu_id":       stu3.StuID,
+			"$.data.attnds[2].attnd_status": 1.0,
+			"$.data.attnds[2].distance":     51.020,
+
+			"$.data.my_signin.openid":       stu1.OpenID,
+			"$.data.my_signin.name":         stu1.Name,
+			"$.data.my_signin.stu_id":       stu1.StuID,
+			"$.data.my_signin.attnd_status": 1.0,
+			"$.data.my_signin.distance":     51.020,
+		},
+		desc: "chkAttndSituation ",
+	}, stu1)
+
+	reqTest(t, &reqParams{
+		expectResp: "",
+		method:     "GET",
+		reqURL:     "/api/attnd/situation",
+		args: map[string]string{
+			"cipher":        attnd1.Cipher,
+			"page":          "1",
+			"page_size":     "20",
+			"signin_status": "0",
+		},
+		expectJson: map[string]interface{}{
+			"$.code":                        1000.0,
+			"$.data.count":                  3.0,
+			"$.data.attnds[0].openid":       stu1.OpenID,
+			"$.data.attnds[0].name":         stu1.Name,
+			"$.data.attnds[0].stu_id":       stu1.StuID,
+			"$.data.attnds[0].attnd_status": 1.0,
+			"$.data.attnds[0].distance":     51.020,
+
+			"$.data.attnds[1].openid":       stu2.OpenID,
+			"$.data.attnds[1].name":         stu2.Name,
+			"$.data.attnds[1].stu_id":       stu2.StuID,
+			"$.data.attnds[1].attnd_status": 2.0,
+			"$.data.attnds[1].distance":     555947.880,
+
+			"$.data.attnds[2].openid":       stu3.OpenID,
+			"$.data.attnds[2].name":         stu3.Name,
+			"$.data.attnds[2].stu_id":       stu3.StuID,
+			"$.data.attnds[2].attnd_status": 1.0,
+			"$.data.attnds[2].distance":     51.020,
+		},
+		desc: "chkAttndSituation ",
+	}, teacher1)
+
+	//teacher end the attnd
+	reqTest(t, &reqParams{
+		expectResp: "",
+		method:     "POST",
+		reqURL:     "/api/attnd/end",
+		args: map[string]string{
+			"cipher": attnd1.Cipher,
+		},
+		expectJson: map[string]interface{}{
+			"$.code": 1000.0,
+		},
+	}, teacher1)
+
+	//stu4 signin after the end of the attnd
+	signinLate(attnd1.Cipher, stu4)
+
+	//teacher upd stu1 to late
+	stu1NewStatus := 3
+	reqTest(t, &reqParams{
+		expectResp: "",
+		method:     "POST",
+		reqURL:     "/api/signin/status/upd",
+		args: map[string]string{
+			"cipher": attnd1.Cipher,
+			"openid":stu1.OpenID,
+			"attnd_status":strconv.Itoa(stu1NewStatus),
+		},
+		expectJson: map[string]interface{}{
+			"$.code": 1000.0,
+		},
+	}, teacher1)
+
+	//chk attnd situation 2
+	reqTest(t, &reqParams{
+		expectResp: "",
+		method:     "GET",
+		reqURL:     "/api/attnd/situation",
+		args: map[string]string{
+			"cipher":        attnd1.Cipher,
+			"page":          "1",
+			"page_size":     "20",
+			"signin_status": "0",
+		},
+		expectJson: map[string]interface{}{
+			"$.code":                        1000.0,
+			"$.data.count":                  4.0,
+			"$.data.attnds[0].openid":       stu1.OpenID,
+			"$.data.attnds[0].name":         stu1.Name,
+			"$.data.attnds[0].stu_id":       stu1.StuID,
+			"$.data.attnds[0].attnd_status": float64(stu1NewStatus),  //stu1 --> update to 3 (late)
+			"$.data.attnds[0].distance":     51.020,
+
+			// new sign in after attnd end with status 3 (late)
+			"$.data.attnds[1].openid":       stu4.OpenID,
+			"$.data.attnds[1].name":         stu4.Name,
+			"$.data.attnds[1].stu_id":       stu4.StuID,
+			"$.data.attnds[1].attnd_status": 3.0,
+			"$.data.attnds[1].distance":     51.020,
+			
+			"$.data.attnds[2].openid":       stu2.OpenID,
+			"$.data.attnds[2].name":         stu2.Name,
+			"$.data.attnds[2].stu_id":       stu2.StuID,
+			"$.data.attnds[2].attnd_status": 2.0,
+			"$.data.attnds[2].distance":     555947.880,
+
+			"$.data.attnds[3].openid":       stu3.OpenID,
+			"$.data.attnds[3].name":         stu3.Name,
+			"$.data.attnds[3].stu_id":       stu3.StuID,
+			"$.data.attnds[3].attnd_status": 1.0,
+			"$.data.attnds[3].distance":     51.020,
 
 
-		reqTest(t,&reqParams{
-			expectResp:"",
-			method:"GET",
-			reqURL:"/api/attnd/situation",
-			args:map[string]string{
-				"cipher":attnd1.Cipher,
-				"page":"1",
-				"page_size":"20",
-				"signin_status":"0",
-			},
-			expectJson: map[string]interface{}{
-				"$.code":1000.0,
-				"$.data.count":3.0,
-				"$.data.attnds[0].openid":stu1.OpenID,
-				"$.data.attnds[0].name":stu1.Name,
-				"$.data.attnds[0].stu_id":stu1.StuID,
-				"$.data.attnds[0].attnd_status":1.0,
-				"$.data.attnds[0].distance":51.020,
+		},
+		desc: "chkAttndSituation after attnd end",
+	}, teacher1)
 
-				"$.data.attnds[1].openid":stu2.OpenID,
-				"$.data.attnds[1].name":stu2.Name,
-				"$.data.attnds[1].stu_id":stu2.StuID,
-				"$.data.attnds[1].attnd_status":2.0,
-				"$.data.attnds[1].distance":555947.880,
+	//teacher get attndlist before del
+	reqTest(t, &reqParams{
+		expectResp: "",
+		method:     "GET",
+		reqURL:     "/api/attndlist",
+		args: map[string]string{
+			"list_type": "1",
+			"page": "1",
+			"page_size": "10",
+			"query": "",
+		},
+		expectJson: map[string]interface{}{
+			"$.code": 1000.0,
+			"$.data.count": 1.0,
+			"$.data.attnds[0].status": 5.0, //has end
+			"$.data.attnds[0].attnd_name": attnd1.AttndName,
+			"$.data.attnds[0].teacher_name": attnd1.TeacherName,
+			"$.data.attnds[0].addr_name": attnd1.AddrName,
+			"$.data.attnds[0].cipher": attnd1.Cipher,
+		},
+	}, teacher1)
 
-				"$.data.attnds[2].openid":stu3.OpenID,
-				"$.data.attnds[2].name":stu3.Name,
-				"$.data.attnds[2].stu_id":stu3.StuID,
-				"$.data.attnds[2].attnd_status":1.0,
-				"$.data.attnds[2].distance":51.020,
-			},
-			desc:"chkAttndSituation ",
-		},teacher1)*/
+	//student signin get attndlist before del
+	reqTest(t, &reqParams{
+		expectResp: "",
+		method:     "GET",
+		reqURL:     "/api/attndlist",
+		args: map[string]string{
+			"list_type": "2",
+			"page": "1",
+			"page_size": "10",
+			"query": "",
+		},
+		expectJson: map[string]interface{}{
+			"$.code": 1000.0,
+			"$.data.count": 1.0,
+			"$.data.attnds[0].status": 5.0, //has end
+			"$.data.attnds[0].attnd_name": attnd1.AttndName,
+			"$.data.attnds[0].teacher_name": attnd1.TeacherName,
+			"$.data.attnds[0].addr_name": attnd1.AddrName,
+			"$.data.attnds[0].cipher": attnd1.Cipher,
+		},
+	}, stu1)
+
+	//get his addr name
+	reqTest(t, &reqParams{
+		expectResp: "",
+		method:     "GET",
+		reqURL:     "/api/attnd/hisaddr",
+		expectJson: map[string]interface{}{
+			"$.code": 1000.0,
+			"$.data[0]": attnd1.AddrName,
+		},
+	}, teacher1)
+
+	//get his addr name
+	reqTest(t, &reqParams{
+		expectResp: "",
+		method:     "GET",
+		reqURL:     "/api/attnd/hisname",
+		expectJson: map[string]interface{}{
+			"$.code": 1000.0,
+			"$.data[0]": attnd1.AttndName,
+		},
+	}, teacher1)
+
+
+	//teacher del attnd
+	reqTest(t, &reqParams{
+		expectResp: "",
+		method:     "POST",
+		reqURL:     "/api/attnd/del",
+		args: map[string]string{
+			"cipher": attnd1.Cipher,
+		},
+		expectJson: map[string]interface{}{
+			"$.code": 1000.0,
+		},
+	}, teacher1)
+
+	//teacher get attndlist
+	reqTest(t, &reqParams{
+		expectResp: "",
+		method:     "GET",
+		reqURL:     "/api/attndlist",
+		args: map[string]string{
+			"list_type": "1",
+			"page": "1",
+			"page_size": "10",
+			"query": "",
+		},
+		expectJson: map[string]interface{}{
+			"$.code": 1000.0,
+			"$.data.count": 0.0,
+		},
+	}, teacher1)
 
 	spider <- -1
 }
@@ -575,19 +804,69 @@ func spiderMove() {
 	}
 }
 
+func WaitGroupWrapper(group *sync.WaitGroup, fn func()) {
+	group.Add(1)
+	go func() {
+		fn()
+		group.Done()
+	}()
+}
+
 var startNext = make(chan bool, 1024*4)
 
+type ReportInfo struct {
+	AverRT time.Duration
+	MaxRT time.Duration
+	MinRT time.Duration
+	SrcRT *list.List
+}
+
+
+func reporter(writer io.Writer)  {
+	writer.Write([]byte("detail::::\n"))
+	for k,v :=  range rt {
+		writer.Write([]byte("\n"+k+"\n"))
+		v.MaxRT = v.SrcRT.Front().Value.(time.Duration)
+		v.MinRT = v.SrcRT.Front().Value.(time.Duration)
+		for e:=v.SrcRT.Front();e!=nil;e = e.Next()  {
+			val := e.Value.(time.Duration)
+			if val<v.MinRT {
+				v.MinRT = val
+			}
+			if val>v.MaxRT {
+				v.MaxRT = val
+			}
+			v.AverRT += (val - v.AverRT) / time.Duration(v.SrcRT.Len())
+			writer.Write([]byte(val.String()+"\n"))
+		}
+		writer.Write([]byte("\n"))
+	}
+	writer.Write([]byte("overview::::\n"))
+	for k,v :=  range rt {
+		writer.Write([]byte("\n"+k+"\n"))
+		writer.Write([]byte("\n AverRT ::::"+v.AverRT.String()+"\n"))
+		writer.Write([]byte("\n MaxRT ::::"+v.MaxRT.String()+"\n"))
+		writer.Write([]byte("\n MinRT ::::"+v.MinRT.String()+"\n"))
+	}
+}
+
 //go test -run TestA
-func TestA(t *testing.T) {
+func TestParallel(t *testing.T) {
 
 	enableFncPerf = false
 	go spiderMove()
 
-	remiseCPUTime := time.Millisecond * 5
+	remiseCPUTime := time.Millisecond * 20
 
 	go func() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
+
+	file,err := os.Create("./reporter.log")
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
 
 	//startNext <- true
 	for {
@@ -596,11 +875,10 @@ func TestA(t *testing.T) {
 		fmt.Printf("active spider is %d, done spider is %d\n", concurrentSpider.Load(), doneSpider.Load())
 		go TestUserProcess(t)
 		time.Sleep(remiseCPUTime)
-		if concurrentSpider.Load() >= 1000 {
+		if concurrentSpider.Load() >= 100 {
+			reporter(file)
 			time.Sleep(time.Second * 12)
 		}
 
 	}
 }
-
-
