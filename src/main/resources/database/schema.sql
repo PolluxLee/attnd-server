@@ -39,6 +39,12 @@ CREATE TABLE IF NOT EXISTS signin(
   UNIQUE KEY(openid,cipher)
 )DEFAULT CHARACTER SET = utf8mb4;
 
+CREATE TABLE IF NOT EXISTS felog(
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  userinfo JSON NOT NULL,
+  loginfo JSON NOT NULL
+)DEFAULT CHARACTER SET = utf8mb4;
+
 /* logback table */
 CREATE TABLE IF NOT EXISTS logging_event
   (
