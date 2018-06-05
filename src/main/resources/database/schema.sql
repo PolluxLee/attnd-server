@@ -42,7 +42,8 @@ CREATE TABLE IF NOT EXISTS signin(
 CREATE TABLE IF NOT EXISTS felog(
   id INT PRIMARY KEY AUTO_INCREMENT,
   userinfo JSON NOT NULL,
-  loginfo JSON NOT NULL
+  loginfo JSON NOT NULL,
+  createdat datetime NOT NULL default NOW()
 )DEFAULT CHARACTER SET = utf8mb4;
 
 /* logback table */
