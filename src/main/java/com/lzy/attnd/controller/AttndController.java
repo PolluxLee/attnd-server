@@ -168,9 +168,7 @@ public class AttndController {
     ){
         String[] hisName = attndService.ChkHisAttndName(session.getUserID(),15);
         if (hisName==null || hisName.length<=0){
-            String msg = "ChkHisAttndName hisName empty or null";
-            logger.warn(msg);
-            return FB.SYS_ERROR(msg);
+            return FB.SUCCESS();
         }
         return FB.SUCCESS(hisName);
     }
@@ -191,9 +189,7 @@ public class AttndController {
     ){
         String[] hisName = attndService.ChkHisAttndAddr(session.getUserID(),15);
         if (hisName==null || hisName.length<=0){
-            String msg = "chkAttndHisAddr hisName empty or null";
-            logger.warn(msg);
-            return FB.SYS_ERROR(msg);
+            return FB.SUCCESS();
         }
         return FB.SUCCESS(hisName);
     }
