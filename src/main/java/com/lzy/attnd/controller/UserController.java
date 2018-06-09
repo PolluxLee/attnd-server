@@ -31,7 +31,7 @@ public class UserController {
     }
 
     //testing api
-    @GetMapping("/chk/session")
+    /*@GetMapping("/chk/session")
     public String cookie(HttpServletRequest request, HttpSession session) {
         //取出session中的browser
         StringBuilder sb = new StringBuilder();
@@ -62,7 +62,7 @@ public class UserController {
             HttpServletRequest request, HttpSession session){
         session.setAttribute(configBean.getSession_key(),new Session(id,name,0,openid,session_key,stuid));
         return "ok";
-    }
+    }*/
 
 
     private final UserService userService;
